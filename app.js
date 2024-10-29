@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const colorYInput = document.getElementById('colorY');
     const colorZInput = document.getElementById('colorZ');
     const backgroundColorInput = document.getElementById('backgroundColor');
-    const labelColorInput = document.getElementById('labelColor'); // New label color input
+    const labelColorInput = document.getElementById('labelColor');
+    const highlightZeroInput = document.getElementById('highlightZero'); // Checkbox for highlighting "0" label
 
     // References to buttons
     const saveImageButton = document.getElementById('saveImageButton');
@@ -28,7 +29,8 @@ document.addEventListener('DOMContentLoaded', function () {
     colorYInput.addEventListener('input', drawTonnetz);
     colorZInput.addEventListener('input', drawTonnetz);
     backgroundColorInput.addEventListener('input', drawTonnetz);
-    labelColorInput.addEventListener('input', drawTonnetz); // Real-time label color update
+    labelColorInput.addEventListener('input', drawTonnetz);
+    highlightZeroInput.addEventListener('input', drawTonnetz); // Trigger redraw when checkbox is toggled
 
     // Event listeners for saving
     saveImageButton.addEventListener('click', saveAsImage);
@@ -76,7 +78,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const colorY = colorYInput.value;
         const colorZ = colorZInput.value;
         const backgroundColor = backgroundColorInput.value;
-        const labelColor = labelColorInput.value; // Label color
+        const labelColor = labelColorInput.value;
+        const highlightZero = highlightZeroInput.checked; // Check if "0" label should be highlighted
 
         // Get triangle size from input fields
         const sizeInput = document.getElementById('triangleSize').value;
@@ -110,12 +113,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // Draw the grid
         for (let row = -2; row < rows; row++) {
             for (let col = -2; col < cols; col++) {
-                drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor);
+                drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero);
             }
         }
     }
 
-    function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor) {
+    function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero) {
         const h = size * (Math.sqrt(3) / 2);
         const xOffset = (row % 2) * (size / 2);
         const x = col * size + xOffset;
@@ -155,12 +158,21 @@ document.addEventListener('DOMContentLoaded', function () {
         let label = (intervalX * q + intervalZ * r) % edo;
         if (label < 0) label += edo;
 
-        // Draw label near the top vertex of the triangle
+        // Draw label with highlight if "0"
         const labelX = points[0].x;
         const labelY = points[0].y - (size / 5);
 
-        ctx.fillStyle = labelColor; // Apply label color
-        ctx.font = `${size / 4}px Arial`;
+        // Highlight the "0" label
+        if (label === 0 && highlightZero) {
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.3)'; // Light yellow highlight
+            ctx.beginPath();
+            ctx.arc(labelX, labelY, size / 2.5, 0, Math.PI * 2); // Circle around "0"
+            ctx.fill();
+        }
+
+        // Draw the label
+        ctx.fillStyle = labelColor;
+        ctx.font = `${label === 0 && highlightZero ? size / 3 : size / 4}px Arial`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
         ctx.fillText(label.toString(), labelX, labelY);
