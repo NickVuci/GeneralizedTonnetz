@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generalized Tonnetz</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+
+<h1 class="main-title">Generalized Tonnetz</h1>
+<h3 class="subtitle">By Nick Vuci</h3>
+
+<div id="controls">
+    <!-- Existing controls -->
+    <div class="control-group">
+        <label for="colorX">Axis X (Yellow):</label>
+        <input type="color" id="colorX" value="#FFFF00" class="axis-color">
+        <label for="colorY">Axis Y (Red):</label>
+        <input type="color" id="colorY" value="#FF0000" class="axis-color">
+        <label for="colorZ">Axis Z (Blue):</label>
+        <input type="color" id="colorZ" value="#0000FF" class="axis-color">
+    </div>
+    <div class="control-group">
+        <label for="triangleSize">Triangle Size:</label>
+        <input type="number" id="triangleSize" value="40" min="10" max="200">
+    </div>
+    <div class="control-group">
+        <label for="canvasSize">Canvas Size:</label>
+        <select id="canvasSize">
+            <option value="A4">A4</option>
+            <option value="A3">A3</option>
+            <option value="Letter">Letter</option>
+            <option value="Legal">Legal</option>
+            <option value="Custom">Custom</option>
+        </select>
+        <label for="orientation">Orientation:</label>
+        <select id="orientation">
+            <option value="portrait">Vertical</option>
+            <option value="landscape">Horizontal</option>
+        </select>
+    </div>
+    <div class="control-group" id="customSizeGroup" style="display: none;">
+        <label for="canvasWidth">Width (px):</label>
+        <input type="number" id="canvasWidth" value="600" min="100" max="2000">
+        <label for="canvasHeight">Height (px):</label>
+        <input type="number" id="canvasHeight" value="600" min="100" max="2000">
+    </div>
+    <div class="control-group">
+        <label for="edo">EDO (Equal Divisions of the Octave):</label>
+        <input type="number" id="edo" value="12" min="1" max="72">
+        <label for="intervalX">Interval X:</label>
+        <input type="number" id="intervalX" value="4" min="-72" max="72">
+        <label for="intervalY">Interval Y:</label>
+        <input type="number" id="intervalY" value="7" min="-72" max="72">
+    </div>
+    <!-- Add buttons for saving -->
+    <div class="control-group">
+        <button id="drawButton">Draw Tonnetz</button>
+        <button id="saveImageButton">Save as Image</button>
+        <button id="savePdfButton">Save as PDF</button>
+    </div>
+</div>
+
+<canvas id="tonnetzCanvas" width="600" height="600"></canvas>
+
+<!-- Include jsPDF library for PDF saving -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
