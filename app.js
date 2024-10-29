@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const colorYInput = document.getElementById('colorY');
     const colorZInput = document.getElementById('colorZ');
     const backgroundColorInput = document.getElementById('backgroundColor');
+    const labelColorInput = document.getElementById('labelColor'); // New label color input
 
     // References to buttons
     const saveImageButton = document.getElementById('saveImageButton');
@@ -27,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
     colorYInput.addEventListener('input', drawTonnetz);
     colorZInput.addEventListener('input', drawTonnetz);
     backgroundColorInput.addEventListener('input', drawTonnetz);
+    labelColorInput.addEventListener('input', drawTonnetz); // Real-time label color update
 
     // Event listeners for saving
     saveImageButton.addEventListener('click', saveAsImage);
@@ -74,6 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const colorY = colorYInput.value;
         const colorZ = colorZInput.value;
         const backgroundColor = backgroundColorInput.value;
+        const labelColor = labelColorInput.value; // Label color
 
         // Get triangle size from input fields
         const sizeInput = document.getElementById('triangleSize').value;
@@ -107,12 +110,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // Draw the grid
         for (let row = -2; row < rows; row++) {
             for (let col = -2; col < cols; col++) {
-                drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ);
+                drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor);
             }
         }
     }
 
-    function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ) {
+    function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor) {
         const h = size * (Math.sqrt(3) / 2);
         const xOffset = (row % 2) * (size / 2);
         const x = col * size + xOffset;
@@ -156,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const labelX = points[0].x;
         const labelY = points[0].y - (size / 5);
 
-        ctx.fillStyle = '#000';
+        ctx.fillStyle = labelColor; // Apply label color
         ctx.font = `${size / 4}px Arial`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
