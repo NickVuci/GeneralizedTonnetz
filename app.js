@@ -9,14 +9,24 @@ document.addEventListener('DOMContentLoaded', function () {
     const customSizeGroup = document.getElementById('customSizeGroup');
     const canvasWidthInput = document.getElementById('canvasWidth');
     const canvasHeightInput = document.getElementById('canvasHeight');
+    const colorXInput = document.getElementById('colorX');
+    const colorYInput = document.getElementById('colorY');
+    const colorZInput = document.getElementById('colorZ');
+    const backgroundColorInput = document.getElementById('backgroundColor');
 
-    // References to new buttons
+    // References to buttons
     const saveImageButton = document.getElementById('saveImageButton');
     const savePdfButton = document.getElementById('savePdfButton');
 
     // Add event listeners
     document.getElementById('drawButton').addEventListener('click', drawTonnetz);
     canvasSizeSelect.addEventListener('change', handleCanvasSizeChange);
+
+    // Event listeners for real-time color updates
+    colorXInput.addEventListener('input', drawTonnetz);
+    colorYInput.addEventListener('input', drawTonnetz);
+    colorZInput.addEventListener('input', drawTonnetz);
+    backgroundColorInput.addEventListener('input', drawTonnetz);
 
     // Event listeners for saving
     saveImageButton.addEventListener('click', saveAsImage);
@@ -35,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function getCanvasDimensions() {
         let width, height;
         const paperSizes = {
-            'A4': { width: 2480, height: 3508 },    // 300 DPI
+            'A4': { width: 2480, height: 3508 },
             'A3': { width: 3508, height: 4961 },
             'Letter': { width: 2550, height: 3300 },
             'Legal': { width: 2550, height: 4200 },
@@ -60,22 +70,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function drawTonnetz() {
         // Get colors from input fields
-        const colorX = document.getElementById('colorX').value;
-        const colorY = document.getElementById('colorY').value;
-        const colorZ = document.getElementById('colorZ').value;
+        const colorX = colorXInput.value;
+        const colorY = colorYInput.value;
+        const colorZ = colorZInput.value;
+        const backgroundColor = backgroundColorInput.value;
 
         // Get triangle size from input fields
         const sizeInput = document.getElementById('triangleSize').value;
-        const size = parseInt(sizeInput) || 40; // Default to 40 if invalid
+        const size = parseInt(sizeInput) || 40;
 
         // Get EDO value and intervals
         const edoInput = document.getElementById('edo').value;
-        const edo = parseInt(edoInput) || 12; // Default to 12-EDO if invalid
+        const edo = parseInt(edoInput) || 12;
 
         const intervalXInput = document.getElementById('intervalX').value;
-        const intervalYInput = document.getElementById('intervalY').value;
-        const intervalX = parseInt(intervalXInput) || 4; // Default to 4 if invalid
-        const intervalY = parseInt(intervalYInput) || 7; // Default to 7 if invalid
+        const intervalZInput = document.getElementById('intervalZ').value;
+        const intervalX = parseInt(intervalXInput) || 4;
+        const intervalZ = parseInt(intervalZInput) || 7;
 
         // Get canvas dimensions
         const { width: canvasWidth, height: canvasHeight } = getCanvasDimensions();
@@ -84,8 +95,9 @@ document.addEventListener('DOMContentLoaded', function () {
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
 
-        // Clear the canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Fill background color
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // Parameters for the grid
         const h = size * (Math.sqrt(3) / 2);
@@ -95,12 +107,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // Draw the grid
         for (let row = -2; row < rows; row++) {
             for (let col = -2; col < cols; col++) {
-                drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalY);
+                drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ);
             }
         }
     }
 
-    function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalY) {
+    function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ) {
         const h = size * (Math.sqrt(3) / 2);
         const xOffset = (row % 2) * (size / 2);
         const x = col * size + xOffset;
@@ -108,87 +120,68 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Points of the triangle
         const points = [
-            { x: x, y: y }, // Top vertex
-            { x: x + size / 2, y: y + h }, // Bottom right
-            { x: x - size / 2, y: y + h }  // Bottom left
+            { x: x, y: y },
+            { x: x + size / 2, y: y + h },
+            { x: x - size / 2, y: y + h }
         ];
 
         // Draw sides with specified colors
-
-        // Side X (horizontal - yellow)
+        ctx.strokeStyle = colorX;
         ctx.beginPath();
         ctx.moveTo(points[0].x, points[0].y);
         ctx.lineTo(points[1].x, points[1].y);
-        ctx.strokeStyle = colorX;
         ctx.stroke();
 
-        // Side Y (left - red)
+        ctx.strokeStyle = colorY;
         ctx.beginPath();
         ctx.moveTo(points[0].x, points[0].y);
         ctx.lineTo(points[2].x, points[2].y);
-        ctx.strokeStyle = colorY;
         ctx.stroke();
 
-        // Side Z (bottom - blue)
+        ctx.strokeStyle = colorZ;
         ctx.beginPath();
         ctx.moveTo(points[1].x, points[1].y);
         ctx.lineTo(points[2].x, points[2].y);
-        ctx.strokeStyle = colorZ;
         ctx.stroke();
 
-        // Adjusted label calculation to ensure Y-axis increments straight
         // Calculate axial coordinates (q, r) for hex grid
         let q = col - Math.floor(row / 2);
         let r = row;
 
         // Calculate label
-        let label = (intervalX * q + intervalY * r) % edo;
-        if (label < 0) label += edo; // Ensure label is positive
+        let label = (intervalX * q + intervalZ * r) % edo;
+        if (label < 0) label += edo;
 
         // Draw label near the top vertex of the triangle
         const labelX = points[0].x;
-        const labelY = points[0].y - (size / 5); // Adjust the offset as needed
+        const labelY = points[0].y - (size / 5);
 
         ctx.fillStyle = '#000';
         ctx.font = `${size / 4}px Arial`;
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom'; // Align text so that the bottom of the text is at labelY
+        ctx.textBaseline = 'bottom';
         ctx.fillText(label.toString(), labelX, labelY);
     }
 
     function saveAsImage() {
-        // Convert canvas to data URL
         const image = canvas.toDataURL('image/png');
-
-        // Create a link element
         const link = document.createElement('a');
         link.href = image;
         link.download = 'tonnetz.png';
-
-        // Append to the DOM and trigger click
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     }
 
     function saveAsPdf() {
-        // Import jsPDF module
         const { jsPDF } = window.jspdf;
-
-        // Create a new jsPDF instance
         const pdf = new jsPDF({
             orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
             unit: 'px',
             format: [canvas.width, canvas.height]
         });
-
-        // Get the image data from the canvas
         const imgData = canvas.toDataURL('image/png');
-
-        // Add the image to the PDF
         pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-
-        // Save the PDF
         pdf.save('tonnetz.pdf');
     }
 

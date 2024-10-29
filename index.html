@@ -10,14 +10,17 @@
 <h3 class="subtitle">By Nick Vuci</h3>
 
 <div id="controls">
-    <!-- Existing controls -->
     <div class="control-group">
-        <label for="colorX">Axis X (Yellow):</label>
-        <input type="color" id="colorX" value="#FFFF00" class="axis-color">
-        <label for="colorY">Axis Y (Red):</label>
-        <input type="color" id="colorY" value="#FF0000" class="axis-color">
-        <label for="colorZ">Axis Z (Blue):</label>
-        <input type="color" id="colorZ" value="#0000FF" class="axis-color">
+        <label for="colorX">X Axis:</label>
+        <input type="color" id="colorX" value="#FF0000" class="axis-color"> <!-- Default color: Red -->
+        <label for="colorY">Y Axis:</label>
+        <input type="color" id="colorY" value="#0000FF" class="axis-color"> <!-- Default color: Blue -->
+        <label for="colorZ">Z Axis:</label>
+        <input type="color" id="colorZ" value="#FFFF00" class="axis-color"> <!-- Default color: Yellow -->
+    </div>
+    <div class="control-group">
+        <label for="backgroundColor">Background Color:</label>
+        <input type="color" id="backgroundColor" value="#FFFFFF"> <!-- Default color: White -->
     </div>
     <div class="control-group">
         <label for="triangleSize">Triangle Size:</label>
@@ -49,10 +52,9 @@
         <input type="number" id="edo" value="12" min="1" max="72">
         <label for="intervalX">Interval X:</label>
         <input type="number" id="intervalX" value="4" min="-72" max="72">
-        <label for="intervalY">Interval Y:</label>
-        <input type="number" id="intervalY" value="7" min="-72" max="72">
+        <label for="intervalZ">Interval Z:</label>
+        <input type="number" id="intervalZ" value="7" min="-72" max="72">
     </div>
-    <!-- Add buttons for saving -->
     <div class="control-group">
         <button id="drawButton">Draw Tonnetz</button>
         <button id="saveImageButton">Save as Image</button>
