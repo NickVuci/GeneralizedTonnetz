@@ -174,24 +174,27 @@ document.addEventListener('DOMContentLoaded', function () {
             { x: x - size / 2, y: y + h }
         ];
 
-        // Draw sides with specified colors
-        ctxDraw.strokeStyle = colorX;
-        ctxDraw.beginPath();
-        ctxDraw.moveTo(points[0].x, points[0].y);
-        ctxDraw.lineTo(points[1].x, points[1].y);
-        ctxDraw.stroke();
+    // Draw sides with specified colors so axis-color mapping matches UI and intervals
+    // Z axis: points[0] to points[1] (should be blue)
+    ctxDraw.strokeStyle = colorZ; // blue
+    ctxDraw.beginPath();
+    ctxDraw.moveTo(points[0].x, points[0].y);
+    ctxDraw.lineTo(points[1].x, points[1].y);
+    ctxDraw.stroke();
 
-        ctxDraw.strokeStyle = colorY;
-        ctxDraw.beginPath();
-        ctxDraw.moveTo(points[0].x, points[0].y);
-        ctxDraw.lineTo(points[2].x, points[2].y);
-        ctxDraw.stroke();
+    // Y axis: points[0] to points[2] (should be red)
+    ctxDraw.strokeStyle = colorY; // red
+    ctxDraw.beginPath();
+    ctxDraw.moveTo(points[0].x, points[0].y);
+    ctxDraw.lineTo(points[2].x, points[2].y);
+    ctxDraw.stroke();
 
-        ctxDraw.strokeStyle = colorZ;
-        ctxDraw.beginPath();
-        ctxDraw.moveTo(points[1].x, points[1].y);
-        ctxDraw.lineTo(points[2].x, points[2].y);
-        ctxDraw.stroke();
+    // X axis: points[1] to points[2] (should be yellow)
+    ctxDraw.strokeStyle = colorX; // yellow
+    ctxDraw.beginPath();
+    ctxDraw.moveTo(points[1].x, points[1].y);
+    ctxDraw.lineTo(points[2].x, points[2].y);
+    ctxDraw.stroke();
 
         // Calculate axial coordinates (q, r) for hex grid
         let q = col - Math.floor(row / 2);
