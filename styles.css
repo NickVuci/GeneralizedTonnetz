@@ -30,6 +30,28 @@ body {
     background-color: rgba(240, 240, 240, 0.8);
 }
 
+.title-section { flex: 0 0 auto; }
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-left: 20px;
+}
+
+/* Header lattice controls centered area */
+.header-lattice {
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: auto 90px auto 90px auto 90px; /* EDO, X, Z only */
+    align-items: center;
+    justify-content: center;
+    column-gap: 10px;
+}
+
+.header-lattice label { font-weight: 600; color: #333; }
+.header-lattice input[type="number"] { width: 90px; }
+
 .title-section {
     display: flex;
     flex-direction: column;
@@ -102,7 +124,8 @@ legend {
     padding-top: 10px;
 }
 
-#drawButton {
+/* Legacy style only when Draw button is placed in the main actions row */
+.main-actions #drawButton {
     padding: 12px 30px;
     font-size: 18px;
     font-weight: bold;
@@ -114,14 +137,14 @@ legend {
     transition: background-color 0.3s;
 }
 
-#drawButton:hover {
+.main-actions #drawButton:hover {
     background-color: #45a049;
 }
 
 /* Align label/input pairs neatly inside each card */
 fieldset .control-group {
     display: grid;
-    grid-template-columns: 130px 1fr; /* two-column layout to prevent overflow */
+    grid-template-columns: 130px 1fr; /* simpler two-column layout */
     align-items: center;
     column-gap: 14px;
     row-gap: 12px;
@@ -155,10 +178,23 @@ input[type="color"] {
 
 .axis-color { width: 56px; margin-right: 0; }
 
-/* Buttons inside cards */
-fieldset .control-group button {
-    padding: 8px 14px;
+/* Primary header actions only */
+.header-actions .primary-action {
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid #1e40af;
+    background-color: #2563eb;
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    min-width: 150px;
+    line-height: 1.1;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
+
+.header-actions .primary-action:hover { background-color: #1d4ed8; }
+.header-actions .primary-action:active { background-color: #1b46c6; }
 
 /* Responsive: collapse to 2 and then 1 columns */
 @media (max-width: 1400px) {
@@ -167,6 +203,17 @@ fieldset .control-group button {
 
 @media (max-width: 800px) {
     .controls-content { grid-template-columns: 1fr; }
+}
+
+/* When the viewport is narrower, fall back to a single pair per row to avoid crowding */
+/* two-column layout works well across sizes; keep it consistent */
+
+/* Actions row inside Canvas & Export */
+.export-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 /* ===== Workspace layout: overlays left, canvas right ===== */
