@@ -80,13 +80,7 @@
             </div>
         </fieldset>
 
-        <fieldset>
-            <legend>Chord Overlays</legend>
-            <div class="control-group">
-                <button id="addOverlayBtn" title="Add a new overlay with its own steps, color, and anchors">Add Overlay</button>
-            </div>
-            <div class="control-group" id="overlayList"></div>
-        </fieldset>
+        <!-- Overlays moved to left sidebar below -->
 
         <div class="main-actions">
             <button id="drawButton">Draw Tonnetz</button>
@@ -94,7 +88,20 @@
     </div>
 </div>
 
-<canvas id="tonnetzCanvas" width="600" height="600"></canvas>
+<!-- Workspace: overlay sidebar on the left, canvas on the right -->
+<div class="workspace">
+    <aside id="overlaySidebar" class="overlay-sidebar">
+        <div class="overlay-header">
+            <h3>Chord Overlays</h3>
+            <button id="addOverlayBtn" title="Add a new overlay with its own steps, color, and anchors">Add Overlay</button>
+        </div>
+        <div id="overlayList" class="overlay-list"></div>
+    </aside>
+    <div class="canvas-wrap">
+        <canvas id="tonnetzCanvas" width="600" height="600"></canvas>
+    </div>
+    
+</div>
 
 <!-- Include jsPDF library for PDF saving -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

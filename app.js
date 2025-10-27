@@ -205,6 +205,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Init
     handleCanvasSizeChange();
+    // Ensure two default overlays exist (red then blue)
+    try {
+        if (!overlays || overlays.length === 0) {
+            addOverlay({ color: '#FF0000' });
+            addOverlay({ color: '#0000FF' });
+        }
+    } catch {}
     renderOverlayListPanel();
     drawTonnetz();
 });
