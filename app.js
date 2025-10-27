@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (overlays.length) {
                 for (const ov of overlays) {
                     if (!ov.visible) continue;
-                    drawChordOverlay(offCtx, offscreen.width, offscreen.height, size, edo, intervalX, intervalZ, ov.root, ov.steps, ov.color, ov.opacity, ov.anchors);
+                    drawChordOverlay(offCtx, offscreen.width, offscreen.height, size, edo, intervalX, intervalZ, ov.steps, ov.color, ov.opacity, ov.anchors);
                 }
             }
             canvas.width = canvasWidth;
@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (overlays.length) {
                 for (const ov of overlays) {
                     if (!ov.visible) continue;
-                    drawChordOverlay(ctx, canvas.width, canvas.height, size, edo, intervalX, intervalZ, ov.root, ov.steps, ov.color, ov.opacity, ov.anchors);
+                    drawChordOverlay(ctx, canvas.width, canvas.height, size, edo, intervalX, intervalZ, ov.steps, ov.color, ov.opacity, ov.anchors);
                 }
             }
         }

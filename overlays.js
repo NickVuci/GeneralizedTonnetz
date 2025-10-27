@@ -12,7 +12,6 @@ function addOverlay(preset) {
         id: overlayIdCounter++,
         visible: true,
         steps: preset?.steps || [0, 4, 7],
-        root: Number.isFinite(preset?.root) ? preset.root : 0,
         color,
         opacity: Number.isFinite(preset?.opacity) ? preset.opacity : 0.35,
         anchors: preset?.anchors || []
@@ -53,8 +52,6 @@ function onOverlayPanelEvent(e) {
         activeOverlayId = id;
     } else if (target.classList.contains('ov-steps')) {
         ov.steps = parseChordSteps(target.value);
-    } else if (target.classList.contains('ov-root')) {
-        ov.root = sanitizeInt(target.value, 0);
     } else if (target.classList.contains('ov-color')) {
         ov.color = target.value;
     } else if (target.classList.contains('ov-opacity')) {
@@ -87,8 +84,6 @@ function renderOverlayListPanel() {
             <span>Overlay ${ov.id}</span>
             <label>Steps:</label>
             <input type="text" class="ov-steps" value="${ov.steps.join(',')}" style="width:120px" title="Comma-separated steps">
-            <label>Root:</label>
-            <input type="number" class="ov-root" value="${ov.root}" style="width:70px">
             <label>Color:</label>
             <input type="color" class="ov-color" value="${ov.color}">
             <label>Opacity:</label>

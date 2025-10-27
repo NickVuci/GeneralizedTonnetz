@@ -58,7 +58,7 @@ function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, in
     ctx.fillText(label.toString(), labelX, labelY);
 }
 
-function drawChordOverlay(ctx, width, height, size, edo, intervalX, intervalZ, root, steps, colorHex, opacity, anchors) {
+function drawChordOverlay(ctx, width, height, size, edo, intervalX, intervalZ, steps, colorHex, opacity, anchors) {
     if (!anchors || !anchors.length) return;
     ctx.save();
     ctx.globalAlpha = opacity;
@@ -66,13 +66,13 @@ function drawChordOverlay(ctx, width, height, size, edo, intervalX, intervalZ, r
     ctx.lineWidth = Math.max(1, size / 14);
 
     for (const anchor of anchors) {
-        drawChordShapeAtAnchor(ctx, anchor.q, anchor.r, size, edo, intervalX, intervalZ, root, steps);
+        drawChordShapeAtAnchor(ctx, anchor.q, anchor.r, size, edo, intervalX, intervalZ, steps);
     }
 
     ctx.restore();
 }
 
-function drawChordShapeAtAnchor(ctx, aq, ar, size, edo, intervalX, intervalZ, root, steps) {
+function drawChordShapeAtAnchor(ctx, aq, ar, size, edo, intervalX, intervalZ, steps) {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
