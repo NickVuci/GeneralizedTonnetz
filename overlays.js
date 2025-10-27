@@ -90,7 +90,8 @@ function onOverlayPanelEvent(e) {
 function renderOverlayListPanel() {
     if (!overlayListContainer) return;
     overlayListContainer.innerHTML = '';
-    for (const ov of overlays) {
+    overlays.forEach((ov, idx) => {
+        const displayNum = idx + 1; // Relative numbering based on current order
         const card = document.createElement('div');
         card.className = 'overlay-card';
         card.setAttribute('data-id', String(ov.id));
@@ -102,7 +103,7 @@ function renderOverlayListPanel() {
         card.innerHTML = `
             <input type="checkbox" class="ov-visible" ${ov.visible ? 'checked' : ''} title="Toggle visibility">
             <input type="radio" name="activeOverlay" class="ov-active" ${activeOverlayId === ov.id ? 'checked' : ''} title="Make active for clicks">
-            <span>Overlay ${ov.id}</span>
+            <span>Overlay ${displayNum}</span>
             <label>Steps:</label>
             <input type="text" class="ov-steps" value="${ov.steps.join(',')}" style="width:120px" title="Comma-separated steps">
             <label>Color:</label>
@@ -114,5 +115,5 @@ function renderOverlayListPanel() {
             <button class="ov-delete">Delete</button>
         `;
         overlayListContainer.appendChild(card);
-    }
+    });
 }
