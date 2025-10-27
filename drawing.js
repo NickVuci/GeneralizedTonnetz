@@ -85,9 +85,17 @@ function drawChordShapeAtAnchor(ctx, aq, ar, size, edo, intervalX, intervalZ, st
             triNodes.push({ x, y });
         }
         if (triNodes.length >= 2) {
+            // Inset the triangle slightly so edges don't overlap parallel lattice lines
+            const INSET = 0.92; // 92% of original size; adjust if needed
+            const cx = (triNodes[0].x + triNodes[1].x + triNodes[2].x) / 3;
+            const cy = (triNodes[0].y + triNodes[1].y + triNodes[2].y) / 3;
+            const inset = triNodes.map(p => ({
+                x: cx + (p.x - cx) * INSET,
+                y: cy + (p.y - cy) * INSET
+            }));
             ctx.beginPath();
-            ctx.moveTo(triNodes[0].x, triNodes[0].y);
-            for (let i = 1; i < triNodes.length; i++) ctx.lineTo(triNodes[i].x, triNodes[i].y);
+            ctx.moveTo(inset[0].x, inset[0].y);
+            for (let i = 1; i < inset.length; i++) ctx.lineTo(inset[i].x, inset[i].y);
             ctx.closePath();
             ctx.stroke();
         }

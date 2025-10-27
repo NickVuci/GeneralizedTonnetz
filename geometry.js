@@ -4,16 +4,13 @@ function qrToPixel(q, r, size) {
     const col = q + Math.floor(r / 2);
     const xOffset = (r % 2) * (size / 2);
     const x = col * size + xOffset;
-    const yApex = r * h;
-    const y = yApex - (size / 5);
+    const y = r * h;
     return { x, y };
 }
 
 function pixelToQR(px, py, size) {
     const h = size * (Math.sqrt(3) / 2);
-    // Adjust to apex coords (labels are drawn at yApex - size/5)
-    const pyApex = py + (size / 5);
-    const row = Math.round(pyApex / h);
+    const row = Math.round(py / h);
     const xOffset = (row % 2) * (size / 2);
     const col = Math.round((px - xOffset) / size);
     const q = col - Math.floor(row / 2);
