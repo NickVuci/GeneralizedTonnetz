@@ -15,6 +15,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const backgroundColorInput = document.getElementById('backgroundColor');
     const labelColorInput = document.getElementById('labelColor');
     const highlightZeroInput = document.getElementById('highlightZero'); // Checkbox for highlighting "0" label
+    const triangleSizeInput = document.getElementById('triangleSize');
+    const edoInput = document.getElementById('edo');
+    const intervalXInput = document.getElementById('intervalX');
+    const intervalZInput = document.getElementById('intervalZ');
 
     // References to buttons
     const saveImageButton = document.getElementById('saveImageButton');
@@ -31,6 +35,13 @@ document.addEventListener('DOMContentLoaded', function () {
     backgroundColorInput.addEventListener('input', drawTonnetz);
     labelColorInput.addEventListener('input', drawTonnetz);
     highlightZeroInput.addEventListener('input', drawTonnetz); // Trigger redraw when checkbox is toggled
+
+    // Event listeners for numeric controls so changes redraw immediately
+    triangleSizeInput.addEventListener('input', drawTonnetz);
+    // Use 'input' for immediate response; 'change' would also work but requires blur/enter
+    edoInput.addEventListener('input', drawTonnetz);
+    intervalXInput.addEventListener('input', drawTonnetz);
+    intervalZInput.addEventListener('input', drawTonnetz);
 
     // Event listeners for saving
     saveImageButton.addEventListener('click', saveAsImage);
