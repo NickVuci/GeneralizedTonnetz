@@ -36,12 +36,11 @@ document.addEventListener('DOMContentLoaded', function () {
     labelColorInput.addEventListener('input', drawTonnetz);
     highlightZeroInput.addEventListener('input', drawTonnetz); // Trigger redraw when checkbox is toggled
 
-    // Event listeners for numeric controls so changes redraw immediately
-    triangleSizeInput.addEventListener('input', drawTonnetz);
-    // Use 'input' for immediate response; 'change' would also work but requires blur/enter
-    edoInput.addEventListener('input', drawTonnetz);
-    intervalXInput.addEventListener('input', drawTonnetz);
-    intervalZInput.addEventListener('input', drawTonnetz);
+    // Event listeners for numeric controls: redraw only on 'change' (blur or enter)
+    triangleSizeInput.addEventListener('change', drawTonnetz);
+    edoInput.addEventListener('change', drawTonnetz);
+    intervalXInput.addEventListener('change', drawTonnetz);
+    intervalZInput.addEventListener('change', drawTonnetz);
 
     // Event listeners for saving
     saveImageButton.addEventListener('click', saveAsImage);
@@ -57,8 +56,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Cap maximum render resolution for performance
+    const MAX_CANVAS_WIDTH = 2000;
+    const MAX_CANVAS_HEIGHT = 2000;
+    const PREVIEW_SCALE = 0.5; // Use 0.5 for preview if size exceeds cap
+
     function getCanvasDimensions() {
-        let width, height;
+        let width, height, scale = 1;
         const paperSizes = {
             'A4': { width: 2480, height: 3508 },
             'A3': { width: 3508, height: 4961 },
@@ -80,7 +84,13 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        return { width, height };
+        // If requested size exceeds cap, use preview scale
+        if (width > MAX_CANVAS_WIDTH || height > MAX_CANVAS_HEIGHT) {
+            scale = PREVIEW_SCALE;
+            width = Math.round(width * scale);
+            height = Math.round(height * scale);
+        }
+        return { width, height, scale };
     }
 
     function drawTonnetz() {
@@ -105,31 +115,53 @@ document.addEventListener('DOMContentLoaded', function () {
         const intervalX = parseInt(intervalXInput) || 7;
         const intervalZ = parseInt(intervalZInput) || 4;
 
-        // Get canvas dimensions
-        const { width: canvasWidth, height: canvasHeight } = getCanvasDimensions();
+        // Get canvas dimensions and scale
+        const { width: canvasWidth, height: canvasHeight, scale } = getCanvasDimensions();
 
-        // Update canvas dimensions
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
-
-        // Fill background color
-        ctx.fillStyle = backgroundColor;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Parameters for the grid
-        const h = size * (Math.sqrt(3) / 2);
-        const rows = Math.ceil(canvas.height / h) + 4;
-        const cols = Math.ceil(canvas.width / size) + 4;
-
-        // Draw the grid
-        for (let row = -2; row < rows; row++) {
-            for (let col = -2; col < cols; col++) {
-                drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero);
+        // If scaling, draw to offscreen canvas and copy to visible canvas
+        if (scale < 1) {
+            const offscreen = document.createElement('canvas');
+            offscreen.width = Math.round(canvasWidth / scale);
+            offscreen.height = Math.round(canvasHeight / scale);
+            const offCtx = offscreen.getContext('2d');
+            // Fill background
+            offCtx.fillStyle = backgroundColor;
+            offCtx.fillRect(0, 0, offscreen.width, offscreen.height);
+            // Parameters for the grid
+            const h = size * (Math.sqrt(3) / 2);
+            const rows = Math.ceil(offscreen.height / h) + 4;
+            const cols = Math.ceil(offscreen.width / size) + 4;
+            for (let row = -2; row < rows; row++) {
+                for (let col = -2; col < cols; col++) {
+                    drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, offCtx);
+                }
+            }
+            // Copy scaled preview to visible canvas
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(offscreen, 0, 0, offscreen.width, offscreen.height, 0, 0, canvas.width, canvas.height);
+        } else {
+            // Update canvas dimensions
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            // Fill background color
+            ctx.fillStyle = backgroundColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Parameters for the grid
+            const h = size * (Math.sqrt(3) / 2);
+            const rows = Math.ceil(canvas.height / h) + 4;
+            const cols = Math.ceil(canvas.width / size) + 4;
+            for (let row = -2; row < rows; row++) {
+                for (let col = -2; col < cols; col++) {
+                    drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, ctx);
+                }
             }
         }
     }
 
-    function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero) {
+    function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, ctxOverride) {
+        const ctxDraw = ctxOverride || ctx;
         const h = size * (Math.sqrt(3) / 2);
         const xOffset = (row % 2) * (size / 2);
         const x = col * size + xOffset;
@@ -143,23 +175,23 @@ document.addEventListener('DOMContentLoaded', function () {
         ];
 
         // Draw sides with specified colors
-        ctx.strokeStyle = colorX;
-        ctx.beginPath();
-        ctx.moveTo(points[0].x, points[0].y);
-        ctx.lineTo(points[1].x, points[1].y);
-        ctx.stroke();
+        ctxDraw.strokeStyle = colorX;
+        ctxDraw.beginPath();
+        ctxDraw.moveTo(points[0].x, points[0].y);
+        ctxDraw.lineTo(points[1].x, points[1].y);
+        ctxDraw.stroke();
 
-        ctx.strokeStyle = colorY;
-        ctx.beginPath();
-        ctx.moveTo(points[0].x, points[0].y);
-        ctx.lineTo(points[2].x, points[2].y);
-        ctx.stroke();
+        ctxDraw.strokeStyle = colorY;
+        ctxDraw.beginPath();
+        ctxDraw.moveTo(points[0].x, points[0].y);
+        ctxDraw.lineTo(points[2].x, points[2].y);
+        ctxDraw.stroke();
 
-        ctx.strokeStyle = colorZ;
-        ctx.beginPath();
-        ctx.moveTo(points[1].x, points[1].y);
-        ctx.lineTo(points[2].x, points[2].y);
-        ctx.stroke();
+        ctxDraw.strokeStyle = colorZ;
+        ctxDraw.beginPath();
+        ctxDraw.moveTo(points[1].x, points[1].y);
+        ctxDraw.lineTo(points[2].x, points[2].y);
+        ctxDraw.stroke();
 
         // Calculate axial coordinates (q, r) for hex grid
         let q = col - Math.floor(row / 2);
@@ -175,18 +207,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Highlight the "0" label
         if (label === 0 && highlightZero) {
-            ctx.fillStyle = 'rgba(255, 255, 0, 0.3)'; // Light yellow highlight
-            ctx.beginPath();
-            ctx.arc(labelX, labelY, size / 2.5, 0, Math.PI * 2); // Circle around "0"
-            ctx.fill();
+            ctxDraw.fillStyle = 'rgba(255, 255, 0, 0.3)'; // Light yellow highlight
+            ctxDraw.beginPath();
+            ctxDraw.arc(labelX, labelY, size / 2.5, 0, Math.PI * 2); // Circle around "0"
+            ctxDraw.fill();
         }
 
         // Draw the label
-        ctx.fillStyle = labelColor;
-        ctx.font = `${label === 0 && highlightZero ? size / 3 : size / 4}px Arial`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText(label.toString(), labelX, labelY);
+        ctxDraw.fillStyle = labelColor;
+        ctxDraw.font = `${label === 0 && highlightZero ? size / 3 : size / 4}px Arial`;
+        ctxDraw.textAlign = 'center';
+        ctxDraw.textBaseline = 'bottom';
+        ctxDraw.fillText(label.toString(), labelX, labelY);
     }
 
     function saveAsImage() {
