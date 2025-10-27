@@ -45,7 +45,7 @@ function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, in
     const labelY = points[0].y - (size / 5);
 
     if (label === 0 && highlightZero) {
-        ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
+        ctx.fillStyle = 'rgb(255 255 0 / 0.3)';
         ctx.beginPath();
         ctx.arc(labelX, labelY, size / 2.5, 0, Math.PI * 2);
         ctx.fill();

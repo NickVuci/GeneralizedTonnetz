@@ -53,6 +53,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const MAX_CANVAS_HEIGHT = 2000;
     const PREVIEW_SCALE = 0.5;
 
+    // Default colors (stored as rgb()) and applied to inputs as hex
+    const DEFAULT_COLORS = {
+        x: 'rgb(255 255 0)',
+        y: 'rgb(255 0 0)',
+        z: 'rgb(0 0 255)',
+        bg: 'rgb(255 255 255)',
+        label: 'rgb(0 0 0)'
+    };
+
     function handleCanvasSizeChange() {
         if (canvasSizeSelect.value === 'Custom') {
             customSizeGroup.style.display = 'block';
@@ -95,11 +104,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function drawTonnetz() {
-        const colorX = colorXInput.value;
-        const colorY = colorYInput.value;
-        const colorZ = colorZInput.value;
-        const backgroundColor = backgroundColorInput.value;
-        const labelColor = labelColorInput.value;
+        const colorX = hexToRgbString(colorXInput.value);
+        const colorY = hexToRgbString(colorYInput.value);
+        const colorZ = hexToRgbString(colorZInput.value);
+        const backgroundColor = hexToRgbString(backgroundColorInput.value);
+        const labelColor = hexToRgbString(labelColorInput.value);
         const highlightZero = highlightZeroInput.checked;
 
         const size = parseInt(document.getElementById('triangleSize').value) || 40;
@@ -205,11 +214,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Init
     handleCanvasSizeChange();
+    // Seed color inputs from rgb() defaults -> hex for input[type=color]
+    try {
+        colorXInput.value = rgbStringToHex(DEFAULT_COLORS.x);
+        colorYInput.value = rgbStringToHex(DEFAULT_COLORS.y);
+        colorZInput.value = rgbStringToHex(DEFAULT_COLORS.z);
+        backgroundColorInput.value = rgbStringToHex(DEFAULT_COLORS.bg);
+        labelColorInput.value = rgbStringToHex(DEFAULT_COLORS.label);
+    } catch {}
     // Ensure two default overlays exist (red then blue)
     try {
         if (!overlays || overlays.length === 0) {
-            addOverlay({ color: '#FF0000' });
-            addOverlay({ color: '#0000FF' });
+            addOverlay({ color: 'rgb(255 0 0)' });
+            addOverlay({ color: 'rgb(0 0 255)' });
         }
     } catch {}
     renderOverlayListPanel();

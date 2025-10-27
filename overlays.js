@@ -6,8 +6,8 @@ let activeOverlayId = null;
 const overlayListContainer = document.getElementById('overlayList');
 
 function addOverlay(preset) {
-    const palette = ['#00AA00', '#AA00AA', '#00AAAA', '#AA5500', '#0055AA', '#AA0055', '#557700'];
-    const color = preset?.color || palette[(overlayIdCounter - 1) % palette.length];
+    const palette = ['rgb(0 170 0)', 'rgb(170 0 170)', 'rgb(0 170 170)', 'rgb(170 85 0)', 'rgb(0 85 170)', 'rgb(170 0 85)', 'rgb(85 119 0)'];
+    const color = preset?.color ? normalizeColorToRgb(preset.color) : palette[(overlayIdCounter - 1) % palette.length];
 
     // Compute smart defaults for the first two overlays based on current X and Z
     let stepsDefault = [0, 4, 7];
@@ -73,7 +73,8 @@ function onOverlayPanelEvent(e) {
     } else if (target.classList.contains('ov-steps')) {
         ov.steps = parseChordSteps(target.value);
     } else if (target.classList.contains('ov-color')) {
-        ov.color = target.value;
+        // input[type=color] yields hex -> store as rgb() for consistency
+        ov.color = hexToRgbString(target.value);
     } else if (target.classList.contains('ov-opacity')) {
         ov.opacity = clamp(parseFloat(target.value), 0, 1, 0.35);
     } else if (target.classList.contains('ov-clear-anchors')) {
@@ -105,7 +106,7 @@ function renderOverlayListPanel() {
             <label>Steps:</label>
             <input type="text" class="ov-steps" value="${ov.steps.join(',')}" style="width:120px" title="Comma-separated steps">
             <label>Color:</label>
-            <input type="color" class="ov-color" value="${ov.color}">
+            <input type="color" class="ov-color" value="${rgbStringToHex(ov.color)}">
             <label>Opacity:</label>
             <input type="number" class="ov-opacity" min="0" max="1" step="0.05" value="${ov.opacity}" style="width:70px">
             <span style="font-size: 12px">Anchors: <strong class="ov-anchors-count">${ov.anchors.length}</strong></span>
