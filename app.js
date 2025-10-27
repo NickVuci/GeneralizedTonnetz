@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const overlayListContainer = document.getElementById('overlayList');
     const saveImageButton = document.getElementById('saveImageButton');
     const savePdfButton = document.getElementById('savePdfButton');
+    const toggleControlsBtn = document.getElementById('toggleControls');
+    const controlsContent = document.getElementById('controlsContent');
 
     // Wire events
     document.getElementById('drawButton').addEventListener('click', drawTonnetz);
@@ -44,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
     overlayListContainer?.addEventListener('change', (e) => { onOverlayPanelEvent(e); drawTonnetz(); }, true);
     overlayListContainer?.addEventListener('click', (e) => { onOverlayPanelEvent(e); drawTonnetz(); }, true);
     canvas.addEventListener('click', onCanvasClick);
+    toggleControlsBtn?.addEventListener('click', toggleControls);
 
     // Limits
     const MAX_CANVAS_WIDTH = 2000;
@@ -192,6 +195,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const imgData = canvas.toDataURL('image/png');
         pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
         pdf.save('tonnetz.pdf');
+    }
+
+    function toggleControls() {
+        const isCollapsed = controlsContent.classList.toggle('collapsed');
+        toggleControlsBtn.textContent = isCollapsed ? '+' : '−';
+        toggleControlsBtn.title = isCollapsed ? 'Expand controls' : 'Collapse controls';
     }
 
     // Init

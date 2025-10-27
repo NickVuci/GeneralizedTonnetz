@@ -6,71 +6,91 @@
 </head>
 <body>
 
-<h1 class="main-title">Generalized Tonnetz</h1>
-<h3 class="subtitle">By Nick Vuci</h3>
+<div id="controls" class="header-controls">
+    <div class="controls-header">
+        <div class="title-section">
+            <h1 class="main-title">Generalized Tonnetz</h1>
+            <h3 class="subtitle">By Nick Vuci</h3>
+        </div>
+        <button id="toggleControls" class="toggle-btn">−</button>
+    </div>
+    <div class="controls-content" id="controlsContent">
+        <fieldset>
+            <legend>Lattice Parameters</legend>
+            <div class="control-group">
+                <label for="edo">EDO:</label>
+                <input type="number" id="edo" value="12" min="1" max="72">
+                <label for="intervalX">Interval X:</label>
+                <input type="number" id="intervalX" value="7" min="-72" max="72">
+                <label for="intervalZ">Interval Z:</label>
+                <input type="number" id="intervalZ" value="4" min="-72" max="72">
+            </div>
+            <div class="control-group">
+                <label for="triangleSize">Triangle Size:</label>
+                <input type="number" id="triangleSize" value="75" min="10" max="200">
+            </div>
+        </fieldset>
 
-<div id="controls">
-    <div class="control-group">
-    <label for="colorX">X Axis:</label>
-    <input type="color" id="colorX" value="#FFFF00" class="axis-color"> <!-- Default color: Yellow -->
-    <label for="colorY">Y Axis:</label>
-    <input type="color" id="colorY" value="#FF0000" class="axis-color"> <!-- Default color: Red -->
-        <label for="colorZ">Z Axis:</label>
-        <input type="color" id="colorZ" value="#0000FF" class="axis-color"> <!-- Default color: Blue -->
-    </div>
-    <div class="control-group">
-        <label for="backgroundColor">Background Color:</label>
-        <input type="color" id="backgroundColor" value="#FFFFFF"> <!-- Default color: White -->
-        <label for="labelColor">Label Color:</label>
-        <input type="color" id="labelColor" value="#000000"> <!-- Default color: Black -->
-    </div>
-    <div class="control-group">
-        <label for="triangleSize">Triangle Size:</label>
-        <input type="number" id="triangleSize" value="100" min="10" max="200">
-    </div>
-    <div class="control-group">
-        <label for="canvasSize">Canvas Size:</label>
-        <select id="canvasSize">
-            <option value="A4">A4</option>
-            <option value="A3">A3</option>
-            <option value="Letter">Letter</option>
-            <option value="Legal">Legal</option>
-            <option value="Custom">Custom</option>
-        </select>
-        <label for="orientation">Orientation:</label>
-        <select id="orientation">
-            <option value="portrait">Vertical</option>
-            <option value="landscape">Horizontal</option>
-        </select>
-    </div>
-    <div class="control-group" id="customSizeGroup" style="display: none;">
-        <label for="canvasWidth">Width (px):</label>
-        <input type="number" id="canvasWidth" value="600" min="100" max="2000">
-        <label for="canvasHeight">Height (px):</label>
-        <input type="number" id="canvasHeight" value="600" min="100" max="2000">
-    </div>
-    <div class="control-group">
-        <label for="edo">EDO (Equal Divisions of the Octave):</label>
-        <input type="number" id="edo" value="12" min="1" max="72">
-        <label for="intervalX">Interval X:</label>
-        <input type="number" id="intervalX" value="7" min="-72" max="72">
-        <label for="intervalZ">Interval Z:</label>
-        <input type="number" id="intervalZ" value="4" min="-72" max="72">
-    </div>
-    <div class="control-group">
-        <input type="checkbox" id="highlightZero" checked>
-        <label for="highlightZero">Highlight "0" Label</label> <!-- Checkbox to highlight "0" label -->
-    </div>
-    <!-- Chord Overlays -->
-    <div class="control-group">
-        <label>Chord Overlays:</label>
-        <button id="addOverlayBtn" title="Add a new overlay with its own steps, color, and anchors">Add Overlay</button>
-    </div>
-    <div class="control-group" id="overlayList"></div>
-    <div class="control-group">
-        <button id="drawButton">Draw Tonnetz</button>
-        <button id="saveImageButton">Save as Image</button>
-        <button id="savePdfButton">Save as PDF</button>
+        <fieldset>
+            <legend>Appearance</legend>
+            <div class="control-group">
+                <label for="colorX">X Axis:</label>
+                <input type="color" id="colorX" value="#FFFF00" class="axis-color">
+                <label for="colorY">Y Axis:</label>
+                <input type="color" id="colorY" value="#FF0000" class="axis-color">
+                <label for="colorZ">Z Axis:</label>
+                <input type="color" id="colorZ" value="#0000FF" class="axis-color">
+            </div>
+            <div class="control-group">
+                <label for="backgroundColor">Background:</label>
+                <input type="color" id="backgroundColor" value="#FFFFFF">
+                <label for="labelColor">Labels:</label>
+                <input type="color" id="labelColor" value="#000000">
+                <input type="checkbox" id="highlightZero" checked>
+                <label for="highlightZero">Highlight "0"</label>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Canvas & Export</legend>
+            <div class="control-group">
+                <label for="canvasSize">Canvas Size:</label>
+                <select id="canvasSize">
+                    <option value="A4">A4</option>
+                    <option value="A3">A3</option>
+                    <option value="Letter">Letter</option>
+                    <option value="Legal">Legal</option>
+                    <option value="Custom" selected>Custom</option>
+                </select>
+                <label for="orientation">Orientation:</label>
+                <select id="orientation">
+                    <option value="portrait">Vertical</option>
+                    <option value="landscape">Horizontal</option>
+                </select>
+            </div>
+            <div class="control-group" id="customSizeGroup" style="display: block;">
+                <label for="canvasWidth">Width (px):</label>
+                <input type="number" id="canvasWidth" value="1000" min="100" max="2000">
+                <label for="canvasHeight">Height (px):</label>
+                <input type="number" id="canvasHeight" value="1000" min="100" max="2000">
+            </div>
+            <div class="control-group">
+                <button id="saveImageButton">Save as Image</button>
+                <button id="savePdfButton">Save as PDF</button>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Chord Overlays</legend>
+            <div class="control-group">
+                <button id="addOverlayBtn" title="Add a new overlay with its own steps, color, and anchors">Add Overlay</button>
+            </div>
+            <div class="control-group" id="overlayList"></div>
+        </fieldset>
+
+        <div class="main-actions">
+            <button id="drawButton">Draw Tonnetz</button>
+        </div>
     </div>
 </div>
 
