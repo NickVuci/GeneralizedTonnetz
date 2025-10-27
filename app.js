@@ -91,8 +91,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const intervalXInput = document.getElementById('intervalX').value;
         const intervalZInput = document.getElementById('intervalZ').value;
-        const intervalX = parseInt(intervalXInput) || 4;
-        const intervalZ = parseInt(intervalZInput) || 7;
+        const intervalX = parseInt(intervalXInput) || 7;
+        const intervalZ = parseInt(intervalZInput) || 4;
 
         // Get canvas dimensions
         const { width: canvasWidth, height: canvasHeight } = getCanvasDimensions();
