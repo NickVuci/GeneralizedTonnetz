@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const colorZInput = document.getElementById('colorZ');
     const backgroundColorInput = document.getElementById('backgroundColor');
     const labelColorInput = document.getElementById('labelColor');
+    const highlightZeroColorInput = document.getElementById('highlightZeroColor');
     const highlightZeroInput = document.getElementById('highlightZero');
     const triangleSizeInput = document.getElementById('triangleSize');
     const edoInput = document.getElementById('edo');
@@ -34,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
     colorZInput.addEventListener('input', drawTonnetz);
     backgroundColorInput.addEventListener('input', drawTonnetz);
     labelColorInput.addEventListener('input', drawTonnetz);
+    highlightZeroColorInput.addEventListener('input', drawTonnetz);
     highlightZeroInput.addEventListener('input', drawTonnetz);
     triangleSizeInput.addEventListener('change', drawTonnetz);
     edoInput.addEventListener('change', drawTonnetz);
@@ -59,7 +61,8 @@ document.addEventListener('DOMContentLoaded', function () {
         y: 'rgb(255 0 0)',
         z: 'rgb(0 0 255)',
         bg: 'rgb(255 255 255)',
-        label: 'rgb(0 0 0)'
+        label: 'rgb(0 0 0)',
+        highlightZero: 'rgb(255 255 0)'
     };
 
     function handleCanvasSizeChange() {
@@ -108,7 +111,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const colorY = hexToRgbString(colorYInput.value);
         const colorZ = hexToRgbString(colorZInput.value);
         const backgroundColor = hexToRgbString(backgroundColorInput.value);
-        const labelColor = hexToRgbString(labelColorInput.value);
+    const labelColor = hexToRgbString(labelColorInput.value);
+    const highlightZeroColor = hexToRgbString(highlightZeroColorInput.value, 0.3);
         const highlightZero = highlightZeroInput.checked;
 
         const size = parseInt(document.getElementById('triangleSize').value) || 40;
@@ -130,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const cols = Math.ceil(offscreen.width / size) + 4;
             for (let row = -2; row < rows; row++) {
                 for (let col = -2; col < cols; col++) {
-                    drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, offCtx);
+                    drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, offCtx);
                 }
             }
             if (overlays.length) {
@@ -153,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const cols = Math.ceil(canvas.width / size) + 4;
             for (let row = -2; row < rows; row++) {
                 for (let col = -2; col < cols; col++) {
-                    drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, ctx);
+                    drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, ctx);
                 }
             }
             if (overlays.length) {
@@ -221,6 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
         colorZInput.value = rgbStringToHex(DEFAULT_COLORS.z);
         backgroundColorInput.value = rgbStringToHex(DEFAULT_COLORS.bg);
         labelColorInput.value = rgbStringToHex(DEFAULT_COLORS.label);
+        highlightZeroColorInput.value = rgbStringToHex(DEFAULT_COLORS.highlightZero);
     } catch {}
     // Ensure two default overlays exist (red then blue)
     try {

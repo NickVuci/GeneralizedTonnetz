@@ -1,5 +1,5 @@
 // Drawing functions for grid and overlays
-function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, ctx) {
+function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, ctx) {
     const h = size * (Math.sqrt(3) / 2);
     const xOffset = (row % 2) * (size / 2);
     const x = col * size + xOffset;
@@ -45,7 +45,7 @@ function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, in
     const labelY = points[0].y - (size / 5);
 
     if (label === 0 && highlightZero) {
-        ctx.fillStyle = 'rgb(255 255 0 / 0.3)';
+        ctx.fillStyle = highlightZeroColor || 'rgb(255 255 0 / 0.3)';
         ctx.beginPath();
         ctx.arc(labelX, labelY, size / 2.5, 0, Math.PI * 2);
         ctx.fill();

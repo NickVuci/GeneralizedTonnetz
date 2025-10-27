@@ -260,6 +260,22 @@ fieldset .control-group label {
   color: var(--text);
 }
 
+/* Align checkbox next to color input tightly */
+fieldset .control-group input[type="color"],
+fieldset .control-group input[type="checkbox"] {
+  vertical-align: middle;
+}
+fieldset .control-group input[type="color"] + input[type="checkbox"] {
+  margin-left: var(--gap-xs);
+}
+
+/* Inline pair: color + checkbox in same grid cell */
+.inline-inputs {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-xs);
+}
+
 /* =========================
    Form Controls
    ========================= */
