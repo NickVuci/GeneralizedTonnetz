@@ -8,10 +8,30 @@ const overlayListContainer = document.getElementById('overlayList');
 function addOverlay(preset) {
     const palette = ['#00AA00', '#AA00AA', '#00AAAA', '#AA5500', '#0055AA', '#AA0055', '#557700'];
     const color = preset?.color || palette[(overlayIdCounter - 1) % palette.length];
+
+    // Compute smart defaults for the first two overlays based on current X and Z
+    let stepsDefault = [0, 4, 7];
+    try {
+        const edo = parseInt(document.getElementById('edo')?.value) || 12;
+        const ix = parseInt(document.getElementById('intervalX')?.value) || 7; // X
+        const iz = parseInt(document.getElementById('intervalZ')?.value) || 4; // Z
+        const mod = (n, m) => ((n % m) + m) % m;
+        // Upward triangle uses X - Z for its non-shared edge with X
+        const ixMinusZ = mod(ix - iz, edo);
+
+        if (overlays.length === 0) {
+            // First overlay (downward triangle): 0, Z, X
+            stepsDefault = [0, iz, ix];
+        } else if (overlays.length === 1) {
+            // Second overlay (upward triangle, inversion of the first): 0, (X - Z), X
+            stepsDefault = [0, ixMinusZ, ix];
+        }
+    } catch {}
+
     const ov = {
         id: overlayIdCounter++,
         visible: true,
-        steps: preset?.steps || [0, 4, 7],
+        steps: preset?.steps || stepsDefault,
         color,
         opacity: Number.isFinite(preset?.opacity) ? preset.opacity : 0.35,
         anchors: preset?.anchors || []
