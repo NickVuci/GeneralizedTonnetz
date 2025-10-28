@@ -31,6 +31,8 @@ function addOverlay(preset) {
         }
     } catch {}
 
+    const isFirst = overlays.length === 0;
+    const isSecond = overlays.length === 1;
     const ov = {
         id: overlayIdCounter++,
         visible: true,
@@ -40,6 +42,8 @@ function addOverlay(preset) {
         anchors: preset?.anchors || [],
         repeatAll: !!preset?.repeatAll
     };
+    // Auto-sync the two default overlays' steps with X/Z unless user edits them
+    ov.autoSync = (preset?.steps == null) && (isFirst || isSecond);
     overlays.push(ov);
     activeOverlayId = ov.id;
     // Auto-assign default up/down mapping for the first two overlays
@@ -81,6 +85,7 @@ function onOverlayPanelEvent(e) {
         activeOverlayId = id;
     } else if (target.classList.contains('ov-steps')) {
         ov.steps = parseChordSteps(target.value);
+        ov.autoSync = false; // user has overridden defaults
     } else if (target.classList.contains('ov-repeat')) {
         ov.repeatAll = !!target.checked;
     } else if (target.classList.contains('ov-color')) {
@@ -101,6 +106,26 @@ function onOverlayPanelEvent(e) {
     } else if (target.classList.contains('ov-map-down')) {
         downOverlayId = id;
         renderOverlayListPanel();
+    }
+}
+
+// Keep default overlays in sync with current X/Z when autoSync is enabled
+function synchronizeDefaultOverlaySteps(ix, iz, edo) {
+    const mod = (n, m) => ((n % m) + m) % m;
+    const ixMinusZ = mod(ix - iz, edo);
+    // Determine canonical default steps given X/Z
+    const downSteps = [0, iz, ix];
+    const upSteps = [0, ixMinusZ, ix];
+    // Track first two autoSync overlays in creation order
+    let autoIdx = 0;
+    for (const ov of overlays) {
+        if (!ov.autoSync) continue;
+        autoIdx++;
+        if (autoIdx === 1) {
+            ov.steps = downSteps.slice();
+        } else if (autoIdx === 2) {
+            ov.steps = upSteps.slice();
+        }
     }
 }
 

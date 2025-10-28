@@ -38,9 +38,9 @@ document.addEventListener('DOMContentLoaded', function () {
     highlightZeroColorInput.addEventListener('input', drawTonnetz);
     highlightZeroInput.addEventListener('input', drawTonnetz);
     triangleSizeInput.addEventListener('change', drawTonnetz);
-    edoInput.addEventListener('change', drawTonnetz);
-    intervalXInput.addEventListener('change', drawTonnetz);
-    intervalZInput.addEventListener('change', drawTonnetz);
+    edoInput.addEventListener('change', onIntervalParamsChange);
+    intervalXInput.addEventListener('change', onIntervalParamsChange);
+    intervalZInput.addEventListener('change', onIntervalParamsChange);
     saveImageButton.addEventListener('click', saveAsImage);
     savePdfButton.addEventListener('click', saveAsPdf);
     addOverlayBtn?.addEventListener('click', () => { addOverlay(); renderOverlayListPanel(); drawTonnetz(); });
@@ -131,6 +131,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const intervalX = parseInt(document.getElementById('intervalX').value) || 7;
         const intervalZ = parseInt(document.getElementById('intervalZ').value) || 4;
 
+        // Keep the two default overlays synced to current X/Z if they are autoSync
+        try { synchronizeDefaultOverlaySteps(intervalX, intervalZ, edo); } catch {}
+
         const { width: canvasWidth, height: canvasHeight, scale } = getCanvasDimensions();
 
         if (scale < 1) {
@@ -180,6 +183,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         }
+    }
+
+    // When X/Z/EDO change, update default overlay steps and refresh the panel inputs
+    function onIntervalParamsChange() {
+        const edo = parseInt(edoInput.value) || 12;
+        const ix = parseInt(intervalXInput.value) || 7;
+        const iz = parseInt(intervalZInput.value) || 4;
+        try { synchronizeDefaultOverlaySteps(ix, iz, edo); } catch {}
+        renderOverlayListPanel();
+        drawTonnetz();
     }
 
     // Helper: determine if a clicked lattice point is equivalent to an existing
