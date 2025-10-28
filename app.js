@@ -171,6 +171,23 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Helper: determine if a clicked lattice point is equivalent to an existing
+    // anchor under translations by the lattice period vectors p1, p2.
+    function findEquivalentAnchorIndex(anchors, q, r, p1, p2) {
+        const D = p1.u * p2.v - p1.v * p2.u;
+        if (!D) return -1;
+        const isInt = (x) => Math.abs(x - Math.round(x)) < 1e-6;
+        for (let i = 0; i < anchors.length; i++) {
+            const a = anchors[i];
+            const dq = q - a.q;
+            const dr = r - a.r;
+            const n1 = (p2.v * dq - p2.u * dr) / D;
+            const n2 = (-p1.v * dq + p1.u * dr) / D;
+            if (isInt(n1) && isInt(n2)) return i;
+        }
+        return -1;
+    }
+
     // Combine user-selected anchors with optional periodic tiling across the lattice
     function buildAnchorsForOverlay(ov, width, height, size, edo, ix, iz) {
         const anchors = Array.isArray(ov.anchors) ? ov.anchors.slice() : [];
@@ -249,7 +266,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!anchorQR) anchorQR = approx; // non-triangular overlays anchor to the clicked apex
         const { q, r } = anchorQR;
         if (ov) {
-            const i = ov.anchors.findIndex(a => a.q === q && a.r === r);
+            let i = ov.anchors.findIndex(a => a.q === q && a.r === r);
+            if (i < 0 && ov.repeatAll) {
+                const { p1, p2 } = findPeriodVectors(intervalX, intervalZ, edo);
+                i = findEquivalentAnchorIndex(ov.anchors, q, r, p1, p2);
+            }
             if (i >= 0) ov.anchors.splice(i, 1); else ov.anchors.push({ q, r });
             updateOverlayAnchorsCount(ov.id, ov.anchors.length);
         }
