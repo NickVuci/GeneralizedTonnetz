@@ -50,6 +50,17 @@ document.addEventListener('DOMContentLoaded', function () {
     canvas.addEventListener('click', onCanvasClick);
     toggleControlsBtn?.addEventListener('click', toggleControls);
 
+    // Start with controls collapsed by default
+    try {
+        if (controlsContent && !controlsContent.classList.contains('collapsed')) {
+            controlsContent.classList.add('collapsed');
+        }
+        if (toggleControlsBtn) {
+            toggleControlsBtn.textContent = '+';
+            toggleControlsBtn.title = 'Expand controls';
+        }
+    } catch {}
+
     // Limits
     const MAX_CANVAS_WIDTH = 2000;
     const MAX_CANVAS_HEIGHT = 2000;
