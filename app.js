@@ -188,6 +188,10 @@ document.addEventListener('DOMContentLoaded', function () {
             try {
                 anchorQR = anchorFromClick(px, py, size, edo, intervalX, intervalZ, ov.steps);
             } catch {}
+            // If we are using a triangular overlay and the click does not fall inside
+            // any of its three-triangle cells, do not resolve to the nearest apex.
+            // This prevents adjacent triangles from toggling the same overlay anchor.
+            if (!anchorQR) return; // ignore the click as it doesn't target this overlay
         }
         if (!anchorQR) anchorQR = pixelToQR(px, py, size);
         const { q, r } = anchorQR;
