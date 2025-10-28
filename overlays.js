@@ -37,7 +37,8 @@ function addOverlay(preset) {
         steps: preset?.steps || stepsDefault,
         color,
         opacity: Number.isFinite(preset?.opacity) ? preset.opacity : 0.35,
-        anchors: preset?.anchors || []
+        anchors: preset?.anchors || [],
+        repeatAll: !!preset?.repeatAll
     };
     overlays.push(ov);
     activeOverlayId = ov.id;
@@ -80,6 +81,8 @@ function onOverlayPanelEvent(e) {
         activeOverlayId = id;
     } else if (target.classList.contains('ov-steps')) {
         ov.steps = parseChordSteps(target.value);
+    } else if (target.classList.contains('ov-repeat')) {
+        ov.repeatAll = !!target.checked;
     } else if (target.classList.contains('ov-color')) {
         // input[type=color] yields hex -> store as rgb() for consistency
         ov.color = hexToRgbString(target.value);
@@ -124,6 +127,8 @@ function renderOverlayListPanel() {
             <input type="radio" name="mapUp" class="ov-map-up" ${isUp ? 'checked' : ''} title="Use this chord for Up triangles">
             <label title="Map to Down-triangle clicks">↓</label>
             <input type="radio" name="mapDown" class="ov-map-down" ${isDown ? 'checked' : ''} title="Use this chord for Down triangles">
+            <label title="Auto-place at all matching triangles" style="margin-left:4px">Repeat</label>
+            <input type="checkbox" class="ov-repeat" ${ov.repeatAll ? 'checked' : ''} title="Automatically place at all matching triangles">
             <label>Steps:</label>
             <input type="text" class="ov-steps" value="${ov.steps.join(',')}" style="width:120px" title="Comma-separated steps">
             <label>Color:</label>

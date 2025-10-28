@@ -140,7 +140,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (overlays.length) {
                 for (const ov of overlays) {
                     if (!ov.visible) continue;
-                    drawChordOverlay(offCtx, offscreen.width, offscreen.height, size, edo, intervalX, intervalZ, ov.steps, ov.color, ov.opacity, ov.anchors);
+                    const anchors = buildAnchorsForOverlay(ov, offscreen.width, offscreen.height, size, edo, intervalX, intervalZ);
+                    drawChordOverlay(offCtx, offscreen.width, offscreen.height, size, edo, intervalX, intervalZ, ov.steps, ov.color, ov.opacity, anchors);
                 }
             }
             canvas.width = canvasWidth;
@@ -163,10 +164,50 @@ document.addEventListener('DOMContentLoaded', function () {
             if (overlays.length) {
                 for (const ov of overlays) {
                     if (!ov.visible) continue;
-                    drawChordOverlay(ctx, canvas.width, canvas.height, size, edo, intervalX, intervalZ, ov.steps, ov.color, ov.opacity, ov.anchors);
+                    const anchors = buildAnchorsForOverlay(ov, canvas.width, canvas.height, size, edo, intervalX, intervalZ);
+                    drawChordOverlay(ctx, canvas.width, canvas.height, size, edo, intervalX, intervalZ, ov.steps, ov.color, ov.opacity, anchors);
                 }
             }
         }
+    }
+
+    // Combine user-selected anchors with optional periodic tiling across the lattice
+    function buildAnchorsForOverlay(ov, width, height, size, edo, ix, iz) {
+        const anchors = Array.isArray(ov.anchors) ? ov.anchors.slice() : [];
+        if (!ov.repeatAll || anchors.length === 0) return anchors;
+
+        // Period vectors tile the lattice for the given EDO/intervals
+        const { p1, p2 } = findPeriodVectors(ix, iz, edo);
+        const MARGIN = size * 2; // a bit of extra space offscreen
+        const diag = Math.hypot(width, height);
+
+        // Use the first anchor to estimate pixel spacing for p1/p2
+        const base = anchors[0];
+        const basePx = qrToPixel(base.q, base.r, size);
+        const p1Px = qrToPixel(base.q + p1.u, base.r + p1.v, size);
+        const p2Px = qrToPixel(base.q + p2.u, base.r + p2.v, size);
+        const l1 = Math.max(1, Math.hypot(p1Px.x - basePx.x, p1Px.y - basePx.y));
+        const l2 = Math.max(1, Math.hypot(p2Px.x - basePx.x, p2Px.y - basePx.y));
+        const r1 = Math.min(40, Math.ceil(diag / l1) + 2);
+        const r2 = Math.min(40, Math.ceil(diag / l2) + 2);
+
+        const seen = new Set(anchors.map(a => `${a.q},${a.r}`));
+        const originals = anchors.slice(); // only tile placed anchors
+        for (const a of originals) {
+            for (let n1 = -r1; n1 <= r1; n1++) {
+                for (let n2 = -r2; n2 <= r2; n2++) {
+                    const q = a.q + n1 * p1.u + n2 * p2.u;
+                    const r = a.r + n1 * p1.v + n2 * p2.v;
+                    const key = `${q},${r}`;
+                    if (seen.has(key)) continue;
+                    const pt = qrToPixel(q, r, size);
+                    if (pt.x < -MARGIN || pt.x > width + MARGIN || pt.y < -MARGIN || pt.y > height + MARGIN) continue;
+                    seen.add(key);
+                    anchors.push({ q, r });
+                }
+            }
+        }
+        return anchors;
     }
 
     function onCanvasClick(evt) {

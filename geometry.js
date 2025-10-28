@@ -177,6 +177,13 @@ function findNearestOffsets(step, ix, iz, edo, aq, ar, size, anchorPx, need = 4)
     return candidates.slice(0, need);
 }
 
+// Compute the label at lattice apex (q,r)
+function labelAt(q, r, ix, iz, edo) {
+    let label = (ix * q + iz * r) % edo;
+    if (label < 0) label += edo;
+    return label;
+}
+
 // Approximate lattice node by simple rounding (used for candidate generation)
 function approximateQR(px, py, size) {
     const h = size * (Math.sqrt(3) / 2);
