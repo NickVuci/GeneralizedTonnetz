@@ -174,12 +174,23 @@ document.addEventListener('DOMContentLoaded', function () {
         let px = (evt.clientX - rect.left) * (canvas.width / rect.width);
         let py = (evt.clientY - rect.top) * (canvas.height / rect.height);
         const size = parseInt(document.getElementById('triangleSize').value) || 40;
+        const edo = parseInt(document.getElementById('edo').value) || 12;
+        const intervalX = parseInt(document.getElementById('intervalX').value) || 7;
+        const intervalZ = parseInt(document.getElementById('intervalZ').value) || 4;
         const { scale } = getCanvasDimensions();
         if (scale < 1) { px = px / scale; py = py / scale; }
-        const { q, r } = pixelToQR(px, py, size);
+        // Prefer overlay-aware anchor resolution when possible (triangular overlays)
+        let anchorQR = null;
         if (!overlays.length) { addOverlay(); renderOverlayListPanel(); }
         if (activeOverlayId == null) activeOverlayId = overlays[0].id;
         const ov = overlays.find(o => o.id === activeOverlayId);
+        if (ov && ov.steps && ov.steps.length >= 3) {
+            try {
+                anchorQR = anchorFromClick(px, py, size, edo, intervalX, intervalZ, ov.steps);
+            } catch {}
+        }
+        if (!anchorQR) anchorQR = pixelToQR(px, py, size);
+        const { q, r } = anchorQR;
         if (ov) {
             const i = ov.anchors.findIndex(a => a.q === q && a.r === r);
             if (i >= 0) ov.anchors.splice(i, 1); else ov.anchors.push({ q, r });
