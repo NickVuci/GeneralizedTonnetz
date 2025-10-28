@@ -179,21 +179,33 @@ document.addEventListener('DOMContentLoaded', function () {
         const intervalZ = parseInt(document.getElementById('intervalZ').value) || 4;
         const { scale } = getCanvasDimensions();
         if (scale < 1) { px = px / scale; py = py / scale; }
-        // Prefer overlay-aware anchor resolution when possible (triangular overlays)
-        let anchorQR = null;
-        if (!overlays.length) { addOverlay(); renderOverlayListPanel(); }
+        // Choose overlay automatically based on triangle orientation (up/down)
+        // Determine the triangle under the click and its apex position
+        const approx = pixelToQR(px, py, size);
+        const apexPx = qrToPixel(approx.q, approx.r, size);
+        const orientation = py >= apexPx.y ? 'up' : 'down';
+
+        // Ensure at least one overlay exists (defaults added on load too)
+        if (!overlays.length) { addOverlay(); addOverlay(); renderOverlayListPanel(); }
         if (activeOverlayId == null) activeOverlayId = overlays[0].id;
-        const ov = overlays.find(o => o.id === activeOverlayId);
+
+        // Resolve overlay: mapped up/down if set, else fall back to active overlay
+        let targetOverlayId = orientation === 'up' ? (typeof upOverlayId === 'number' ? upOverlayId : null)
+                                                  : (typeof downOverlayId === 'number' ? downOverlayId : null);
+        if (targetOverlayId == null) targetOverlayId = activeOverlayId;
+        let ov = overlays.find(o => o.id === targetOverlayId) || overlays.find(o => o.id === activeOverlayId) || overlays[0];
+
+        // Prefer overlay-aware anchor resolution when the overlay forms a triangle
+        let anchorQR = null;
         if (ov && ov.steps && ov.steps.length >= 3) {
             try {
                 anchorQR = anchorFromClick(px, py, size, edo, intervalX, intervalZ, ov.steps);
             } catch {}
             // If we are using a triangular overlay and the click does not fall inside
-            // any of its three-triangle cells, do not resolve to the nearest apex.
-            // This prevents adjacent triangles from toggling the same overlay anchor.
-            if (!anchorQR) return; // ignore the click as it doesn't target this overlay
+            // any of its triangle cells, ignore the click.
+            if (!anchorQR) return;
         }
-        if (!anchorQR) anchorQR = pixelToQR(px, py, size);
+        if (!anchorQR) anchorQR = approx; // non-triangular overlays anchor to the clicked apex
         const { q, r } = anchorQR;
         if (ov) {
             const i = ov.anchors.findIndex(a => a.q === q && a.r === r);

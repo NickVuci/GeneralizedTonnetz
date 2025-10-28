@@ -2,6 +2,9 @@
 let overlays = [];
 let overlayIdCounter = 1;
 let activeOverlayId = null;
+// Mappings for automatic click behavior on up/down triangles
+let upOverlayId = null;
+let downOverlayId = null;
 
 const overlayListContainer = document.getElementById('overlayList');
 
@@ -38,12 +41,17 @@ function addOverlay(preset) {
     };
     overlays.push(ov);
     activeOverlayId = ov.id;
+    // Auto-assign default up/down mapping for the first two overlays
+    if (overlays.length === 1 && downOverlayId == null) downOverlayId = ov.id; // first overlay is downward by default
+    else if (overlays.length === 2 && upOverlayId == null) upOverlayId = ov.id; // second overlay is upward by default
 }
 
 function removeOverlay(id) {
     const idx = overlays.findIndex(o => o.id === id);
     if (idx >= 0) overlays.splice(idx, 1);
     if (activeOverlayId === id) activeOverlayId = overlays[0]?.id ?? null;
+    if (upOverlayId === id) upOverlayId = null;
+    if (downOverlayId === id) downOverlayId = null;
 }
 
 function clearOverlayAnchors(id) {
@@ -84,6 +92,12 @@ function onOverlayPanelEvent(e) {
         e.preventDefault();
         removeOverlay(id);
         renderOverlayListPanel();
+    } else if (target.classList.contains('ov-map-up')) {
+        upOverlayId = id;
+        renderOverlayListPanel();
+    } else if (target.classList.contains('ov-map-down')) {
+        downOverlayId = id;
+        renderOverlayListPanel();
     }
 }
 
@@ -100,10 +114,16 @@ function renderOverlayListPanel() {
         card.style.alignItems = 'center';
         card.style.gap = '6px';
 
+        const isUp = upOverlayId === ov.id;
+        const isDown = downOverlayId === ov.id;
         card.innerHTML = `
             <input type="checkbox" class="ov-visible" ${ov.visible ? 'checked' : ''} title="Toggle visibility">
             <input type="radio" name="activeOverlay" class="ov-active" ${activeOverlayId === ov.id ? 'checked' : ''} title="Make active for clicks">
             <span>Overlay ${displayNum}</span>
+            <label title="Map to Up-triangle clicks" style="margin-left:4px">↑</label>
+            <input type="radio" name="mapUp" class="ov-map-up" ${isUp ? 'checked' : ''} title="Use this chord for Up triangles">
+            <label title="Map to Down-triangle clicks">↓</label>
+            <input type="radio" name="mapDown" class="ov-map-down" ${isDown ? 'checked' : ''} title="Use this chord for Down triangles">
             <label>Steps:</label>
             <input type="text" class="ov-steps" value="${ov.steps.join(',')}" style="width:120px" title="Comma-separated steps">
             <label>Color:</label>
