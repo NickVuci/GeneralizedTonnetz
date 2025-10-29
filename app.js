@@ -141,17 +141,21 @@ document.addEventListener('DOMContentLoaded', function () {
         const intervalX = parseInt(document.getElementById('intervalX').value) || 7;
         const intervalZ = parseInt(document.getElementById('intervalZ').value) || 4;
 
-        // Scale highlighting
+        // Scale highlighting (treat blank as no degrees; do NOT default to [0])
         let scaleSet = null;
         try {
-            const raw = (scaleDegreesInput?.value || '').trim();
-            const arr = parseChordSteps(raw);
-            const set = new Set();
-            for (const n of arr) {
-                let v = n % edo; if (v < 0) v += edo;
-                set.add(v);
+            const raw = (scaleDegreesInput?.value ?? '').trim();
+            const tokens = raw.length ? raw.split(/[\,\s]+/).filter(Boolean) : [];
+            if (tokens.length) {
+                const set = new Set();
+                for (const tok of tokens) {
+                    const n = parseInt(tok, 10);
+                    if (!Number.isFinite(n)) continue;
+                    let v = n % edo; if (v < 0) v += edo;
+                    set.add(v);
+                }
+                if (set.size > 0) scaleSet = set;
             }
-            if (set.size > 0) scaleSet = set;
         } catch {}
     const scaleSizeFactor = clamp(parseFloat(scaleSizeInput?.value), 0.1, 10, 1.5);
     const drawScaleDots = !!(scaleDotsInput?.checked);
