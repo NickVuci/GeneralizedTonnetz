@@ -290,6 +290,17 @@ select {
   background: var(--input-bg);
   color: var(--text);
 }
+textarea {
+  width: 100%;
+  max-width: var(--input-max);
+  min-height: 60px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--text);
+  resize: vertical;
+}
 input[type="color"] {
   width: var(--axis-swatch);
   height: var(--input-h);

@@ -20,6 +20,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const edoInput = document.getElementById('edo');
     const intervalXInput = document.getElementById('intervalX');
     const intervalZInput = document.getElementById('intervalZ');
+    const scaleDegreesInput = document.getElementById('scaleDegrees');
+    const scaleSizeInput = document.getElementById('scaleSize');
+    const scaleDotsInput = document.getElementById('scaleDots');
+    const scaleDotColorInput = document.getElementById('scaleDotColor');
+    const scaleDotSizeInput = document.getElementById('scaleDotSize');
     const addOverlayBtn = document.getElementById('addOverlayBtn');
     const overlayListContainer = document.getElementById('overlayList');
     const saveImageButton = document.getElementById('saveImageButton');
@@ -43,6 +48,11 @@ document.addEventListener('DOMContentLoaded', function () {
     intervalZInput.addEventListener('change', onIntervalParamsChange);
     saveImageButton.addEventListener('click', saveAsImage);
     savePdfButton.addEventListener('click', saveAsPdf);
+    scaleDegreesInput?.addEventListener('input', drawTonnetz);
+    scaleSizeInput?.addEventListener('input', drawTonnetz);
+    scaleDotsInput?.addEventListener('change', drawTonnetz);
+    scaleDotColorInput?.addEventListener('input', drawTonnetz);
+    scaleDotSizeInput?.addEventListener('input', drawTonnetz);
     addOverlayBtn?.addEventListener('click', () => { addOverlay(); renderOverlayListPanel(); drawTonnetz(); });
     overlayListContainer?.addEventListener('input', (e) => { onOverlayPanelEvent(e); drawTonnetz(); }, true);
     overlayListContainer?.addEventListener('change', (e) => { onOverlayPanelEvent(e); drawTonnetz(); }, true);
@@ -131,6 +141,23 @@ document.addEventListener('DOMContentLoaded', function () {
         const intervalX = parseInt(document.getElementById('intervalX').value) || 7;
         const intervalZ = parseInt(document.getElementById('intervalZ').value) || 4;
 
+        // Scale highlighting
+        let scaleSet = null;
+        try {
+            const raw = (scaleDegreesInput?.value || '').trim();
+            const arr = parseChordSteps(raw);
+            const set = new Set();
+            for (const n of arr) {
+                let v = n % edo; if (v < 0) v += edo;
+                set.add(v);
+            }
+            if (set.size > 0) scaleSet = set;
+        } catch {}
+    const scaleSizeFactor = clamp(parseFloat(scaleSizeInput?.value), 0.1, 10, 1.5);
+    const drawScaleDots = !!(scaleDotsInput?.checked);
+    const scaleDotColor = hexToRgbString(scaleDotColorInput?.value || '#000000');
+    const scaleDotSize = clamp(parseFloat(scaleDotSizeInput?.value), 1, 50, 6);
+
         // Keep the two default overlays synced to current X/Z if they are autoSync
         try { synchronizeDefaultOverlaySteps(intervalX, intervalZ, edo); } catch {}
 
@@ -148,7 +175,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const cols = Math.ceil(offscreen.width / size) + 4;
             for (let row = -2; row < rows; row++) {
                 for (let col = -2; col < cols; col++) {
-                    drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, offCtx);
+                    // Draw base grid without dots (dots will be drawn on top in a final pass)
+                    drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, offCtx, scaleSet, scaleSizeFactor, false, null, null);
                 }
             }
             if (overlays.length) {
@@ -157,6 +185,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     const anchors = buildAnchorsForOverlay(ov, offscreen.width, offscreen.height, size, edo, intervalX, intervalZ);
                     drawChordOverlay(offCtx, offscreen.width, offscreen.height, size, edo, intervalX, intervalZ, ov.steps, ov.color, ov.opacity, anchors);
                 }
+            }
+            // Draw scale dots above overlays
+            if (drawScaleDots && scaleSet) {
+                drawScaleDotsGrid(offCtx, offscreen.width, offscreen.height, size, edo, intervalX, intervalZ, scaleSet, scaleDotColor, scaleDotSize);
             }
             canvas.width = canvasWidth;
             canvas.height = canvasHeight;
@@ -172,7 +204,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const cols = Math.ceil(canvas.width / size) + 4;
             for (let row = -2; row < rows; row++) {
                 for (let col = -2; col < cols; col++) {
-                    drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, ctx);
+                    // Draw base grid without dots (dots will be drawn on top in a final pass)
+                    drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, ctx, scaleSet, scaleSizeFactor, false, null, null);
                 }
             }
             if (overlays.length) {
@@ -181,6 +214,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     const anchors = buildAnchorsForOverlay(ov, canvas.width, canvas.height, size, edo, intervalX, intervalZ);
                     drawChordOverlay(ctx, canvas.width, canvas.height, size, edo, intervalX, intervalZ, ov.steps, ov.color, ov.opacity, anchors);
                 }
+            }
+            // Draw scale dots above overlays
+            if (drawScaleDots && scaleSet) {
+                drawScaleDotsGrid(ctx, canvas.width, canvas.height, size, edo, intervalX, intervalZ, scaleSet, scaleDotColor, scaleDotSize);
             }
         }
     }
@@ -339,6 +376,9 @@ document.addEventListener('DOMContentLoaded', function () {
         backgroundColorInput.value = rgbStringToHex(DEFAULT_COLORS.bg);
         labelColorInput.value = rgbStringToHex(DEFAULT_COLORS.label);
         highlightZeroColorInput.value = rgbStringToHex(DEFAULT_COLORS.highlightZero);
+        // Defaults for scale dot controls
+        if (scaleDotColorInput) scaleDotColorInput.value = '#000000';
+        if (scaleDotSizeInput) scaleDotSizeInput.value = '6';
     } catch {}
     // Ensure two default overlays exist (red then blue)
     try {

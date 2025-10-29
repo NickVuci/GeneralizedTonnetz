@@ -1,5 +1,5 @@
 // Drawing functions for grid and overlays
-function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, ctx) {
+function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, ctx, scaleSet, scaleSizeFactor, drawScaleDots, scaleDotColor, scaleDotSize) {
     const h = size * (Math.sqrt(3) / 2);
     const xOffset = (row % 2) * (size / 2);
     const x = col * size + xOffset;
@@ -51,8 +51,22 @@ function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, in
         ctx.fill();
     }
 
+    // Optional dot at the lattice apex for scale degrees
+    if (drawScaleDots && scaleSet && scaleSet.has(label)) {
+        const dotR = clamp(Number(scaleDotSize) || 6, 1, Math.max(2, Math.floor(size / 3)), 6);
+        ctx.fillStyle = scaleDotColor || 'rgb(0 0 0)';
+        ctx.beginPath();
+        // Place at the apex (points[0]) to sit on lattice node
+        ctx.arc(points[0].x, points[0].y, dotR, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
     ctx.fillStyle = labelColor;
-    ctx.font = `${label === 0 && highlightZero ? size / 3 : size / 4}px Arial`;
+    const baseLabelSize = (label === 0 && highlightZero) ? (size / 3) : (size / 4);
+    const inScale = !!(scaleSet && scaleSet.has(label));
+    const factor = Number.isFinite(scaleSizeFactor) && scaleSizeFactor > 0 ? scaleSizeFactor : 1;
+    const finalSize = inScale ? baseLabelSize * factor : baseLabelSize;
+    ctx.font = `${finalSize}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
     ctx.fillText(label.toString(), labelX, labelY);
@@ -127,4 +141,29 @@ function drawFourArmsForStep(ctx, aq, ar, size, edo, intervalX, intervalZ, step,
         ctx.lineTo(x, y);
         ctx.stroke();
     }
+}
+
+// Final-pass renderer: draw dots at lattice apexes for in-scale degrees, above overlays
+function drawScaleDotsGrid(ctx, width, height, size, edo, intervalX, intervalZ, scaleSet, scaleDotColor, scaleDotSize) {
+    if (!scaleSet || !scaleSet.size) return;
+    const h = size * (Math.sqrt(3) / 2);
+    const rows = Math.ceil(height / h) + 4;
+    const cols = Math.ceil(width / size) + 4;
+    const dotR = clamp(Number(scaleDotSize) || 6, 1, Math.max(2, Math.floor(size / 3)), 6);
+    ctx.save();
+    ctx.fillStyle = scaleDotColor || 'rgb(0 0 0)';
+    for (let row = -2; row < rows; row++) {
+        for (let col = -2; col < cols; col++) {
+            const q = col - Math.floor(row / 2);
+            const r = row;
+            let label = (intervalX * q + intervalZ * r) % edo;
+            if (label < 0) label += edo;
+            if (!scaleSet.has(label)) continue;
+            const { x, y } = qrToPixel(q, r, size);
+            ctx.beginPath();
+            ctx.arc(x, y, dotR, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    ctx.restore();
 }
