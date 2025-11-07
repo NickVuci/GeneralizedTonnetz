@@ -40,7 +40,8 @@ function addOverlay(preset) {
         color,
         opacity: Number.isFinite(preset?.opacity) ? preset.opacity : 0.35,
         anchors: preset?.anchors || [],
-        repeatAll: !!preset?.repeatAll
+        repeatAll: !!preset?.repeatAll,
+        nonTriangleMode: !!preset?.nonTriangleMode
     };
     // Auto-sync the two default overlays' steps with X/Z unless user edits them
     ov.autoSync = (preset?.steps == null) && (isFirst || isSecond);
@@ -88,6 +89,8 @@ function onOverlayPanelEvent(e) {
         ov.autoSync = false; // user has overridden defaults
     } else if (target.classList.contains('ov-repeat')) {
         ov.repeatAll = !!target.checked;
+    } else if (target.classList.contains('ov-non-triangle')) {
+        ov.nonTriangleMode = !!target.checked;
     } else if (target.classList.contains('ov-color')) {
         // input[type=color] yields hex -> store as rgb() for consistency
         ov.color = hexToRgbString(target.value);
@@ -154,6 +157,8 @@ function renderOverlayListPanel() {
             <input type="radio" name="mapDown" class="ov-map-down" ${isDown ? 'checked' : ''} title="Use this chord for Down triangles">
             <label title="Auto-place at all matching triangles" style="margin-left:4px">Repeat</label>
             <input type="checkbox" class="ov-repeat" ${ov.repeatAll ? 'checked' : ''} title="Automatically place at all matching triangles">
+            <label title="Non-triangle mode: draw 4 arms for all notes">Non-△</label>
+            <input type="checkbox" class="ov-non-triangle" ${ov.nonTriangleMode ? 'checked' : ''} title="Apply 4-arm logic to all chord tones">
             <label>Steps:</label>
             <input type="text" class="ov-steps" value="${ov.steps.join(',')}" style="width:120px" title="Comma-separated steps">
             <label>Color:</label>

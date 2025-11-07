@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 for (const ov of overlays) {
                     if (!ov.visible) continue;
                     const anchors = buildAnchorsForOverlay(ov, offscreen.width, offscreen.height, size, edo, intervalX, intervalZ);
-                    drawChordOverlay(offCtx, offscreen.width, offscreen.height, size, edo, intervalX, intervalZ, ov.steps, ov.color, ov.opacity, anchors);
+                    drawChordOverlay(offCtx, offscreen.width, offscreen.height, size, edo, intervalX, intervalZ, ov.steps, ov.color, ov.opacity, anchors, ov.nonTriangleMode);
                 }
             }
             // Draw scale dots above overlays
@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 for (const ov of overlays) {
                     if (!ov.visible) continue;
                     const anchors = buildAnchorsForOverlay(ov, canvas.width, canvas.height, size, edo, intervalX, intervalZ);
-                    drawChordOverlay(ctx, canvas.width, canvas.height, size, edo, intervalX, intervalZ, ov.steps, ov.color, ov.opacity, anchors);
+                    drawChordOverlay(ctx, canvas.width, canvas.height, size, edo, intervalX, intervalZ, ov.steps, ov.color, ov.opacity, anchors, ov.nonTriangleMode);
                 }
             }
             // Draw scale dots above overlays

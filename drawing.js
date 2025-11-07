@@ -72,7 +72,7 @@ function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, in
     ctx.fillText(label.toString(), labelX, labelY);
 }
 
-function drawChordOverlay(ctx, width, height, size, edo, intervalX, intervalZ, steps, colorHex, opacity, anchors) {
+function drawChordOverlay(ctx, width, height, size, edo, intervalX, intervalZ, steps, colorHex, opacity, anchors, nonTriangleMode) {
     if (!anchors || !anchors.length) return;
     ctx.save();
     ctx.globalAlpha = opacity;
@@ -80,16 +80,28 @@ function drawChordOverlay(ctx, width, height, size, edo, intervalX, intervalZ, s
     ctx.lineWidth = Math.max(1, size / 14);
 
     for (const anchor of anchors) {
-        drawChordShapeAtAnchor(ctx, anchor.q, anchor.r, size, edo, intervalX, intervalZ, steps);
+        drawChordShapeAtAnchor(ctx, anchor.q, anchor.r, size, edo, intervalX, intervalZ, steps, nonTriangleMode);
     }
 
     ctx.restore();
 }
 
-function drawChordShapeAtAnchor(ctx, aq, ar, size, edo, intervalX, intervalZ, steps) {
+function drawChordShapeAtAnchor(ctx, aq, ar, size, edo, intervalX, intervalZ, steps, nonTriangleMode) {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
+    // Non-triangle mode: draw 4 arms for all non-zero steps
+    if (nonTriangleMode) {
+        const anchorPx = qrToPixel(aq, ar, size);
+        const { p1, p2 } = findPeriodVectors(intervalX, intervalZ, edo);
+        for (const step of steps) {
+            if (step === 0) continue; // skip root
+            drawFourArmsForStep(ctx, aq, ar, size, edo, intervalX, intervalZ, step, anchorPx, p1, p2);
+        }
+        return;
+    }
+
+    // Standard triangle mode (original logic)
     if (steps.length >= 3) {
         const triSteps = steps.slice(0, 3);
         const triNodes = [];
