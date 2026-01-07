@@ -29,7 +29,7 @@ function addOverlay(preset) {
             // Second overlay (upward triangle, inversion of the first): 0, (X - Z), X
             stepsDefault = [0, ixMinusZ, ix];
         }
-    } catch {}
+    } catch (e) { console.error('Error computing overlay defaults', e); }
 
     const isFirst = overlays.length === 0;
     const isSecond = overlays.length === 1;
@@ -147,28 +147,126 @@ function renderOverlayListPanel() {
 
         const isUp = upOverlayId === ov.id;
         const isDown = downOverlayId === ov.id;
-        card.innerHTML = `
-            <input type="checkbox" class="ov-visible" ${ov.visible ? 'checked' : ''} title="Toggle visibility">
-            <input type="radio" name="activeOverlay" class="ov-active" ${activeOverlayId === ov.id ? 'checked' : ''} title="Make active for clicks">
-            <span>Overlay ${displayNum}</span>
-            <label title="Map to Up-triangle clicks" style="margin-left:4px">↑</label>
-            <input type="radio" name="mapUp" class="ov-map-up" ${isUp ? 'checked' : ''} title="Use this chord for Up triangles">
-            <label title="Map to Down-triangle clicks">↓</label>
-            <input type="radio" name="mapDown" class="ov-map-down" ${isDown ? 'checked' : ''} title="Use this chord for Down triangles">
-            <label title="Auto-place at all matching triangles" style="margin-left:4px">Repeat</label>
-            <input type="checkbox" class="ov-repeat" ${ov.repeatAll ? 'checked' : ''} title="Automatically place at all matching triangles">
-            <label title="Non-triangle mode: draw 4 arms for all notes">Non-△</label>
-            <input type="checkbox" class="ov-non-triangle" ${ov.nonTriangleMode ? 'checked' : ''} title="Apply 4-arm logic to all chord tones">
-            <label>Steps:</label>
-            <input type="text" class="ov-steps" value="${ov.steps.join(',')}" style="width:120px" title="Comma-separated steps">
-            <label>Color:</label>
-            <input type="color" class="ov-color" value="${rgbStringToHex(ov.color)}">
-            <label>Opacity:</label>
-            <input type="number" class="ov-opacity" min="0" max="1" step="0.05" value="${ov.opacity}" style="width:70px">
-            <span style="font-size: 12px">Anchors: <strong class="ov-anchors-count">${ov.anchors.length}</strong></span>
-            <button class="ov-clear-anchors">Clear Anchors</button>
-            <button class="ov-delete">Delete</button>
-        `;
+        // Build DOM nodes safely instead of using innerHTML to avoid injection
+        const inputVisible = document.createElement('input');
+        inputVisible.type = 'checkbox';
+        inputVisible.className = 'ov-visible';
+        inputVisible.title = 'Toggle visibility';
+        inputVisible.checked = !!ov.visible;
+
+        const inputActive = document.createElement('input');
+        inputActive.type = 'radio';
+        inputActive.name = 'activeOverlay';
+        inputActive.className = 'ov-active';
+        inputActive.title = 'Make active for clicks';
+        inputActive.checked = (activeOverlayId === ov.id);
+
+        const labelNum = document.createElement('span');
+        labelNum.textContent = `Overlay ${displayNum}`;
+
+        const lblUp = document.createElement('label');
+        lblUp.title = 'Map to Up-triangle clicks';
+        lblUp.style.marginLeft = '4px';
+        lblUp.textContent = '↑';
+        const inputMapUp = document.createElement('input');
+        inputMapUp.type = 'radio';
+        inputMapUp.name = 'mapUp';
+        inputMapUp.className = 'ov-map-up';
+        inputMapUp.title = 'Use this chord for Up triangles';
+        inputMapUp.checked = !!isUp;
+
+        const lblDown = document.createElement('label');
+        lblDown.title = 'Map to Down-triangle clicks';
+        lblDown.textContent = '↓';
+        const inputMapDown = document.createElement('input');
+        inputMapDown.type = 'radio';
+        inputMapDown.name = 'mapDown';
+        inputMapDown.className = 'ov-map-down';
+        inputMapDown.title = 'Use this chord for Down triangles';
+        inputMapDown.checked = !!isDown;
+
+        const lblRepeat = document.createElement('label');
+        lblRepeat.title = 'Auto-place at all matching triangles';
+        lblRepeat.style.marginLeft = '4px';
+        lblRepeat.textContent = 'Repeat';
+        const inputRepeat = document.createElement('input');
+        inputRepeat.type = 'checkbox';
+        inputRepeat.className = 'ov-repeat';
+        inputRepeat.title = 'Automatically place at all matching triangles';
+        inputRepeat.checked = !!ov.repeatAll;
+
+        const lblNon = document.createElement('label');
+        lblNon.title = 'Non-triangle mode: draw 4 arms for all notes';
+        lblNon.textContent = 'Non-△';
+        const inputNon = document.createElement('input');
+        inputNon.type = 'checkbox';
+        inputNon.className = 'ov-non-triangle';
+        inputNon.title = 'Apply 4-arm logic to all chord tones';
+        inputNon.checked = !!ov.nonTriangleMode;
+
+        const lblSteps = document.createElement('label');
+        lblSteps.textContent = 'Steps:';
+        const inputSteps = document.createElement('input');
+        inputSteps.type = 'text';
+        inputSteps.className = 'ov-steps';
+        inputSteps.style.width = '120px';
+        inputSteps.title = 'Comma-separated steps';
+        inputSteps.value = Array.isArray(ov.steps) ? ov.steps.join(',') : String(ov.steps || '');
+
+        const lblColor = document.createElement('label');
+        lblColor.textContent = 'Color:';
+        const inputColor = document.createElement('input');
+        inputColor.type = 'color';
+        inputColor.className = 'ov-color';
+        try { inputColor.value = rgbStringToHex(ov.color); } catch (e) { inputColor.value = '#00ff00'; }
+
+        const lblOp = document.createElement('label');
+        lblOp.textContent = 'Opacity:';
+        const inputOp = document.createElement('input');
+        inputOp.type = 'number';
+        inputOp.className = 'ov-opacity';
+        inputOp.min = '0'; inputOp.max = '1'; inputOp.step = '0.05';
+        inputOp.style.width = '70px';
+        inputOp.value = String(ov.opacity);
+
+        const anchorsSpan = document.createElement('span');
+        anchorsSpan.style.fontSize = '12px';
+        anchorsSpan.textContent = 'Anchors: ';
+        const anchorsStrong = document.createElement('strong');
+        anchorsStrong.className = 'ov-anchors-count';
+        anchorsStrong.textContent = String(ov.anchors.length);
+        anchorsSpan.appendChild(anchorsStrong);
+
+        const btnClear = document.createElement('button');
+        btnClear.className = 'ov-clear-anchors';
+        btnClear.textContent = 'Clear Anchors';
+
+        const btnDelete = document.createElement('button');
+        btnDelete.className = 'ov-delete';
+        btnDelete.textContent = 'Delete';
+
+        // Append elements in a logical order
+        card.appendChild(inputVisible);
+        card.appendChild(inputActive);
+        card.appendChild(labelNum);
+        card.appendChild(lblUp);
+        card.appendChild(inputMapUp);
+        card.appendChild(lblDown);
+        card.appendChild(inputMapDown);
+        card.appendChild(lblRepeat);
+        card.appendChild(inputRepeat);
+        card.appendChild(lblNon);
+        card.appendChild(inputNon);
+        card.appendChild(lblSteps);
+        card.appendChild(inputSteps);
+        card.appendChild(lblColor);
+        card.appendChild(inputColor);
+        card.appendChild(lblOp);
+        card.appendChild(inputOp);
+        card.appendChild(anchorsSpan);
+        card.appendChild(btnClear);
+        card.appendChild(btnDelete);
+
         overlayListContainer.appendChild(card);
     });
 }

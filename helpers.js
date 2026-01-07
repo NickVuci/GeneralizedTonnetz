@@ -63,3 +63,16 @@ function normalizeColorToRgb(color) {
     };
     return named[color.toLowerCase()] || color;
 }
+
+// Debounce helper: returns a function that delays invoking `fn` until after
+// `wait` milliseconds have elapsed since the last time it was invoked.
+function debounce(fn, wait = 150) {
+    let timer = null;
+    return function (...args) {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => {
+            timer = null;
+            try { fn.apply(this, args); } catch (e) { console.error('Debounced function error', e); }
+        }, wait);
+    };
+}

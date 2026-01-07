@@ -110,7 +110,7 @@ function drawChordShapeAtAnchor(ctx, aq, ar, size, edo, intervalX, intervalZ, st
             const { x, y } = qrToPixel(aq + u, ar + v, size);
             triNodes.push({ x, y });
         }
-        if (triNodes.length >= 2) {
+        if (triNodes.length >= 3) {
             // Inset the triangle slightly so edges don't overlap parallel lattice lines
             const INSET = 0.92; // 92% of original size; adjust if needed
             const cx = (triNodes[0].x + triNodes[1].x + triNodes[2].x) / 3;
@@ -124,6 +124,15 @@ function drawChordShapeAtAnchor(ctx, aq, ar, size, edo, intervalX, intervalZ, st
             for (let i = 1; i < inset.length; i++) ctx.lineTo(inset[i].x, inset[i].y);
             ctx.closePath();
             ctx.stroke();
+        } else {
+            // Degenerate or incomplete triangle: skip triangular stroke to avoid
+            // out-of-bounds accesses. Fall back to drawing the individual arms
+            // for the available steps to give the user visual feedback.
+            const anchorPx = qrToPixel(aq, ar, size);
+            const { p1, p2 } = findPeriodVectors(intervalX, intervalZ, edo);
+            for (const step of triSteps) {
+                drawFourArmsForStep(ctx, aq, ar, size, edo, intervalX, intervalZ, step, anchorPx, p1, p2);
+            }
         }
 
         if (steps.length > 3) {

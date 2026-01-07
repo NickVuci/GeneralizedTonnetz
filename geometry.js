@@ -149,6 +149,14 @@ function findPeriodVectors(ix, iz, edo) {
 
 function findNearestOffsets(step, ix, iz, edo, aq, ar, size, anchorPx, need = 4) {
     // Progressive search for nearest congruent offsets by true pixel distance
+    // Use a simple memoization cache keyed by (step,ix,iz,edo,aq,ar,size)
+    if (typeof findNearestOffsets._cache === 'undefined') findNearestOffsets._cache = new Map();
+    const cacheKey = [step, ix, iz, edo, aq, ar, size].join('|');
+    if (findNearestOffsets._cache.has(cacheKey)) {
+        const cached = findNearestOffsets._cache.get(cacheKey);
+        return cached.slice(0, need);
+    }
+
     const seen = new Set();
     let candidates = [];
     let range = 4;
@@ -174,6 +182,9 @@ function findNearestOffsets(step, ix, iz, edo, aq, ar, size, anchorPx, need = 4)
         range += 4;
     }
     candidates.sort((a, b) => (a.d2 - b.d2) || (a.man - b.man));
+    // Cache the full sorted candidates for this key (up to a reasonable cap)
+    const CAP = 200;
+    findNearestOffsets._cache.set(cacheKey, candidates.slice(0, CAP));
     return candidates.slice(0, need);
 }
 

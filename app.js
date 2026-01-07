@@ -31,32 +31,34 @@ document.addEventListener('DOMContentLoaded', function () {
     const savePdfButton = document.getElementById('savePdfButton');
     const toggleControlsBtn = document.getElementById('toggleControls');
     const controlsContent = document.getElementById('controlsContent');
+    // Debounced draw function will be assigned after drawTonnetz is defined.
+    let debouncedDraw = null;
 
     // Wire events
     document.getElementById('drawButton').addEventListener('click', drawTonnetz);
     canvasSizeSelect.addEventListener('change', handleCanvasSizeChange);
-    colorXInput.addEventListener('input', drawTonnetz);
-    colorYInput.addEventListener('input', drawTonnetz);
-    colorZInput.addEventListener('input', drawTonnetz);
-    backgroundColorInput.addEventListener('input', drawTonnetz);
-    labelColorInput.addEventListener('input', drawTonnetz);
-    highlightZeroColorInput.addEventListener('input', drawTonnetz);
-    highlightZeroInput.addEventListener('input', drawTonnetz);
-    triangleSizeInput.addEventListener('change', drawTonnetz);
+    colorXInput.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
+    colorYInput.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
+    colorZInput.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
+    backgroundColorInput.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
+    labelColorInput.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
+    highlightZeroColorInput.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
+    highlightZeroInput.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
+    triangleSizeInput.addEventListener('change', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
     edoInput.addEventListener('change', onIntervalParamsChange);
     intervalXInput.addEventListener('change', onIntervalParamsChange);
     intervalZInput.addEventListener('change', onIntervalParamsChange);
     saveImageButton.addEventListener('click', saveAsImage);
     savePdfButton.addEventListener('click', saveAsPdf);
-    scaleDegreesInput?.addEventListener('input', drawTonnetz);
-    scaleSizeInput?.addEventListener('input', drawTonnetz);
-    scaleDotsInput?.addEventListener('change', drawTonnetz);
-    scaleDotColorInput?.addEventListener('input', drawTonnetz);
-    scaleDotSizeInput?.addEventListener('input', drawTonnetz);
-    addOverlayBtn?.addEventListener('click', () => { addOverlay(); renderOverlayListPanel(); drawTonnetz(); });
-    overlayListContainer?.addEventListener('input', (e) => { onOverlayPanelEvent(e); drawTonnetz(); }, true);
-    overlayListContainer?.addEventListener('change', (e) => { onOverlayPanelEvent(e); drawTonnetz(); }, true);
-    overlayListContainer?.addEventListener('click', (e) => { onOverlayPanelEvent(e); drawTonnetz(); }, true);
+    scaleDegreesInput?.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
+    scaleSizeInput?.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
+    scaleDotsInput?.addEventListener('change', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
+    scaleDotColorInput?.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
+    scaleDotSizeInput?.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
+    addOverlayBtn?.addEventListener('click', () => { addOverlay(); renderOverlayListPanel(); if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
+    overlayListContainer?.addEventListener('input', (e) => { onOverlayPanelEvent(e); if (debouncedDraw) debouncedDraw(); else drawTonnetz(); }, true);
+    overlayListContainer?.addEventListener('change', (e) => { onOverlayPanelEvent(e); if (debouncedDraw) debouncedDraw(); else drawTonnetz(); }, true);
+    overlayListContainer?.addEventListener('click', (e) => { onOverlayPanelEvent(e); if (debouncedDraw) debouncedDraw(); else drawTonnetz(); }, true);
     canvas.addEventListener('click', onCanvasClick);
     toggleControlsBtn?.addEventListener('click', toggleControls);
 
@@ -69,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
             toggleControlsBtn.textContent = '+';
             toggleControlsBtn.title = 'Expand controls';
         }
-    } catch {}
+    } catch (e) { console.error('Error initializing controls collapse state', e); }
 
     // Limits
     const MAX_CANVAS_WIDTH = 2000;
@@ -95,6 +97,11 @@ document.addEventListener('DOMContentLoaded', function () {
             orientationSelect.disabled = false;
         }
     }
+
+    // Install debounced draw using helper (reduces frequent redraws during rapid input)
+    try {
+        if (typeof debounce === 'function') debouncedDraw = debounce(drawTonnetz, 120);
+    } catch (e) { console.error('Failed to create debounced draw', e); }
 
     function getCanvasDimensions() {
         let width, height, scale = 1;
@@ -156,14 +163,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 if (set.size > 0) scaleSet = set;
             }
-        } catch {}
+        } catch (e) { console.error('Error parsing scale degrees', e); }
     const scaleSizeFactor = clamp(parseFloat(scaleSizeInput?.value), 0.1, 10, 1.5);
     const drawScaleDots = !!(scaleDotsInput?.checked);
     const scaleDotColor = hexToRgbString(scaleDotColorInput?.value || '#000000');
     const scaleDotSize = clamp(parseFloat(scaleDotSizeInput?.value), 1, 50, 6);
 
         // Keep the two default overlays synced to current X/Z if they are autoSync
-        try { synchronizeDefaultOverlaySteps(intervalX, intervalZ, edo); } catch {}
+        try { synchronizeDefaultOverlaySteps(intervalX, intervalZ, edo); } catch (e) { console.error('Error synchronizing default overlays', e); }
 
         const { width: canvasWidth, height: canvasHeight, scale } = getCanvasDimensions();
 
@@ -231,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const edo = parseInt(edoInput.value) || 12;
         const ix = parseInt(intervalXInput.value) || 7;
         const iz = parseInt(intervalZInput.value) || 4;
-        try { synchronizeDefaultOverlaySteps(ix, iz, edo); } catch {}
+        try { synchronizeDefaultOverlaySteps(ix, iz, edo); } catch (e) { console.error('Error synchronizing default overlays (onIntervalParamsChange)', e); }
         renderOverlayListPanel();
         drawTonnetz();
     }
@@ -323,7 +330,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (ov && ov.steps && ov.steps.length >= 3) {
             try {
                 anchorQR = anchorFromClick(px, py, size, edo, intervalX, intervalZ, ov.steps);
-            } catch {}
+            } catch (e) { console.error('Error resolving anchor from click', e); }
             // If we are using a triangular overlay and the click does not fall inside
             // any of its triangle cells, ignore the click.
             if (!anchorQR) return;
@@ -383,14 +390,14 @@ document.addEventListener('DOMContentLoaded', function () {
         // Defaults for scale dot controls
         if (scaleDotColorInput) scaleDotColorInput.value = '#000000';
         if (scaleDotSizeInput) scaleDotSizeInput.value = '6';
-    } catch {}
+    } catch (e) { console.error('Error seeding color inputs', e); }
     // Ensure two default overlays exist (red then blue)
     try {
         if (!overlays || overlays.length === 0) {
             addOverlay({ color: 'rgb(255 0 0)' });
             addOverlay({ color: 'rgb(0 0 255)' });
         }
-    } catch {}
+    } catch (e) { console.error('Error ensuring default overlays', e); }
     renderOverlayListPanel();
     drawTonnetz();
 });
