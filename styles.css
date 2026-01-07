@@ -330,7 +330,7 @@ input[type="color"] {
 .canvas-wrap {
   flex: 1;
   display: flex;
-  justify-content: flex-end; /* right-justify canvas */
+  justify-content: center; /* center canvas horizontally */
   padding-right: var(--pad-x);
   overflow: auto;
 }
