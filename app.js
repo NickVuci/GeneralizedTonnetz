@@ -35,7 +35,6 @@ document.addEventListener('DOMContentLoaded', function () {
     let debouncedDraw = null;
 
     // Wire events
-    document.getElementById('drawButton').addEventListener('click', drawTonnetz);
     canvasSizeSelect.addEventListener('change', handleCanvasSizeChange);
     colorXInput.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
     colorYInput.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });

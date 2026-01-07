@@ -237,14 +237,7 @@ legend {
   font-size: 18px;
 }
 
-/* Old green Draw style only when used in the legacy row */
-.main-actions { grid-column: 1 / -1; text-align: center; padding-top: 10px; }
-.main-actions #drawButton {
-  padding: 12px 30px; font-size: 18px; font-weight: bold;
-  background-color: var(--action-green); color: var(--on-solid); border: none; border-radius: 5px; cursor: pointer;
-  transition: background-color 0.3s;
-}
-.main-actions #drawButton:hover { background-color: var(--action-green-hover); }
+/* legacy main-actions removed */
 
 /* Label/Input alignment inside cards */
 fieldset .control-group {
