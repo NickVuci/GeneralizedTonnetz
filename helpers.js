@@ -23,7 +23,7 @@ function parseChordSteps(text) {
 
 function hexToRgbString(hex, alpha) {
     const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (!m) return alpha == null ? `rgb(0 170 0)` : `rgb(0 170 0 / ${alpha})`;
+    if (!m) return alpha == null ? `rgb(0 0 0)` : `rgb(0 0 0 / ${alpha})`;
     const r = parseInt(m[1], 16);
     const g = parseInt(m[2], 16);
     const b = parseInt(m[3], 16);

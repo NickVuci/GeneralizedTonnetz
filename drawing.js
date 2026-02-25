@@ -1,7 +1,7 @@
 // Drawing functions for grid and overlays
-function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, ctx, scaleSet, scaleSizeFactor, drawScaleDots, scaleDotColor, scaleDotSize) {
-    const h = size * (Math.sqrt(3) / 2);
-    const xOffset = (row % 2) * (size / 2);
+function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, ctx, scaleSet, scaleSizeFactor) {
+    const h = size * SQRT3_HALF;
+    const xOffset = ((row % 2 + 2) % 2) * (size / 2);
     const x = col * size + xOffset;
     const y = row * h;
 
@@ -51,16 +51,6 @@ function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, in
         ctx.fill();
     }
 
-    // Optional dot at the lattice apex for scale degrees
-    if (drawScaleDots && scaleSet && scaleSet.has(label)) {
-        const dotR = clamp(Number(scaleDotSize) || 6, 1, Math.max(2, Math.floor(size / 3)), 6);
-        ctx.fillStyle = scaleDotColor || 'rgb(0 0 0)';
-        ctx.beginPath();
-        // Place at the apex (points[0]) to sit on lattice node
-        ctx.arc(points[0].x, points[0].y, dotR, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
     ctx.fillStyle = labelColor;
     const baseLabelSize = (label === 0 && highlightZero) ? (size / 3) : (size / 4);
     const inScale = !!(scaleSet && scaleSet.has(label));
@@ -90,10 +80,12 @@ function drawChordShapeAtAnchor(ctx, aq, ar, size, edo, intervalX, intervalZ, st
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
+    // Compute period vectors once per call (shared across all branches)
+    const anchorPx = qrToPixel(aq, ar, size);
+    const { p1, p2 } = findPeriodVectors(intervalX, intervalZ, edo);
+
     // Non-triangle mode: draw 4 arms for all non-zero steps
     if (nonTriangleMode) {
-        const anchorPx = qrToPixel(aq, ar, size);
-        const { p1, p2 } = findPeriodVectors(intervalX, intervalZ, edo);
         for (const step of steps) {
             if (step === 0) continue; // skip root
             drawFourArmsForStep(ctx, aq, ar, size, edo, intervalX, intervalZ, step, anchorPx, p1, p2);
@@ -128,16 +120,12 @@ function drawChordShapeAtAnchor(ctx, aq, ar, size, edo, intervalX, intervalZ, st
             // Degenerate or incomplete triangle: skip triangular stroke to avoid
             // out-of-bounds accesses. Fall back to drawing the individual arms
             // for the available steps to give the user visual feedback.
-            const anchorPx = qrToPixel(aq, ar, size);
-            const { p1, p2 } = findPeriodVectors(intervalX, intervalZ, edo);
             for (const step of triSteps) {
                 drawFourArmsForStep(ctx, aq, ar, size, edo, intervalX, intervalZ, step, anchorPx, p1, p2);
             }
         }
 
         if (steps.length > 3) {
-            const anchorPx = qrToPixel(aq, ar, size);
-            const { p1, p2 } = findPeriodVectors(intervalX, intervalZ, edo);
             for (let i = 3; i < steps.length; i++) {
                 const step = steps[i];
                 drawFourArmsForStep(ctx, aq, ar, size, edo, intervalX, intervalZ, step, anchorPx, p1, p2);
@@ -146,8 +134,6 @@ function drawChordShapeAtAnchor(ctx, aq, ar, size, edo, intervalX, intervalZ, st
         return;
     }
 
-    const anchorPx = qrToPixel(aq, ar, size);
-    const { p1, p2 } = findPeriodVectors(intervalX, intervalZ, edo);
     for (const step of steps) {
         drawFourArmsForStep(ctx, aq, ar, size, edo, intervalX, intervalZ, step, anchorPx, p1, p2);
     }
@@ -167,7 +153,7 @@ function drawFourArmsForStep(ctx, aq, ar, size, edo, intervalX, intervalZ, step,
 // Final-pass renderer: draw dots at lattice apexes for in-scale degrees, above overlays
 function drawScaleDotsGrid(ctx, width, height, size, edo, intervalX, intervalZ, scaleSet, scaleDotColor, scaleDotSize) {
     if (!scaleSet || !scaleSet.size) return;
-    const h = size * (Math.sqrt(3) / 2);
+    const h = size * SQRT3_HALF;
     const rows = Math.ceil(height / h) + 4;
     const cols = Math.ceil(width / size) + 4;
     const dotR = clamp(Number(scaleDotSize) || 6, 1, Math.max(2, Math.floor(size / 3)), 6);

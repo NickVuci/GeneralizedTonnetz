@@ -26,13 +26,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const scaleDotColorInput = document.getElementById('scaleDotColor');
     const scaleDotSizeInput = document.getElementById('scaleDotSize');
     const addOverlayBtn = document.getElementById('addOverlayBtn');
-    const overlayListContainer = document.getElementById('overlayList');
     const saveImageButton = document.getElementById('saveImageButton');
     const savePdfButton = document.getElementById('savePdfButton');
     const toggleControlsBtn = document.getElementById('toggleControls');
     const controlsContent = document.getElementById('controlsContent');
+    const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+    const overlaySidebar = document.getElementById('overlaySidebar');
     // Debounced draw function will be assigned after drawTonnetz is defined.
     let debouncedDraw = null;
+    // Retain the last full-resolution offscreen canvas for high-quality export
+    let lastOffscreenCanvas = null;
 
     // Wire events
     canvasSizeSelect.addEventListener('change', handleCanvasSizeChange);
@@ -60,6 +63,7 @@ document.addEventListener('DOMContentLoaded', function () {
     overlayListContainer?.addEventListener('click', (e) => { onOverlayPanelEvent(e); if (debouncedDraw) debouncedDraw(); else drawTonnetz(); }, true);
     canvas.addEventListener('click', onCanvasClick);
     toggleControlsBtn?.addEventListener('click', toggleControls);
+    toggleSidebarBtn?.addEventListener('click', toggleSidebar);
 
     // Start with controls collapsed by default
     try {
@@ -67,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
             controlsContent.classList.add('collapsed');
         }
         if (toggleControlsBtn) {
-            toggleControlsBtn.textContent = '+';
+            // toggleControlsBtn.textContent = '+'; // Don't overwrite SVG
             toggleControlsBtn.title = 'Expand controls';
         }
     } catch (e) { console.error('Error initializing controls collapse state', e); }
@@ -89,7 +93,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function handleCanvasSizeChange() {
         if (canvasSizeSelect.value === 'Custom') {
-            customSizeGroup.style.display = 'block';
+            customSizeGroup.style.display = ''; // Revert to CSS (grid)
+            if (window.getComputedStyle(customSizeGroup).display === 'none') {
+                 // Fallback if CSS doesn't set display (though it should via class)
+                 customSizeGroup.style.display = 'grid';
+            }
             orientationSelect.disabled = true;
         } else {
             customSizeGroup.style.display = 'none';
@@ -142,10 +150,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const highlightZeroColor = hexToRgbString(highlightZeroColorInput.value, 0.3);
         const highlightZero = highlightZeroInput.checked;
 
-        const size = parseInt(document.getElementById('triangleSize').value) || 40;
-        const edo = parseInt(document.getElementById('edo').value) || 12;
-        const intervalX = parseInt(document.getElementById('intervalX').value) || 7;
-        const intervalZ = parseInt(document.getElementById('intervalZ').value) || 4;
+        const size = parseInt(triangleSizeInput.value) || 40;
+        const edo = parseInt(edoInput.value) || 12;
+        const intervalX = parseInt(intervalXInput.value) || 7;
+        const intervalZ = parseInt(intervalZInput.value) || 4;
 
         // Scale highlighting (treat blank as no degrees; do NOT default to [0])
         let scaleSet = null;
@@ -163,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (set.size > 0) scaleSet = set;
             }
         } catch (e) { console.error('Error parsing scale degrees', e); }
-    const scaleSizeFactor = clamp(parseFloat(scaleSizeInput?.value), 0.1, 10, 1.5);
+    const scaleSizeFactor = clamp(parseFloat(scaleSizeInput?.value), 0.5, 4, 1.5);
     const drawScaleDots = !!(scaleDotsInput?.checked);
     const scaleDotColor = hexToRgbString(scaleDotColorInput?.value || '#000000');
     const scaleDotSize = clamp(parseFloat(scaleDotSizeInput?.value), 1, 50, 6);
@@ -173,62 +181,46 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const { width: canvasWidth, height: canvasHeight, scale } = getCanvasDimensions();
 
+        // Shared render logic for both offscreen and direct paths
+        function renderToContext(targetCtx, w, h) {
+            targetCtx.fillStyle = backgroundColor;
+            targetCtx.fillRect(0, 0, w, h);
+            const cellH = size * SQRT3_HALF;
+            const rows = Math.ceil(h / cellH) + 4;
+            const cols = Math.ceil(w / size) + 4;
+            for (let row = -2; row < rows; row++) {
+                for (let col = -2; col < cols; col++) {
+                    drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, targetCtx, scaleSet, scaleSizeFactor);
+                }
+            }
+            if (overlays.length) {
+                for (const ov of overlays) {
+                    if (!ov.visible) continue;
+                    const anchors = buildAnchorsForOverlay(ov, w, h, size, edo, intervalX, intervalZ);
+                    drawChordOverlay(targetCtx, w, h, size, edo, intervalX, intervalZ, ov.steps, ov.color, ov.opacity, anchors, ov.nonTriangleMode);
+                }
+            }
+            if (drawScaleDots && scaleSet) {
+                drawScaleDotsGrid(targetCtx, w, h, size, edo, intervalX, intervalZ, scaleSet, scaleDotColor, scaleDotSize);
+            }
+        }
+
         if (scale < 1) {
             const offscreen = document.createElement('canvas');
             offscreen.width = Math.round(canvasWidth / scale);
             offscreen.height = Math.round(canvasHeight / scale);
             const offCtx = offscreen.getContext('2d');
-            offCtx.fillStyle = backgroundColor;
-            offCtx.fillRect(0, 0, offscreen.width, offscreen.height);
-            const h = size * (Math.sqrt(3) / 2);
-            const rows = Math.ceil(offscreen.height / h) + 4;
-            const cols = Math.ceil(offscreen.width / size) + 4;
-            for (let row = -2; row < rows; row++) {
-                for (let col = -2; col < cols; col++) {
-                    // Draw base grid without dots (dots will be drawn on top in a final pass)
-                    drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, offCtx, scaleSet, scaleSizeFactor, false, null, null);
-                }
-            }
-            if (overlays.length) {
-                for (const ov of overlays) {
-                    if (!ov.visible) continue;
-                    const anchors = buildAnchorsForOverlay(ov, offscreen.width, offscreen.height, size, edo, intervalX, intervalZ);
-                    drawChordOverlay(offCtx, offscreen.width, offscreen.height, size, edo, intervalX, intervalZ, ov.steps, ov.color, ov.opacity, anchors, ov.nonTriangleMode);
-                }
-            }
-            // Draw scale dots above overlays
-            if (drawScaleDots && scaleSet) {
-                drawScaleDotsGrid(offCtx, offscreen.width, offscreen.height, size, edo, intervalX, intervalZ, scaleSet, scaleDotColor, scaleDotSize);
-            }
+            renderToContext(offCtx, offscreen.width, offscreen.height);
+            lastOffscreenCanvas = offscreen;
             canvas.width = canvasWidth;
             canvas.height = canvasHeight;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(offscreen, 0, 0, offscreen.width, offscreen.height, 0, 0, canvas.width, canvas.height);
         } else {
+            lastOffscreenCanvas = null;
             canvas.width = canvasWidth;
             canvas.height = canvasHeight;
-            ctx.fillStyle = backgroundColor;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            const h = size * (Math.sqrt(3) / 2);
-            const rows = Math.ceil(canvas.height / h) + 4;
-            const cols = Math.ceil(canvas.width / size) + 4;
-            for (let row = -2; row < rows; row++) {
-                for (let col = -2; col < cols; col++) {
-                    // Draw base grid without dots (dots will be drawn on top in a final pass)
-                    drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, ctx, scaleSet, scaleSizeFactor, false, null, null);
-                }
-            }
-            if (overlays.length) {
-                for (const ov of overlays) {
-                    if (!ov.visible) continue;
-                    const anchors = buildAnchorsForOverlay(ov, canvas.width, canvas.height, size, edo, intervalX, intervalZ);
-                    drawChordOverlay(ctx, canvas.width, canvas.height, size, edo, intervalX, intervalZ, ov.steps, ov.color, ov.opacity, anchors, ov.nonTriangleMode);
-                }
-            }
-            // Draw scale dots above overlays
-            if (drawScaleDots && scaleSet) {
-                drawScaleDotsGrid(ctx, canvas.width, canvas.height, size, edo, intervalX, intervalZ, scaleSet, scaleDotColor, scaleDotSize);
-            }
+            renderToContext(ctx, canvas.width, canvas.height);
         }
     }
 
@@ -237,6 +229,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const edo = parseInt(edoInput.value) || 12;
         const ix = parseInt(intervalXInput.value) || 7;
         const iz = parseInt(intervalZInput.value) || 4;
+        // Clear memoization caches that depend on lattice parameters
+        if (typeof findNearestOffsets !== 'undefined' && findNearestOffsets._cache) findNearestOffsets._cache.clear();
         try { synchronizeDefaultOverlaySteps(ix, iz, edo); } catch (e) { console.error('Error synchronizing default overlays (onIntervalParamsChange)', e); }
         renderOverlayListPanel();
         drawTonnetz();
@@ -302,10 +296,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const rect = canvas.getBoundingClientRect();
         let px = (evt.clientX - rect.left) * (canvas.width / rect.width);
         let py = (evt.clientY - rect.top) * (canvas.height / rect.height);
-        const size = parseInt(document.getElementById('triangleSize').value) || 40;
-        const edo = parseInt(document.getElementById('edo').value) || 12;
-        const intervalX = parseInt(document.getElementById('intervalX').value) || 7;
-        const intervalZ = parseInt(document.getElementById('intervalZ').value) || 4;
+        const size = parseInt(triangleSizeInput.value) || 40;
+        const edo = parseInt(edoInput.value) || 12;
+        const intervalX = parseInt(intervalXInput.value) || 7;
+        const intervalZ = parseInt(intervalZInput.value) || 4;
         const { scale } = getCanvasDimensions();
         if (scale < 1) { px = px / scale; py = py / scale; }
         // Choose overlay automatically based on triangle orientation (up/down)
@@ -346,10 +340,14 @@ document.addEventListener('DOMContentLoaded', function () {
             updateOverlayAnchorsCount(ov.id, ov.anchors.length);
         }
         drawTonnetz();
+        // Brief visual flash on the canvas for anchor placement feedback
+        canvas.classList.add('canvas-flash');
+        setTimeout(() => canvas.classList.remove('canvas-flash'), 300);
     }
 
     function saveAsImage() {
-        const image = canvas.toDataURL('image/png');
+        const exportCanvas = lastOffscreenCanvas || canvas;
+        const image = exportCanvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.href = image;
         link.download = 'tonnetz.png';
@@ -359,44 +357,280 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function saveAsPdf() {
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({
-            orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
-            unit: 'px',
-            format: [canvas.width, canvas.height]
-        });
-        const imgData = canvas.toDataURL('image/png');
-        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-        pdf.save('tonnetz.pdf');
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+            alert('PDF export requires jsPDF. Please check your internet connection and try again.');
+            return;
+        }
+        try {
+            const { jsPDF } = window.jspdf;
+            const exportCanvas = lastOffscreenCanvas || canvas;
+            const w = exportCanvas.width;
+            const h = exportCanvas.height;
+            const pdf = new jsPDF({
+                orientation: w > h ? 'landscape' : 'portrait',
+                unit: 'px',
+                format: [w, h]
+            });
+            const imgData = exportCanvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', 0, 0, w, h);
+            pdf.save('tonnetz.pdf');
+        } catch (e) {
+            console.error('PDF export failed', e);
+            alert('PDF export failed: ' + e.message);
+        }
     }
 
     function toggleControls() {
         const isCollapsed = controlsContent.classList.toggle('collapsed');
-        toggleControlsBtn.textContent = isCollapsed ? '+' : '−';
+        toggleControlsBtn.classList.toggle('expanded', !isCollapsed);
         toggleControlsBtn.title = isCollapsed ? 'Expand controls' : 'Collapse controls';
+        saveStateToStorage();
     }
 
-    // Init
-    handleCanvasSizeChange();
-    // Seed color inputs from rgb() defaults -> hex for input[type=color]
-    try {
-        colorXInput.value = rgbStringToHex(DEFAULT_COLORS.x);
-        colorYInput.value = rgbStringToHex(DEFAULT_COLORS.y);
-        colorZInput.value = rgbStringToHex(DEFAULT_COLORS.z);
-        backgroundColorInput.value = rgbStringToHex(DEFAULT_COLORS.bg);
-        labelColorInput.value = rgbStringToHex(DEFAULT_COLORS.label);
-        highlightZeroColorInput.value = rgbStringToHex(DEFAULT_COLORS.highlightZero);
-        // Defaults for scale dot controls
-        if (scaleDotColorInput) scaleDotColorInput.value = '#000000';
-        if (scaleDotSizeInput) scaleDotSizeInput.value = '6';
-    } catch (e) { console.error('Error seeding color inputs', e); }
-    // Ensure two default overlays exist (red then blue)
-    try {
-        if (!overlays || overlays.length === 0) {
-            addOverlay({ color: 'rgb(255 0 0)' });
-            addOverlay({ color: 'rgb(0 0 255)' });
+    function toggleSidebar() {
+        if (!overlaySidebar) return;
+        const isCollapsed = overlaySidebar.classList.toggle('collapsed');
+        if (toggleSidebarBtn) {
+            const isHorizontal = window.innerWidth <= 768;
+            toggleSidebarBtn.textContent = isCollapsed
+                ? (isHorizontal ? '∨' : '⟩')
+                : (isHorizontal ? '∧' : '⟨');
+            toggleSidebarBtn.title = isCollapsed ? 'Expand sidebar' : 'Collapse sidebar';
         }
-    } catch (e) { console.error('Error ensuring default overlays', e); }
-    renderOverlayListPanel();
-    drawTonnetz();
+        saveStateToStorage();
+    }
+
+    // ==============================
+    // State Persistence
+    // ==============================
+    const STATE_KEY = 'tonnetz-state';
+    const STATE_VERSION = 1;
+
+    function serializeState() {
+        return {
+            version: STATE_VERSION,
+            edo: parseInt(edoInput.value) || 12,
+            intervalX: parseInt(intervalXInput.value) || 7,
+            intervalZ: parseInt(intervalZInput.value) || 4,
+            canvasSize: canvasSizeSelect.value,
+            orientation: orientationSelect.value,
+            canvasWidth: parseInt(canvasWidthInput.value) || 1000,
+            canvasHeight: parseInt(canvasHeightInput.value) || 1000,
+            triangleSize: parseInt(triangleSizeInput.value) || 75,
+            colorX: colorXInput.value,
+            colorY: colorYInput.value,
+            colorZ: colorZInput.value,
+            backgroundColor: backgroundColorInput.value,
+            labelColor: labelColorInput.value,
+            highlightZero: highlightZeroInput.checked,
+            highlightZeroColor: highlightZeroColorInput.value,
+            scaleDegrees: scaleDegreesInput?.value || '',
+            scaleSize: scaleSizeInput?.value || '1.5',
+            scaleDots: !!scaleDotsInput?.checked,
+            scaleDotColor: scaleDotColorInput?.value || '#000000',
+            scaleDotSize: scaleDotSizeInput?.value || '6',
+            overlays: overlays.map(ov => ({
+                steps: ov.steps,
+                color: ov.color,
+                opacity: ov.opacity,
+                anchors: ov.anchors,
+                repeatAll: ov.repeatAll,
+                nonTriangleMode: ov.nonTriangleMode,
+                visible: ov.visible,
+                autoSync: ov.autoSync
+            })),
+            activeOverlayIdx: overlays.findIndex(o => o.id === activeOverlayId),
+            upOverlayIdx: overlays.findIndex(o => o.id === upOverlayId),
+            downOverlayIdx: overlays.findIndex(o => o.id === downOverlayId),
+            sidebarCollapsed: overlaySidebar?.classList.contains('collapsed') || false,
+            controlsCollapsed: controlsContent?.classList.contains('collapsed') || false
+        };
+    }
+
+    function deserializeState(state) {
+        if (!state || state.version !== STATE_VERSION) return false;
+        try {
+            edoInput.value = state.edo;
+            intervalXInput.value = state.intervalX;
+            intervalZInput.value = state.intervalZ;
+            canvasSizeSelect.value = state.canvasSize;
+            orientationSelect.value = state.orientation;
+            canvasWidthInput.value = state.canvasWidth;
+            canvasHeightInput.value = state.canvasHeight;
+            triangleSizeInput.value = state.triangleSize;
+            colorXInput.value = state.colorX;
+            colorYInput.value = state.colorY;
+            colorZInput.value = state.colorZ;
+            backgroundColorInput.value = state.backgroundColor;
+            labelColorInput.value = state.labelColor;
+            highlightZeroInput.checked = !!state.highlightZero;
+            highlightZeroColorInput.value = state.highlightZeroColor;
+            if (scaleDegreesInput) scaleDegreesInput.value = state.scaleDegrees || '';
+            if (scaleSizeInput) scaleSizeInput.value = state.scaleSize || '1.5';
+            if (scaleDotsInput) scaleDotsInput.checked = !!state.scaleDots;
+            if (scaleDotColorInput) scaleDotColorInput.value = state.scaleDotColor || '#000000';
+            if (scaleDotSizeInput) scaleDotSizeInput.value = state.scaleDotSize || '6';
+
+            // Rebuild overlays
+            overlays.length = 0;
+            overlayIdCounter = 1;
+            activeOverlayId = null;
+            upOverlayId = null;
+            downOverlayId = null;
+            if (Array.isArray(state.overlays) && state.overlays.length > 0) {
+                for (const saved of state.overlays) {
+                    const ov = {
+                        id: overlayIdCounter++,
+                        visible: saved.visible !== false,
+                        steps: saved.steps || [0, 4, 7],
+                        color: saved.color || 'rgb(255 0 0)',
+                        opacity: Number.isFinite(saved.opacity) ? saved.opacity : 0.35,
+                        anchors: Array.isArray(saved.anchors) ? saved.anchors : [],
+                        repeatAll: !!saved.repeatAll,
+                        nonTriangleMode: !!saved.nonTriangleMode,
+                        autoSync: !!saved.autoSync
+                    };
+                    overlays.push(ov);
+                }
+                if (state.activeOverlayIdx >= 0 && state.activeOverlayIdx < overlays.length)
+                    activeOverlayId = overlays[state.activeOverlayIdx].id;
+                else
+                    activeOverlayId = overlays[0].id;
+                if (state.upOverlayIdx >= 0 && state.upOverlayIdx < overlays.length)
+                    upOverlayId = overlays[state.upOverlayIdx].id;
+                if (state.downOverlayIdx >= 0 && state.downOverlayIdx < overlays.length)
+                    downOverlayId = overlays[state.downOverlayIdx].id;
+            }
+
+            // Restore UI collapse states
+            if (state.controlsCollapsed) {
+                controlsContent?.classList.add('collapsed');
+                if (toggleControlsBtn) toggleControlsBtn.classList.remove('expanded');
+            } else {
+                controlsContent?.classList.remove('collapsed');
+                if (toggleControlsBtn) toggleControlsBtn.classList.add('expanded');
+            }
+            if (state.sidebarCollapsed) {
+                overlaySidebar?.classList.add('collapsed');
+                if (toggleSidebarBtn) toggleSidebarBtn.textContent = window.innerWidth <= 768 ? '∨' : '⟩';
+            } else {
+                overlaySidebar?.classList.remove('collapsed');
+                if (toggleSidebarBtn) toggleSidebarBtn.textContent = window.innerWidth <= 768 ? '∧' : '⟨';
+            }
+
+            handleCanvasSizeChange();
+            renderOverlayListPanel();
+            drawTonnetz();
+            return true;
+        } catch (e) {
+            console.error('Error deserializing state', e);
+            return false;
+        }
+    }
+
+    function saveStateToStorage() {
+        try {
+            localStorage.setItem(STATE_KEY, JSON.stringify(serializeState()));
+        } catch (e) { /* quota exceeded or private mode — silently ignore */ }
+    }
+
+    function stateToHash(state) {
+        return '#' + btoa(JSON.stringify(state));
+    }
+
+    function hashToState(hash) {
+        try {
+            if (!hash || hash.length < 2) return null;
+            return JSON.parse(atob(hash.slice(1)));
+        } catch (e) { return null; }
+    }
+
+    // Wire Copy Link button
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', () => {
+            const state = serializeState();
+            const hash = stateToHash(state);
+            history.replaceState(null, '', hash);
+            const url = location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                copyLinkBtn.classList.add('copied');
+                setTimeout(() => copyLinkBtn.classList.remove('copied'), 1500);
+            }).catch(() => {
+                // Fallback for older browsers
+                const ta = document.createElement('textarea');
+                ta.value = url;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                copyLinkBtn.classList.add('copied');
+                setTimeout(() => copyLinkBtn.classList.remove('copied'), 1500);
+            });
+        });
+    }
+
+    // Wire Reset button
+    const resetBtn = document.getElementById('resetBtn');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            localStorage.removeItem(STATE_KEY);
+            history.replaceState(null, '', location.pathname);
+            location.reload();
+        });
+    }
+
+    // Auto-save on every draw (debounced separately to avoid frequent synchronous writes)
+    const debouncedSave = debounce(saveStateToStorage, 500);
+    const originalDrawTonnetz = drawTonnetz;
+    drawTonnetz = function () {
+        originalDrawTonnetz();
+        debouncedSave();
+    };
+    // Re-create debounced version with the wrapped drawTonnetz
+    try {
+        if (typeof debounce === 'function') debouncedDraw = debounce(drawTonnetz, 120);
+    } catch (e) { /* ignore */ }
+
+    // ==============================
+    // Initialization — Restore State
+    // ==============================
+    let stateRestored = false;
+
+    // Priority 1: URL hash
+    try {
+        const hashState = hashToState(location.hash);
+        if (hashState) stateRestored = deserializeState(hashState);
+    } catch (e) { console.error('Error restoring state from URL hash', e); }
+
+    // Priority 2: localStorage
+    if (!stateRestored) {
+        try {
+            const stored = localStorage.getItem(STATE_KEY);
+            if (stored) stateRestored = deserializeState(JSON.parse(stored));
+        } catch (e) { console.error('Error restoring state from localStorage', e); }
+    }
+
+    // Priority 3: Defaults
+    if (!stateRestored) {
+        handleCanvasSizeChange();
+        try {
+            colorXInput.value = rgbStringToHex(DEFAULT_COLORS.x);
+            colorYInput.value = rgbStringToHex(DEFAULT_COLORS.y);
+            colorZInput.value = rgbStringToHex(DEFAULT_COLORS.z);
+            backgroundColorInput.value = rgbStringToHex(DEFAULT_COLORS.bg);
+            labelColorInput.value = rgbStringToHex(DEFAULT_COLORS.label);
+            highlightZeroColorInput.value = rgbStringToHex(DEFAULT_COLORS.highlightZero);
+            if (scaleDotColorInput) scaleDotColorInput.value = '#000000';
+            if (scaleDotSizeInput) scaleDotSizeInput.value = '6';
+        } catch (e) { console.error('Error seeding color inputs', e); }
+        try {
+            if (!overlays || overlays.length === 0) {
+                addOverlay({ color: 'rgb(255 0 0)' });
+                addOverlay({ color: 'rgb(0 0 255)' });
+            }
+        } catch (e) { console.error('Error ensuring default overlays', e); }
+        renderOverlayListPanel();
+        drawTonnetz();
+    }
 });

@@ -1,8 +1,10 @@
 // Geometry and lattice math helpers
+const SQRT3_HALF = Math.sqrt(3) / 2;
+
 function qrToPixel(q, r, size) {
-    const h = size * (Math.sqrt(3) / 2);
+    const h = size * SQRT3_HALF;
     const col = q + Math.floor(r / 2);
-    const xOffset = (r % 2) * (size / 2);
+    const xOffset = ((r % 2 + 2) % 2) * (size / 2);
     const x = col * size + xOffset;
     const y = r * h;
     return { x, y };
@@ -12,7 +14,7 @@ function pixelToQR(px, py, size) {
     // Robust mapping of a pixel to the apex (q,r) of the triangle that actually contains it.
     // Handles both upward- and downward-pointing triangles by geometric hit-testing
     // instead of nearest-vertex rounding, which misclassifies points near edges.
-    const h = size * (Math.sqrt(3) / 2);
+    const h = size * SQRT3_HALF;
 
     // Point-in-upward triangle with apex at (ax, ay)
     function inUp(ax, ay) {
@@ -123,7 +125,7 @@ function solveStepToUV(step, ix, iz, edo) {
 
 function findPeriodVectors(ix, iz, edo) {
     // Find two small, non-collinear vectors (u,v) with ix*u + iz*v ≡ 0 (mod edo)
-    const RANGE = 8;
+    const RANGE = 16;
     let candidates = [];
     for (let u = -RANGE; u <= RANGE; u++) {
         for (let v = -RANGE; v <= RANGE; v++) {
@@ -140,9 +142,14 @@ function findPeriodVectors(ix, iz, edo) {
     candidates.sort((a, b) => a.score - b.score);
     let p1 = candidates[0] || { u: 1, v: 0 };
     // Choose p2 not collinear with p1
-    let p2 = { u: 0, v: 1 };
+    let p2 = null;
     for (const c of candidates) {
         if (p1.u * c.v - p1.v * c.u !== 0) { p2 = c; break; }
+    }
+    // If no non-collinear p2 found, construct one perpendicular-ish to p1
+    if (!p2) {
+        // Use a vector orthogonal in lattice space: swap and negate
+        p2 = { u: -p1.v, v: p1.u, score: Math.abs(p1.v) + Math.abs(p1.u) };
     }
     return { p1, p2 };
 }
@@ -190,7 +197,7 @@ function findNearestOffsets(step, ix, iz, edo, aq, ar, size, anchorPx, need = 4)
 
 // Approximate lattice node by simple rounding (used for candidate generation)
 function approximateQR(px, py, size) {
-    const h = size * (Math.sqrt(3) / 2);
+    const h = size * SQRT3_HALF;
     const row = Math.round(py / h);
     const xOffset = (row % 2) * (size / 2);
     const col = Math.round((px - xOffset) / size);

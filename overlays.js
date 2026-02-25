@@ -140,10 +140,6 @@ function renderOverlayListPanel() {
         const card = document.createElement('div');
         card.className = 'overlay-card';
         card.setAttribute('data-id', String(ov.id));
-        card.style.display = 'flex';
-        card.style.flexWrap = 'wrap';
-        card.style.alignItems = 'center';
-        card.style.gap = '6px';
 
         const isUp = upOverlayId === ov.id;
         const isDown = downOverlayId === ov.id;
@@ -162,11 +158,11 @@ function renderOverlayListPanel() {
         inputActive.checked = (activeOverlayId === ov.id);
 
         const labelNum = document.createElement('span');
+        labelNum.className = 'ov-title';
         labelNum.textContent = `Overlay ${displayNum}`;
 
         const lblUp = document.createElement('label');
         lblUp.title = 'Map to Up-triangle clicks';
-        lblUp.style.marginLeft = '4px';
         lblUp.textContent = '↑';
         const inputMapUp = document.createElement('input');
         inputMapUp.type = 'radio';
@@ -187,7 +183,6 @@ function renderOverlayListPanel() {
 
         const lblRepeat = document.createElement('label');
         lblRepeat.title = 'Auto-place at all matching triangles';
-        lblRepeat.style.marginLeft = '4px';
         lblRepeat.textContent = 'Repeat';
         const inputRepeat = document.createElement('input');
         inputRepeat.type = 'checkbox';
@@ -209,7 +204,6 @@ function renderOverlayListPanel() {
         const inputSteps = document.createElement('input');
         inputSteps.type = 'text';
         inputSteps.className = 'ov-steps';
-        inputSteps.style.width = '120px';
         inputSteps.title = 'Comma-separated steps';
         inputSteps.value = Array.isArray(ov.steps) ? ov.steps.join(',') : String(ov.steps || '');
 
@@ -226,11 +220,10 @@ function renderOverlayListPanel() {
         inputOp.type = 'number';
         inputOp.className = 'ov-opacity';
         inputOp.min = '0'; inputOp.max = '1'; inputOp.step = '0.05';
-        inputOp.style.width = '70px';
         inputOp.value = String(ov.opacity);
 
         const anchorsSpan = document.createElement('span');
-        anchorsSpan.style.fontSize = '12px';
+        anchorsSpan.className = 'ov-anchors';
         anchorsSpan.textContent = 'Anchors: ';
         const anchorsStrong = document.createElement('strong');
         anchorsStrong.className = 'ov-anchors-count';
@@ -245,27 +238,55 @@ function renderOverlayListPanel() {
         btnDelete.className = 'ov-delete';
         btnDelete.textContent = 'Delete';
 
-        // Append elements in a logical order
-        card.appendChild(inputVisible);
-        card.appendChild(inputActive);
-        card.appendChild(labelNum);
-        card.appendChild(lblUp);
-        card.appendChild(inputMapUp);
-        card.appendChild(lblDown);
-        card.appendChild(inputMapDown);
-        card.appendChild(lblRepeat);
-        card.appendChild(inputRepeat);
-        card.appendChild(lblNon);
-        card.appendChild(inputNon);
-        card.appendChild(lblSteps);
-        card.appendChild(inputSteps);
-        card.appendChild(lblColor);
-        card.appendChild(inputColor);
-        card.appendChild(lblOp);
-        card.appendChild(inputOp);
-        card.appendChild(anchorsSpan);
-        card.appendChild(btnClear);
-        card.appendChild(btnDelete);
+        const headerRow = document.createElement('div');
+        headerRow.className = 'ov-row ov-header';
+        headerRow.appendChild(inputVisible);
+        headerRow.appendChild(inputActive);
+        headerRow.appendChild(labelNum);
+
+        const mapRow = document.createElement('div');
+        mapRow.className = 'ov-row ov-mapping';
+        mapRow.appendChild(lblUp);
+        mapRow.appendChild(inputMapUp);
+        mapRow.appendChild(lblDown);
+        mapRow.appendChild(inputMapDown);
+        mapRow.appendChild(lblRepeat);
+        mapRow.appendChild(inputRepeat);
+        mapRow.appendChild(lblNon);
+        mapRow.appendChild(inputNon);
+
+        const fields = document.createElement('div');
+        fields.className = 'ov-fields';
+
+        const fieldSteps = document.createElement('div');
+        fieldSteps.className = 'ov-field';
+        fieldSteps.appendChild(lblSteps);
+        fieldSteps.appendChild(inputSteps);
+
+        const fieldColor = document.createElement('div');
+        fieldColor.className = 'ov-field';
+        fieldColor.appendChild(lblColor);
+        fieldColor.appendChild(inputColor);
+
+        const fieldOpacity = document.createElement('div');
+        fieldOpacity.className = 'ov-field';
+        fieldOpacity.appendChild(lblOp);
+        fieldOpacity.appendChild(inputOp);
+
+        fields.appendChild(fieldSteps);
+        fields.appendChild(fieldColor);
+        fields.appendChild(fieldOpacity);
+
+        const anchorsRow = document.createElement('div');
+        anchorsRow.className = 'ov-row ov-anchors-row';
+        anchorsRow.appendChild(anchorsSpan);
+        anchorsRow.appendChild(btnClear);
+        anchorsRow.appendChild(btnDelete);
+
+        card.appendChild(headerRow);
+        card.appendChild(mapRow);
+        card.appendChild(fields);
+        card.appendChild(anchorsRow);
 
         overlayListContainer.appendChild(card);
     });

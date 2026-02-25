@@ -13,25 +13,43 @@
             <h3 class="subtitle">By Nick Vuci</h3>
         </div>
         <div class="header-lattice">
-            <label for="edo">EDO:</label>
-            <input type="number" id="edo" value="12" min="1" max="72">
-            <label for="intervalX">Interval X:</label>
-            <input type="number" id="intervalX" value="7" min="-72" max="72">
-            <label for="intervalZ">Interval Z:</label>
-            <input type="number" id="intervalZ" value="4" min="-72" max="72">
+            <div class="param-group">
+                <label for="edo">EDO</label>
+                <input type="number" id="edo" value="12" min="1" max="72">
+            </div>
+            <div class="param-group">
+                <label for="intervalX">Interval X</label>
+                <input type="number" id="intervalX" value="7" min="-72" max="72">
+            </div>
+            <div class="param-group">
+                <label for="intervalZ">Interval Z</label>
+                <input type="number" id="intervalZ" value="4" min="-72" max="72">
+            </div>
+            <button id="toggleControls" class="toggle-btn" title="Toggle controls">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9l6 6 6-6"/>
+                </svg>
+            </button>
         </div>
-            <div class="header-actions">
-            <button id="saveImageButton" class="primary-action">Save PNG</button>
-            <button id="savePdfButton" class="primary-action">Save PDF</button>
-            <button id="toggleControls" class="primary-action" title="Toggle controls">−</button>
+        <div class="header-actions">
+            <button id="copyLinkBtn" class="secondary-action" title="Copy shareable link to clipboard">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                Copy Link
+            </button>
+            <button id="saveImageButton" class="secondary-action">Save PNG</button>
+            <button id="savePdfButton" class="secondary-action">Save PDF</button>
+            <button id="resetBtn" class="secondary-action" title="Reset all settings to defaults">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                Reset
+            </button>
         </div>
     </div>
-    <div class="controls-content" id="controlsContent">
-        <fieldset>
-            <legend>Size &amp; Shape</legend>
+    <div class="controls-content collapsed" id="controlsContent">
+        <div class="control-card">
+            <h3 class="card-title">Size & Shape</h3>
             <!-- EDO / X / Z are in the header; canvas & export controls live here -->
-            <div class="control-group">
-                <label for="canvasSize">Canvas Size:</label>
+            <div class="control-group control-group-2col">
+                <label for="canvasSize">Canvas Size</label>
                 <select id="canvasSize">
                     <option value="A4">A4</option>
                     <option value="A3">A3</option>
@@ -39,70 +57,83 @@
                     <option value="Legal">Legal</option>
                     <option value="Custom" selected>Custom</option>
                 </select>
-                <label for="orientation">Orientation:</label>
+                <label for="orientation">Orientation</label>
                 <select id="orientation">
                     <option value="portrait">Vertical</option>
                     <option value="landscape">Horizontal</option>
                 </select>
             </div>
-            <div class="control-group" id="customSizeGroup" style="display: block;">
-                <label for="canvasWidth">Width (px):</label>
+            <div class="control-group control-group-2col" id="customSizeGroup">
+                <label for="canvasWidth">Width (px)</label>
                 <input type="number" id="canvasWidth" value="1000" min="100" max="2000">
-                <label for="canvasHeight">Height (px):</label>
+                <label for="canvasHeight">Height (px)</label>
                 <input type="number" id="canvasHeight" value="1000" min="100" max="2000">
             </div>
             <div class="control-group">
-                <label for="triangleSize">Triangle Size:</label>
+                <label for="triangleSize">Triangle Size</label>
                 <input type="number" id="triangleSize" value="75" min="10" max="200">
             </div>
-        </fieldset>
+        </div>
 
-        <fieldset>
-            <legend>Color</legend>
-            <div class="control-group">
-                <label for="colorX">X Axis:</label>
-                <input type="color" id="colorX" class="axis-color">
-                <label for="colorY">Y Axis:</label>
-                <input type="color" id="colorY" class="axis-color">
-                <label for="colorZ">Z Axis:</label>
-                <input type="color" id="colorZ" class="axis-color">
-            </div>
-            <div class="control-group">
-                <label for="backgroundColor">Background:</label>
-                <input type="color" id="backgroundColor">
-                <label for="labelColor">Labels:</label>
-                <input type="color" id="labelColor">
-                <label for="highlightZeroColor">Note-0</label>
-                <div class="inline-inputs">
-                    <input type="color" id="highlightZeroColor">
-                    <input type="checkbox" id="highlightZero" title="Toggle Note-0 highlight">
+        <div class="control-card">
+            <h3 class="card-title">Color</h3>
+            <div class="control-group axis-colors">
+                <div class="color-pair">
+                    <label for="colorX">X</label>
+                    <input type="color" id="colorX" class="axis-color">
+                </div>
+                <div class="color-pair">
+                    <label for="colorY">Y</label>
+                    <input type="color" id="colorY" class="axis-color">
+                </div>
+                <div class="color-pair">
+                    <label for="colorZ">Z</label>
+                    <input type="color" id="colorZ" class="axis-color">
                 </div>
             </div>
-        </fieldset>
+            <div class="separator"></div>
+            <div class="control-group axis-colors axis-colors-secondary">
+                <div class="color-pair">
+                    <label for="backgroundColor">Background</label>
+                    <input type="color" id="backgroundColor">
+                </div>
+                <div class="color-pair">
+                    <label for="labelColor">Labels</label>
+                    <input type="color" id="labelColor">
+                </div>
+                <div class="color-pair note-zero">
+                    <div class="note-zero-label">
+                        <label for="highlightZeroColor">Note-0</label>
+                        <input type="checkbox" id="highlightZero" title="Toggle Note-0 highlight">
+                    </div>
+                    <input type="color" id="highlightZeroColor">
+                </div>
+            </div>
+        </div>
 
-        <fieldset>
-            <legend>Scale Highlight</legend>
+        <div class="control-card">
+            <h3 class="card-title">Scale Highlight</h3>
             <div class="control-group">
-                <label for="scaleDegrees">Scale degrees:</label>
-                <textarea id="scaleDegrees" rows="2" placeholder="e.g. 0,2,4,5,7,9,11 (leave blank for none)"></textarea>
+                <label for="scaleDegrees">Scale degrees</label>
+                <textarea id="scaleDegrees" rows="2" placeholder="e.g. 0,2,4,5,7,9,11"></textarea>
             </div>
             <div class="control-group">
-                <label for="scaleSize">Scale label size:</label>
+                <label for="scaleSize">Scale label size</label>
                 <input type="number" id="scaleSize" value="1.5" min="0.5" max="4" step="0.1">
             </div>
             <div class="control-group">
-                <label for="scaleDots">Show dots:</label>
+                <label for="scaleDots">Show dots</label>
                 <input type="checkbox" id="scaleDots" checked>
             </div>
             <div class="control-group">
-                <label for="scaleDotColor">Dot color:</label>
+                <label for="scaleDotColor">Dot color</label>
                 <input type="color" id="scaleDotColor" value="#000000">
             </div>
             <div class="control-group">
-                <label for="scaleDotSize">Dot size (px):</label>
+                <label for="scaleDotSize">Dot size (px)</label>
                 <input type="number" id="scaleDotSize" value="6" min="1" max="50" step="1">
             </div>
-        </fieldset>
+        </div>
 
         <!-- Canvas & Export fieldset removed; options moved to Lattice Parameters -->
 
@@ -116,8 +147,14 @@
 <div class="workspace">
     <aside id="overlaySidebar" class="overlay-sidebar">
         <div class="overlay-header">
-            <h3>Chord Overlays</h3>
-            <button id="addOverlayBtn" title="Add a new overlay with its own steps, color, and anchors">Add Overlay</button>
+            <div class="overlay-header-title">
+                <h3>Chord Overlays</h3>
+                <span class="overlay-summary">Manage overlays</span>
+            </div>
+            <div class="overlay-header-actions">
+                <button id="addOverlayBtn" title="Add a new overlay with its own steps, color, and anchors">Add Overlay</button>
+                <button id="toggleSidebarBtn" class="sidebar-toggle" title="Collapse sidebar">⟨</button>
+            </div>
         </div>
         <div id="overlayList" class="overlay-list"></div>
     </aside>
@@ -128,7 +165,7 @@
 </div>
 
 <!-- Include jsPDF library for PDF saving -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <!-- App scripts split for maintainability; order matters (helpers -> geometry -> drawing -> overlays -> app) -->
 <script src="helpers.js"></script>
 <script src="geometry.js"></script>
