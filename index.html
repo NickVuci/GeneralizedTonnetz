@@ -38,6 +38,9 @@
                 <span class="settings-state" id="settingsStateText">Collapsed</span>
             </button>
             <div class="action-btns" id="actionBtns">
+                <div class="mobile-sheet-handle" data-sheet-handle aria-hidden="true">
+                    <span class="mobile-sheet-handle-bar"></span>
+                </div>
                 <button id="copyLinkBtn" class="secondary-action" title="Copy shareable link to clipboard">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                     Copy Link
@@ -58,6 +61,9 @@
         <span class="collapsed-hint">Settings are collapsed</span>
     </div>
     <div class="controls-content collapsed" id="controlsContent">
+        <div class="mobile-sheet-handle" data-sheet-handle aria-hidden="true">
+            <span class="mobile-sheet-handle-bar"></span>
+        </div>
         <div class="control-card">
             <h3 class="card-title">Size & Shape</h3>
             <!-- EDO / X / Z are in the header; canvas & export controls live here -->
@@ -162,6 +168,9 @@
 <!-- Workspace: overlay sidebar on the left, canvas on the right -->
 <div class="workspace">
     <aside id="overlaySidebar" class="overlay-sidebar">
+        <div class="mobile-sheet-handle" data-sheet-handle aria-hidden="true">
+            <span class="mobile-sheet-handle-bar"></span>
+        </div>
         <div class="overlay-header">
             <div class="overlay-header-title">
                 <h3>Chord Overlays</h3>
