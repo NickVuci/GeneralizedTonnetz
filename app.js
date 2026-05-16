@@ -723,11 +723,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 handle: controlsContent?.querySelector('[data-sheet-handle]'),
                 open() {
                     setControlsCollapsedState(false);
+                    controlsContent?.classList.remove('collapsed');
                     controlsContent?.classList.add('mobile-open');
                 },
                 close() {
-                    setControlsCollapsedState(true);
                     controlsContent?.classList.remove('mobile-open');
+                    setControlsCollapsedState(true);
                 }
             },
             chords: {

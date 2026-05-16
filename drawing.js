@@ -96,9 +96,14 @@ function drawChordShapeAtAnchor(ctx, aq, ar, size, edo, intervalX, intervalZ, st
     // Standard triangle mode (original logic)
     if (steps.length >= 3) {
         const triSteps = steps.slice(0, 3);
+        const triOffsets = triSteps.map(step => ({
+            step,
+            offset: solveStepToUV(((step % edo) + edo) % edo, intervalX, intervalZ, edo)
+        }));
         const triNodes = [];
-        for (const step of triSteps) {
-            const { u, v } = solveStepToUV(((step % edo) + edo) % edo, intervalX, intervalZ, edo);
+        for (const item of triOffsets) {
+            if (!item.offset) continue;
+            const { u, v } = item.offset;
             const { x, y } = qrToPixel(aq + u, ar + v, size);
             triNodes.push({ x, y });
         }
@@ -120,8 +125,9 @@ function drawChordShapeAtAnchor(ctx, aq, ar, size, edo, intervalX, intervalZ, st
             // Degenerate or incomplete triangle: skip triangular stroke to avoid
             // out-of-bounds accesses. Fall back to drawing the individual arms
             // for the available steps to give the user visual feedback.
-            for (const step of triSteps) {
-                drawFourArmsForStep(ctx, aq, ar, size, edo, intervalX, intervalZ, step, anchorPx, p1, p2);
+            for (const item of triOffsets) {
+                if (!item.offset) continue;
+                drawFourArmsForStep(ctx, aq, ar, size, edo, intervalX, intervalZ, item.step, anchorPx, p1, p2);
             }
         }
 

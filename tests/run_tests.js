@@ -37,6 +37,11 @@ function suite(name, fn) {
   fn();
 }
 
+function normalize(value, modulus) {
+  value %= modulus;
+  return value < 0 ? value + modulus : value;
+}
+
 // ── Sandbox setup ───────────────────────────────────────────────────────────────
 function loadIntoSandbox(path, sandbox) {
   const code = fs.readFileSync(path, 'utf8');
@@ -186,6 +191,18 @@ suite('solveStepToUV', () => {
   assertEq(val11, 11, 'step=11 maps correctly');
 });
 
+suite('solveStepToUV larger EDO regression', () => {
+  const result = sandbox.solveStepToUV(25, 1, 1, 50);
+  assert(result !== null, 'finds a solution outside the old radius-12 window');
+  assert(result.u !== 0 || result.v !== 0, 'does not collapse to the origin for step 25 in 50-EDO');
+  assertEq(normalize(result.u * 1 + result.v * 1, 50), 25, 'large-EDO solution satisfies the congruence');
+});
+
+suite('solveStepToUV unrepresentable steps', () => {
+  const result = sandbox.solveStepToUV(1, 2, 4, 12);
+  assertEq(result, null, 'returns null when the step is not representable');
+});
+
 suite('findPeriodVectors', () => {
   // Standard 12-EDO, ix=7, iz=4
   const { p1, p2 } = sandbox.findPeriodVectors(7, 4, 12);
@@ -220,6 +237,13 @@ suite('findPeriodVectors edge cases', () => {
   assert(crossB !== 0, 'non-collinear for ix=iz=5');
 });
 
+suite('findPeriodVectors larger EDO regression', () => {
+  const { p1, p2 } = sandbox.findPeriodVectors(1, 1, 33);
+  assertEq(normalize(1 * p1.u + 1 * p1.v, 33), 0, 'p1 is zero-congruent in 33-EDO');
+  assertEq(normalize(1 * p2.u + 1 * p2.v, 33), 0, 'p2 is zero-congruent in 33-EDO');
+  assert(p1.u * p2.v - p1.v * p2.u !== 0, 'period vectors stay non-collinear in 33-EDO');
+});
+
 suite('findNearestOffsets', () => {
   // Reset cache
   sandbox.findNearestOffsets._cache = new Map();
@@ -240,6 +264,17 @@ suite('findNearestOffsets', () => {
   // Sorted by distance (d2 non-decreasing)
   for (let i = 1; i < offsets.length; i++) {
     assert(offsets[i].d2 >= offsets[i - 1].d2, 'sorted by distance');
+  }
+});
+
+suite('findNearestOffsets larger EDO regression', () => {
+  sandbox.findNearestOffsets._cache = new Map();
+  const size = 40;
+  const anchorPx = sandbox.qrToPixel(0, 0, size);
+  const offsets = sandbox.findNearestOffsets(25, 1, 1, 50, 0, 0, size, anchorPx, 4);
+  assert(offsets.length >= 4, 'finds four congruent offsets beyond the old maxRange=40 cap');
+  for (const offset of offsets) {
+    assertEq(normalize(offset.u + offset.v, 50), 25, 'offset remains congruent in 50-EDO');
   }
 });
 

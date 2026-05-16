@@ -932,10 +932,13 @@ input[type="color"]::-webkit-color-swatch {
   .controls-content.mobile-open {
     transform: translateY(var(--sheet-drag-offset)) !important;
     pointer-events: auto;
+    max-height: 78vh !important;
+    padding-top: 12px !important;
+    padding-bottom: 0 !important;
     opacity: 1 !important;
-    visibility: visible;
+    visibility: visible !important;
   }
-  .controls-content.collapsed {
+  .controls-content.collapsed:not(.mobile-open) {
     transform: translateY(calc(110% + var(--sheet-drag-offset))) !important;
     pointer-events: none;
     opacity: 1 !important;

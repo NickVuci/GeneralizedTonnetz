@@ -1,6 +1,142 @@
 // Geometry and lattice math helpers
 const SQRT3_HALF = Math.sqrt(3) / 2;
 
+function mod(value, modulus) {
+    if (!Number.isFinite(modulus) || modulus === 0) return value;
+    const remainder = value % modulus;
+    return remainder < 0 ? remainder + modulus : remainder;
+}
+
+function gcd(a, b) {
+    let left = Math.abs(a);
+    let right = Math.abs(b);
+    while (right !== 0) {
+        const next = left % right;
+        left = right;
+        right = next;
+    }
+    return left;
+}
+
+function extendedGcd(a, b) {
+    let oldR = a;
+    let r = b;
+    let oldS = 1;
+    let s = 0;
+    let oldT = 0;
+    let t = 1;
+
+    while (r !== 0) {
+        const q = Math.trunc(oldR / r);
+        const nextR = oldR - q * r;
+        oldR = r;
+        r = nextR;
+
+        const nextS = oldS - q * s;
+        oldS = s;
+        s = nextS;
+
+        const nextT = oldT - q * t;
+        oldT = t;
+        t = nextT;
+    }
+
+    if (oldR < 0) {
+        oldR = -oldR;
+        oldS = -oldS;
+        oldT = -oldT;
+    }
+
+    return { g: oldR, x: oldS, y: oldT };
+}
+
+function modInverse(value, modulus) {
+    if (modulus === 1) return 0;
+    const result = extendedGcd(value, modulus);
+    if (result.g !== 1) return null;
+    return mod(result.x, modulus);
+}
+
+function chooseCenteredRepresentative(value, period) {
+    if (!Number.isFinite(period) || period <= 0) return value;
+    const normalized = mod(value, period);
+    const shifted = normalized - period;
+    if (Math.abs(shifted) < Math.abs(normalized)) return shifted;
+    return normalized;
+}
+
+function compareVectors(a, b) {
+    return (a.score - b.score)
+        || (a.d2 - b.d2)
+        || (Math.abs(a.u) - Math.abs(b.u))
+        || (Math.abs(a.v) - Math.abs(b.v))
+        || (a.u - b.u)
+        || (a.v - b.v);
+}
+
+function solveSingleVariableCongruence(coefficient, target, modulus) {
+    if (!Number.isFinite(modulus) || modulus <= 0) return null;
+
+    const divisor = gcd(coefficient, modulus);
+    if (mod(target, divisor) !== 0) return null;
+
+    const reducedCoefficient = coefficient / divisor;
+    const reducedTarget = target / divisor;
+    const reducedModulus = modulus / divisor;
+    const inverse = modInverse(mod(reducedCoefficient, reducedModulus), reducedModulus);
+    if (inverse == null) return null;
+
+    return {
+        base: mod(inverse * reducedTarget, reducedModulus),
+        period: reducedModulus
+    };
+}
+
+function enumerateStepSolutionClasses(step, ix, iz, edo) {
+    if (!Number.isFinite(edo) || edo <= 0) return [];
+
+    const normalizedStep = mod(step, edo);
+    const classes = [];
+    const seen = new Set();
+
+    for (let uResidue = 0; uResidue < edo; uResidue++) {
+        const rhs = mod(normalizedStep - ix * uResidue, edo);
+        const vClass = solveSingleVariableCongruence(iz, rhs, edo);
+        if (!vClass) continue;
+
+        const key = `${uResidue}|${vClass.base}|${vClass.period}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        classes.push({ uResidue, vBase: vClass.base, vPeriod: vClass.period });
+    }
+
+    return classes;
+}
+
+function enumerateRepresentativeStepVectors(step, ix, iz, edo, includeZero = false) {
+    const solutions = [];
+    const seen = new Set();
+
+    for (const item of enumerateStepSolutionClasses(step, ix, iz, edo)) {
+        const u = chooseCenteredRepresentative(item.uResidue, edo);
+        const v = chooseCenteredRepresentative(item.vBase, item.vPeriod);
+        if (!includeZero && u === 0 && v === 0) continue;
+
+        const key = `${u},${v}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        solutions.push({
+            u,
+            v,
+            score: Math.abs(u) + Math.abs(v),
+            d2: u * u + v * v
+        });
+    }
+
+    solutions.sort(compareVectors);
+    return solutions;
+}
+
 function qrToPixel(q, r, size) {
     const h = size * SQRT3_HALF;
     const col = q + Math.floor(r / 2);
@@ -97,66 +233,53 @@ function pixelToQR(px, py, size) {
 }
 
 function solveStepToUV(step, ix, iz, edo) {
-    // Find small integers u, v s.t. u*ix + v*iz ≡ step (mod edo)
-    const RANGE = 12; // search radius
-    let best = null;
-    for (let u = -RANGE; u <= RANGE; u++) {
-        for (let v = -RANGE; v <= RANGE; v++) {
-            let val = (u * ix + v * iz) % edo;
-            if (val < 0) val += edo;
-            if (val === step) {
-                const score = Math.abs(u) + Math.abs(v);
-                if (!best || score < best.score) best = { u, v, score };
-            }
-        }
-    }
-    if (best) return best;
-    // Fallback: project along q or r only
-    for (let u = -RANGE; u <= RANGE; u++) {
-        let val = (u * ix) % edo; if (val < 0) val += edo;
-        if (val === step) return { u, v: 0 };
-    }
-    for (let v = -RANGE; v <= RANGE; v++) {
-        let val = (v * iz) % edo; if (val < 0) val += edo;
-        if (val === step) return { u: 0, v };
-    }
-    return { u: 0, v: 0 };
+    const solutions = enumerateRepresentativeStepVectors(step, ix, iz, edo, true);
+    if (!solutions.length) return null;
+    return { u: solutions[0].u, v: solutions[0].v };
 }
 
 function findPeriodVectors(ix, iz, edo) {
-    // Find two small, non-collinear vectors (u,v) with ix*u + iz*v ≡ 0 (mod edo)
-    const RANGE = 16;
-    let candidates = [];
-    for (let u = -RANGE; u <= RANGE; u++) {
-        for (let v = -RANGE; v <= RANGE; v++) {
-            if (u === 0 && v === 0) continue;
-            let val = (ix * u + iz * v) % edo;
-            if (val < 0) val += edo;
-            if (val === 0) {
-                const score = Math.abs(u) + Math.abs(v);
-                candidates.push({ u, v, score });
-            }
+    const candidates = enumerateRepresentativeStepVectors(0, ix, iz, edo, false);
+    const axisCandidates = [
+        { u: edo / Math.max(1, gcd(ix, edo)), v: 0 },
+        { u: 0, v: edo / Math.max(1, gcd(iz, edo)) }
+    ];
+
+    for (const candidate of axisCandidates) {
+        const key = `${candidate.u},${candidate.v}`;
+        if (candidates.some(existing => `${existing.u},${existing.v}` === key)) continue;
+        candidates.push({
+            u: candidate.u,
+            v: candidate.v,
+            score: Math.abs(candidate.u) + Math.abs(candidate.v),
+            d2: candidate.u * candidate.u + candidate.v * candidate.v
+        });
+    }
+
+    candidates.sort(compareVectors);
+
+    let p1 = candidates[0] || { u: 1, v: 0 };
+    let p2 = null;
+    for (const candidate of candidates) {
+        if (candidate.u === p1.u && candidate.v === p1.v) continue;
+        if (p1.u * candidate.v - p1.v * candidate.u !== 0) {
+            p2 = candidate;
+            break;
         }
     }
-    // Sort by Manhattan length
-    candidates.sort((a, b) => a.score - b.score);
-    let p1 = candidates[0] || { u: 1, v: 0 };
-    // Choose p2 not collinear with p1
-    let p2 = null;
-    for (const c of candidates) {
-        if (p1.u * c.v - p1.v * c.u !== 0) { p2 = c; break; }
-    }
-    // If no non-collinear p2 found, construct one perpendicular-ish to p1
+
     if (!p2) {
-        // Use a vector orthogonal in lattice space: swap and negate
-        p2 = { u: -p1.v, v: p1.u, score: Math.abs(p1.v) + Math.abs(p1.u) };
+        p2 = (p1.u !== 0)
+            ? { u: 0, v: edo / Math.max(1, gcd(iz, edo)) }
+            : { u: edo / Math.max(1, gcd(ix, edo)), v: 0 };
     }
+
     return { p1, p2 };
 }
 
 function findNearestOffsets(step, ix, iz, edo, aq, ar, size, anchorPx, need = 4) {
-    // Progressive search for nearest congruent offsets by true pixel distance
-    // Use a simple memoization cache keyed by (step,ix,iz,edo,aq,ar,size)
+    // Enumerate congruent offset classes exactly, then sample nearby lifts and
+    // sort by the true pixel distance from the anchor.
     if (typeof findNearestOffsets._cache === 'undefined') findNearestOffsets._cache = new Map();
     const cacheKey = [step, ix, iz, edo, aq, ar, size].join('|');
     if (findNearestOffsets._cache.has(cacheKey)) {
@@ -165,31 +288,38 @@ function findNearestOffsets(step, ix, iz, edo, aq, ar, size, anchorPx, need = 4)
     }
 
     const seen = new Set();
-    let candidates = [];
-    let range = 4;
-    const maxRange = 40;
-    while (candidates.length < need && range <= maxRange) {
-        for (let u = -range; u <= range; u++) {
-            for (let v = -range; v <= range; v++) {
-                if (u === 0 && v === 0) continue; // skip anchor itself
-                let val = (ix * u + iz * v) % edo;
-                if (val < 0) val += edo;
-                if (val !== step) continue;
-                const key = u + "," + v;
+    const candidates = [];
+    const classes = enumerateStepSolutionClasses(step, ix, iz, edo);
+    const shiftRadius = Math.max(1, Math.min(3, need));
+
+    for (const item of classes) {
+        const centeredU = chooseCenteredRepresentative(item.uResidue, edo);
+        const centeredV = chooseCenteredRepresentative(item.vBase, item.vPeriod);
+        for (let du = -shiftRadius; du <= shiftRadius; du++) {
+            for (let dv = -shiftRadius; dv <= shiftRadius; dv++) {
+                const u = centeredU + du * edo;
+                const v = centeredV + dv * item.vPeriod;
+                if (u === 0 && v === 0) continue;
+
+                const key = `${u},${v}`;
                 if (seen.has(key)) continue;
                 seen.add(key);
+
                 const pt = qrToPixel(aq + u, ar + v, size);
                 const dx = pt.x - anchorPx.x;
                 const dy = pt.y - anchorPx.y;
-                const d2 = dx * dx + dy * dy;
-                const man = Math.abs(u) + Math.abs(v);
-                candidates.push({ u, v, d2, man });
+                candidates.push({
+                    u,
+                    v,
+                    d2: dx * dx + dy * dy,
+                    man: Math.abs(u) + Math.abs(v)
+                });
             }
         }
-        range += 4;
     }
+
     candidates.sort((a, b) => (a.d2 - b.d2) || (a.man - b.man));
-    // Cache the full sorted candidates for this key (up to a reasonable cap)
+
     const CAP = 200;
     findNearestOffsets._cache.set(cacheKey, candidates.slice(0, CAP));
     return candidates.slice(0, need);
@@ -226,9 +356,10 @@ function pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
 // actually contains the pixel. Returns null if not determinable.
 function anchorFromClick(px, py, size, edo, ix, iz, steps) {
     if (!steps || steps.length < 3) return null;
-    const triSteps = steps.slice(0, 3).map(s => ((s % edo) + edo) % edo);
+    const triSteps = steps.slice(0, 3).map(s => mod(s, edo));
     // Convert to lattice vectors relative to anchor
     const uv = triSteps.map(s => solveStepToUV(s, ix, iz, edo));
+    if (uv.some(v => !v)) return null;
     // Ensure we have the anchor at (0,0) included; if not, prefer the smallest vector as anchor
     let zeroIdx = uv.findIndex(v => v.u === 0 && v.v === 0);
     let basis;
