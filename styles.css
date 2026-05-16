@@ -184,21 +184,6 @@ input[type="radio"] {
   letter-spacing: 0.2px;
 }
 
-.settings-state {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 20px;
-  padding: 0 8px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-}
-
 button {
   cursor: pointer;
   border: none;
@@ -265,12 +250,6 @@ button {
 .toggle-btn.expanded .toggle-icon {
   transform: rotate(180deg);
 }
-.toggle-btn.expanded .settings-state {
-  color: var(--primary);
-  border-color: rgba(55, 148, 255, 0.55);
-  background: rgba(55, 148, 255, 0.1);
-}
-
 .collapsed-settings-strip {
   display: none;
   align-items: center;

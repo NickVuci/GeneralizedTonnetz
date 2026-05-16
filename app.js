@@ -32,7 +32,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const toggleControlsBtn = document.getElementById('toggleControls');
     const controlsContainer = document.getElementById('controls');
     const controlsContent = document.getElementById('controlsContent');
-    const settingsStateText = document.getElementById('settingsStateText');
     const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
     const overlaySidebar = document.getElementById('overlaySidebar');
     const actionBtns = document.getElementById('actionBtns');
@@ -116,9 +115,6 @@ document.addEventListener('DOMContentLoaded', function () {
             toggleControlsBtn.classList.toggle('expanded', !isCollapsed);
             toggleControlsBtn.title = isCollapsed ? 'Expand settings' : 'Collapse settings';
             toggleControlsBtn.setAttribute('aria-expanded', String(!isCollapsed));
-        }
-        if (settingsStateText) {
-            settingsStateText.textContent = isCollapsed ? 'Collapsed' : 'Expanded';
         }
         controlsContainer?.classList.toggle('settings-collapsed', isCollapsed);
     }
