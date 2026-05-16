@@ -32,6 +32,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const controlsContent = document.getElementById('controlsContent');
     const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
     const overlaySidebar = document.getElementById('overlaySidebar');
+    const moreMenuBtn = document.getElementById('moreMenuBtn');
+    const actionBtns = document.getElementById('actionBtns');
+    const controlsBackdrop = document.getElementById('controlsBackdrop');
     // Debounced draw function will be assigned after drawTonnetz is defined.
     let debouncedDraw = null;
     // Retain the last full-resolution offscreen canvas for high-quality export
@@ -86,6 +89,28 @@ document.addEventListener('DOMContentLoaded', function () {
     }, { passive: false });
     toggleControlsBtn?.addEventListener('click', toggleControls);
     toggleSidebarBtn?.addEventListener('click', toggleSidebar);
+    controlsBackdrop?.addEventListener('click', toggleControls);
+
+    // More-menu (⋮) toggle — shown on mobile, hidden on desktop
+    if (moreMenuBtn && actionBtns) {
+        moreMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = actionBtns.classList.toggle('open');
+            moreMenuBtn.setAttribute('aria-expanded', String(isOpen));
+        });
+        // Close on any outside click
+        document.addEventListener('click', (e) => {
+            if (!actionBtns.contains(e.target) && e.target !== moreMenuBtn) {
+                actionBtns.classList.remove('open');
+                moreMenuBtn.setAttribute('aria-expanded', 'false');
+            }
+        });
+        // Close after an action button is tapped
+        actionBtns.addEventListener('click', () => {
+            actionBtns.classList.remove('open');
+            moreMenuBtn.setAttribute('aria-expanded', 'false');
+        });
+    }
 
     // Start with controls collapsed by default
     try {
@@ -93,8 +118,7 @@ document.addEventListener('DOMContentLoaded', function () {
             controlsContent.classList.add('collapsed');
         }
         if (toggleControlsBtn) {
-            // toggleControlsBtn.textContent = '+'; // Don't overwrite SVG
-            toggleControlsBtn.title = 'Expand controls';
+            toggleControlsBtn.title = 'Expand settings';
         }
     } catch (e) { console.error('Error initializing controls collapse state', e); }
 
@@ -417,7 +441,11 @@ document.addEventListener('DOMContentLoaded', function () {
     function toggleControls() {
         const isCollapsed = controlsContent.classList.toggle('collapsed');
         toggleControlsBtn.classList.toggle('expanded', !isCollapsed);
-        toggleControlsBtn.title = isCollapsed ? 'Expand controls' : 'Collapse controls';
+        toggleControlsBtn.title = isCollapsed ? 'Expand settings' : 'Collapse settings';
+        // Show/hide backdrop on mobile (bottom-sheet mode)
+        if (controlsBackdrop) {
+            controlsBackdrop.classList.toggle('visible', !isCollapsed && window.innerWidth <= 768);
+        }
         saveStateToStorage();
     }
 
@@ -540,9 +568,11 @@ document.addEventListener('DOMContentLoaded', function () {
             if (state.controlsCollapsed) {
                 controlsContent?.classList.add('collapsed');
                 if (toggleControlsBtn) toggleControlsBtn.classList.remove('expanded');
+                if (controlsBackdrop) controlsBackdrop.classList.remove('visible');
             } else {
                 controlsContent?.classList.remove('collapsed');
                 if (toggleControlsBtn) toggleControlsBtn.classList.add('expanded');
+                if (controlsBackdrop) controlsBackdrop.classList.toggle('visible', window.innerWidth <= 768);
             }
             if (state.sidebarCollapsed) {
                 overlaySidebar?.classList.add('collapsed');
