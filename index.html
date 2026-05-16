@@ -28,22 +28,30 @@
                 <label for="intervalZ">Interval Z</label>
                 <input type="number" id="intervalZ" value="4" min="-72" max="72">
             </div>
-            <button id="toggleControls" class="toggle-btn" title="Toggle controls">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M6 9l6 6 6-6"/>
-                </svg>
-            </button>
         </div>
         <div class="header-actions">
-            <button id="copyLinkBtn" class="secondary-action" title="Copy shareable link to clipboard">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                Copy Link
+            <button id="toggleControls" class="toggle-btn" title="Toggle settings">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 9l6 6 6-6"/>
+                </svg>
+                <span class="settings-label">Settings</span>
             </button>
-            <button id="saveImageButton" class="secondary-action">Save PNG</button>
-            <button id="savePdfButton" class="secondary-action">Save PDF</button>
-            <button id="resetBtn" class="secondary-action" title="Reset all settings to defaults">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                Reset
+            <div class="action-btns" id="actionBtns">
+                <button id="copyLinkBtn" class="secondary-action" title="Copy shareable link to clipboard">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    Copy Link
+                </button>
+                <button id="saveImageButton" class="secondary-action">Save PNG</button>
+                <button id="savePdfButton" class="secondary-action">Save PDF</button>
+                <button id="resetBtn" class="secondary-action" title="Reset all settings to defaults">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    Reset
+                </button>
+            </div>
+            <button id="moreMenuBtn" class="icon-btn" title="More options" aria-label="More options" aria-expanded="false">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <circle cx="12" cy="5" r="2.5"/><circle cx="12" cy="12" r="2.5"/><circle cx="12" cy="19" r="2.5"/>
+                </svg>
             </button>
         </div>
     </div>
@@ -145,6 +153,9 @@
             <!-- Draw and Save Image moved to header -->
     </div>
 </div>
+
+<!-- Backdrop for mobile settings sheet -->
+<div id="controlsBackdrop" class="controls-backdrop"></div>
 
 <!-- Workspace: overlay sidebar on the left, canvas on the right -->
 <div class="workspace">

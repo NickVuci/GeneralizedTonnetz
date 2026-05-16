@@ -165,8 +165,44 @@ input[type="radio"] {
   display: flex;
   gap: var(--spacing-sm);
   align-items: center;
-  min-width: 260px;
+  position: relative; /* For more-menu dropdown positioning */
   justify-content: flex-end;
+}
+
+.action-btns {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* More-menu toggle (hidden on desktop, shown on mobile) */
+#moreMenuBtn {
+  display: none;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: var(--radius);
+  flex-shrink: 0;
+}
+#moreMenuBtn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-active);
+  color: var(--text);
+}
+#moreMenuBtn:active {
+  background: var(--surface-active);
+}
+
+/* Settings label (hidden on desktop) */
+.settings-label {
+  display: none;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 4px;
 }
 
 button {
@@ -213,7 +249,6 @@ button {
   font-size: 20px;
   padding: 0;
   border-radius: 50%;
-  margin-left: auto; /* Push to right if in flex container */
 }
 .toggle-btn:hover {
   color: var(--text);
@@ -243,6 +278,22 @@ button {
   padding-bottom: 0;
   opacity: 0;
   border-bottom: none;
+}
+
+/* =========================
+   Controls Backdrop (mobile bottom sheet)
+   ========================= */
+.controls-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 149;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+.controls-backdrop.visible {
+  display: block;
 }
 
 /* Cards */
@@ -642,11 +693,13 @@ input[type="color"]::-webkit-color-swatch {
   transform: translateX(-50%) translateY(0);
 }
 
-/* Responsive */
+/* ===========================
+   Responsive: Tablet / large breakpoint (≤1000px)
+   =========================== */
 @media (max-width: 1000px) {
-    .controls-content {
-        justify-content: flex-start;
-    }
+  .controls-content {
+    justify-content: flex-start;
+  }
   .controls-header {
     flex-wrap: wrap;
     height: auto;
@@ -656,14 +709,13 @@ input[type="color"]::-webkit-color-swatch {
   .title-section {
     flex: 1 1 auto;
     order: 1;
-    min-width: 160px;
+    min-width: 140px;
   }
   .header-actions {
     flex: 0 1 auto;
     order: 2;
     justify-content: flex-end;
     padding-bottom: 0;
-    min-width: auto;
   }
   .header-lattice {
     order: 3;
@@ -671,56 +723,195 @@ input[type="color"]::-webkit-color-swatch {
     border: none;
     height: auto;
     padding: 6px 0 4px;
+    justify-content: flex-start;
+    gap: var(--spacing-lg);
   }
 }
 
-/* Tablet portrait */
+/* ===========================
+   Responsive: Mobile (≤768px) — bottom-panel sidebar + bottom-sheet settings
+   =========================== */
 @media (max-width: 768px) {
+  /* --- Header --- */
+  .controls-header {
+    min-height: 52px;
+  }
+  .title-section {
+    min-width: 0;
+  }
+
+  /* Show more-menu button; keep action-btns as a dropdown */
+  #moreMenuBtn {
+    display: inline-flex;
+  }
+  .action-btns {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--spacing-sm);
+    gap: 4px;
+    z-index: 300;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    min-width: 170px;
+  }
+  .action-btns.open {
+    display: flex;
+  }
+  .action-btns button {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 10px 14px;
+    font-size: 13px;
+    height: auto;
+    min-height: 44px;
+    border-radius: var(--radius);
+    border: none;
+  }
+  .action-btns button:hover {
+    background: var(--surface-hover);
+  }
+
+  /* Settings toggle: add label on mobile */
+  .settings-label {
+    display: inline;
+  }
+  #toggleControls {
+    border-radius: var(--radius);
+    width: auto;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  #toggleControls:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-active);
+    color: var(--text);
+  }
+  #toggleControls.expanded {
+    background: rgba(55, 148, 255, 0.12);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  /* --- Controls panel: slide-up bottom sheet --- */
+  .controls-content {
+    position: fixed !important;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 150;
+    max-height: 78vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    border-radius: 16px 16px 0 0;
+    border-bottom: none !important;
+    box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.65);
+    /* Replace max-height transition with translate */
+    transform: translateY(0);
+    transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    opacity: 1 !important;
+    padding: 20px var(--spacing-lg) var(--spacing-lg) !important;
+    /* Pull-handle */
+    padding-top: 28px !important;
+  }
+  /* Pull-handle bar */
+  .controls-content::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: var(--border-active);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+  .controls-content.collapsed {
+    transform: translateY(105%) !important;
+    pointer-events: none;
+  }
+
+  /* --- Workspace & sidebar: canvas on top, sidebar bar at bottom --- */
   .workspace {
     flex-direction: column;
-  }
-  .overlay-sidebar {
-    width: 100%;
-    max-width: 100%;
-    min-width: 100%;
-    max-height: 35vh;
-    resize: vertical;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-  .overlay-sidebar.collapsed {
-    max-height: 44px;
-    min-height: 44px;
-    width: 100%;
-    min-width: 100%;
-    max-width: 100%;
-    resize: none;
   }
   .canvas-wrap {
     flex: 1;
     min-height: 0;
+    order: 1;
+    /* Padding for the collapsed sidebar bar height */
+    padding-bottom: 52px;
   }
+  .overlay-sidebar {
+    order: 2;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    max-height: 50vh;
+    min-height: 52px;
+    border-right: none;
+    border-top: 1px solid var(--border);
+    border-bottom: none;
+    resize: none !important;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    /* Fixed at bottom so it doesn't affect canvas layout */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+  }
+  .overlay-sidebar.collapsed {
+    max-height: 52px;
+    min-height: 52px;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    resize: none !important;
+    overflow: hidden;
+  }
+  /* On mobile, always show the sidebar header (title + toggle), even when collapsed */
+  .overlay-sidebar.collapsed .overlay-header-title {
+    display: flex !important;
+  }
+  .overlay-sidebar.collapsed .overlay-summary {
+    display: none !important;
+  }
+  .overlay-sidebar.collapsed #addOverlayBtn {
+    display: none !important;
+  }
+  .overlay-sidebar.collapsed .overlay-list {
+    display: none !important;
+  }
+  /* Hide summary text on mobile to keep header bar compact */
+  .overlay-summary {
+    display: none;
+  }
+
+  /* Cards */
   .control-card {
     min-width: 220px;
   }
-  /* Increase touch targets inside the header at tablet size */
-  .controls-header {
-    min-height: 52px;
-  }
 }
 
-/* Large phone */
+/* ===========================
+   Responsive: Large phone (≤600px)
+   =========================== */
 @media (max-width: 600px) {
-  .header-actions {
-    gap: var(--spacing-xs);
-  }
-  .header-actions button {
-    padding: 6px 10px;
-    font-size: 12px;
-    min-height: 44px;
+  .header-lattice {
+    gap: var(--spacing-md);
   }
   .param-group input[type="number"] {
-    width: 48px;
+    width: 52px;
     font-size: 16px; /* Prevent iOS auto-zoom */
     min-height: 44px;
   }
@@ -735,7 +926,7 @@ input[type="color"]::-webkit-color-swatch {
     gap: var(--spacing-sm);
   }
   .controls-content {
-    padding: var(--spacing-md);
+    padding: var(--spacing-md) !important;
     gap: var(--spacing-md);
   }
   .control-card {
@@ -750,7 +941,9 @@ input[type="color"]::-webkit-color-swatch {
   }
 }
 
-/* Small phone */
+/* ===========================
+   Responsive: Small phone (≤375px)
+   =========================== */
 @media (max-width: 375px) {
   .subtitle {
     display: none;
@@ -759,15 +952,9 @@ input[type="color"]::-webkit-color-swatch {
     font-size: 14px;
   }
   .title-section {
-    min-width: auto;
+    min-width: 0;
   }
-  .header-actions button {
-    padding: 6px 8px;
-    font-size: 11px;
-    min-height: 44px;
-  }
-  /* Hide Copy Link and Save PDF on very small screens to reduce clutter */
-  #copyLinkBtn,
+  /* On very small screens hide PDF (save space in the more-menu) */
   #savePdfButton {
     display: none;
   }
@@ -886,10 +1073,11 @@ input[type="color"]::-webkit-color-swatch {
     min-height: 44px;
   }
 
-  /* Slightly larger overlay toggle */
-  .sidebar-toggle {
-    width: 36px;
-    height: 36px;
+  /* Sidebar toggle and more-menu button */
+  .sidebar-toggle,
+  #moreMenuBtn {
+    width: 44px;
+    height: 44px;
   }
 
   /* Param group inputs keep compact width but meet height target */
