@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const scaleDotColorInput = document.getElementById('scaleDotColor');
     const scaleDotSizeInput = document.getElementById('scaleDotSize');
     const addOverlayBtn = document.getElementById('addOverlayBtn');
+    const overlayListContainer = document.getElementById('overlayList');
     const saveImageButton = document.getElementById('saveImageButton');
     const savePdfButton = document.getElementById('savePdfButton');
     const toggleControlsBtn = document.getElementById('toggleControls');
