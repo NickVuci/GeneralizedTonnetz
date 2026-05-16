@@ -15,20 +15,6 @@
             <h1 class="main-title">Generalized Tonnetz</h1>
             <h3 class="subtitle">By Nick Vuci</h3>
         </div>
-        <div class="header-lattice">
-            <div class="param-group">
-                <label for="edo">EDO</label>
-                <input type="number" id="edo" value="12" min="1" max="72">
-            </div>
-            <div class="param-group">
-                <label for="intervalX">Interval X</label>
-                <input type="number" id="intervalX" value="7" min="-72" max="72">
-            </div>
-            <div class="param-group">
-                <label for="intervalZ">Interval Z</label>
-                <input type="number" id="intervalZ" value="4" min="-72" max="72">
-            </div>
-        </div>
         <div class="header-actions">
             <button id="toggleControls" class="toggle-btn" title="Toggle settings" aria-controls="controlsContent" aria-expanded="false">
                 <svg class="toggle-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -59,8 +45,24 @@
         </div>
         <div class="controls-scroll-body">
         <div class="control-card">
+            <h3 class="card-title">Lattice</h3>
+            <div class="settings-lattice">
+                <div class="param-group">
+                    <label for="edo">EDO</label>
+                    <input type="number" id="edo" value="12" min="1" max="72">
+                </div>
+                <div class="param-group">
+                    <label for="intervalX">Interval X</label>
+                    <input type="number" id="intervalX" value="7" min="-72" max="72">
+                </div>
+                <div class="param-group">
+                    <label for="intervalZ">Interval Z</label>
+                    <input type="number" id="intervalZ" value="4" min="-72" max="72">
+                </div>
+            </div>
+        </div>
+        <div class="control-card">
             <h3 class="card-title">Size & Shape</h3>
-            <!-- EDO / X / Z are in the header; canvas & export controls live here -->
             <div class="control-group control-group-2col">
                 <label for="canvasSize">Canvas Size</label>
                 <select id="canvasSize">

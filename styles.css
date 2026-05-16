@@ -116,18 +116,12 @@ input[type="radio"] {
   font-weight: 400;
 }
 
-/* Global Params (Lattice) */
-.header-lattice {
+/* Settings lattice controls */
+.settings-lattice {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  flex: 1;
-  justify-content: center;
-  border-left: 1px solid var(--border);
-  border-right: 1px solid var(--border);
-  padding: 0 var(--spacing-md);
-  height: 70%;
-  margin: 0 var(--spacing-sm);
+  justify-content: space-between;
 }
 
 .param-group {
@@ -136,6 +130,10 @@ input[type="radio"] {
     align-items: center;
     justify-content: center;
     gap: 2px;
+}
+
+.settings-lattice .param-group {
+  flex: 1 1 0;
 }
 
 .param-group label {
@@ -874,19 +872,6 @@ input[type="color"]::-webkit-color-swatch {
     display: none;
   }
 
-  .header-lattice {
-    order: 3;
-    flex: 1 1 100%;
-    border-left: none;
-    border-right: none;
-    border-top: 1px solid var(--border);
-    height: auto;
-    padding: 8px 0 10px;
-    justify-content: center;
-    gap: 32px;
-    margin: 0;
-  }
-
   .workspace {
     padding-left: var(--desktop-nav-width);
   }
@@ -1202,19 +1187,6 @@ input[type="color"]::-webkit-color-swatch {
   #toggleControls {
     display: none;
   }
-  /* Lattice params: full-width second row, centered */
-  .header-lattice {
-    order: 3;
-    flex: 1 1 100%;
-    border-left: none;
-    border-right: none;
-    border-top: 1px solid var(--border);
-    height: auto;
-    padding: 8px 0 10px;
-    justify-content: center;
-    gap: 32px;
-    margin: 0;
-  }
   .param-group input[type="number"] {
     font-size: 16px; /* Prevent iOS auto-zoom */
     min-height: 44px;
@@ -1299,6 +1271,10 @@ input[type="color"]::-webkit-color-swatch {
   .control-group.control-group-2col {
     grid-template-columns: auto 1fr;
     gap: 8px;
+  }
+
+  .settings-lattice {
+    gap: var(--spacing-sm);
   }
 
   /* ---- Chord Overlays panel: slide-up bottom sheet ---- */
@@ -1425,8 +1401,8 @@ input[type="color"]::-webkit-color-swatch {
   .param-group input[type="number"] {
     width: 56px;
   }
-  .header-lattice {
-    gap: 20px;
+  .settings-lattice {
+    gap: 6px;
   }
   .ov-mapping label {
     font-size: 10px;
