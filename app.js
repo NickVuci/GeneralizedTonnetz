@@ -37,33 +37,46 @@ document.addEventListener('DOMContentLoaded', function () {
     const controlsBackdrop = document.getElementById('controlsBackdrop');
     // Debounced draw function will be assigned after drawTonnetz is defined.
     let debouncedDraw = null;
+    let closeActiveMobilePanel = null;
     // Retain the last full-resolution offscreen canvas for high-quality export
     let lastOffscreenCanvas = null;
 
+    function queueDraw() {
+        if (debouncedDraw) debouncedDraw();
+        else drawTonnetz();
+    }
+
+    function handleOverlayPanelInteraction(e) {
+        onOverlayPanelEvent(e);
+        queueDraw();
+    }
+
     // Wire events
     canvasSizeSelect.addEventListener('change', handleCanvasSizeChange);
-    colorXInput.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
-    colorYInput.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
-    colorZInput.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
-    backgroundColorInput.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
-    labelColorInput.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
-    highlightZeroColorInput.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
-    highlightZeroInput.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
-    triangleSizeInput.addEventListener('change', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
+    colorXInput.addEventListener('input', queueDraw);
+    colorYInput.addEventListener('input', queueDraw);
+    colorZInput.addEventListener('input', queueDraw);
+    backgroundColorInput.addEventListener('input', queueDraw);
+    labelColorInput.addEventListener('input', queueDraw);
+    highlightZeroColorInput.addEventListener('input', queueDraw);
+    highlightZeroInput.addEventListener('input', queueDraw);
+    triangleSizeInput.addEventListener('change', queueDraw);
     edoInput.addEventListener('change', onIntervalParamsChange);
     intervalXInput.addEventListener('change', onIntervalParamsChange);
     intervalZInput.addEventListener('change', onIntervalParamsChange);
     saveImageButton.addEventListener('click', saveAsImage);
     savePdfButton.addEventListener('click', saveAsPdf);
-    scaleDegreesInput?.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
-    scaleSizeInput?.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
-    scaleDotsInput?.addEventListener('change', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
-    scaleDotColorInput?.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
-    scaleDotSizeInput?.addEventListener('input', () => { if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
-    addOverlayBtn?.addEventListener('click', () => { addOverlay(); renderOverlayListPanel(); if (debouncedDraw) debouncedDraw(); else drawTonnetz(); });
-    overlayListContainer?.addEventListener('input', (e) => { onOverlayPanelEvent(e); if (debouncedDraw) debouncedDraw(); else drawTonnetz(); }, true);
-    overlayListContainer?.addEventListener('change', (e) => { onOverlayPanelEvent(e); if (debouncedDraw) debouncedDraw(); else drawTonnetz(); }, true);
-    overlayListContainer?.addEventListener('click', (e) => { onOverlayPanelEvent(e); if (debouncedDraw) debouncedDraw(); else drawTonnetz(); }, true);
+    scaleDegreesInput?.addEventListener('input', queueDraw);
+    scaleSizeInput?.addEventListener('input', queueDraw);
+    scaleDotsInput?.addEventListener('change', queueDraw);
+    scaleDotColorInput?.addEventListener('input', queueDraw);
+    scaleDotSizeInput?.addEventListener('input', queueDraw);
+    addOverlayBtn?.addEventListener('click', () => { addOverlay(); renderOverlayListPanel(); queueDraw(); });
+    overlayListContainer?.addEventListener('input', handleOverlayPanelInteraction, true);
+    overlayListContainer?.addEventListener('click', (e) => {
+        if (!e.target.closest('button')) return;
+        handleOverlayPanelInteraction(e);
+    }, true);
     canvas.addEventListener('click', onCanvasClick);
     // Touch tap support — convert single-finger tap to the same handler as click.
     // Track touchstart position so we can distinguish a tap from a pan/scroll.
@@ -89,11 +102,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }, { passive: false });
     toggleControlsBtn?.addEventListener('click', toggleControls);
     toggleSidebarBtn?.addEventListener('click', toggleSidebar);
-    controlsBackdrop?.addEventListener('click', toggleControls);
+    controlsBackdrop?.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+            closeActiveMobilePanel?.();
+            return;
+        }
+        toggleControls();
+    });
 
     function setMoreMenuOpen(isOpen) {
         if (!actionBtns) return;
-        actionBtns.classList.toggle('open', !!isOpen);
         actionBtns.classList.toggle('mobile-open', !!isOpen);
     }
 
@@ -781,6 +799,8 @@ document.addEventListener('DOMContentLoaded', function () {
             updateNavPressed();
         }
 
+        closeActiveMobilePanel = closeMobilePanel;
+
         function openMobilePanel(panel) {
             if (!isMobileViewport()) return;
             if (activeMobilePanel === panel) {
@@ -866,12 +886,6 @@ document.addEventListener('DOMContentLoaded', function () {
         mobileNavSettings?.addEventListener('click', function () { openMobilePanel('settings'); });
         mobileNavChords?.addEventListener('click',   function () { openMobilePanel('chords'); });
         mobileNavMore?.addEventListener('click',     function () { openMobilePanel('more'); });
-
-        // Backdrop click closes the active panel (overrides the desktop handler that only toggled settings)
-        if (controlsBackdrop) {
-            controlsBackdrop.removeEventListener('click', toggleControls);
-            controlsBackdrop.addEventListener('click', closeMobilePanel);
-        }
 
         // Close More panel after any action button is tapped
         if (actionBtns) {
