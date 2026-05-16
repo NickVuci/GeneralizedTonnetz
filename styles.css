@@ -944,9 +944,10 @@ input[type="color"]::-webkit-color-swatch {
     border-radius: 16px 16px 0 0;
     border-bottom: none !important;
     box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.65);
-    transform: translateY(0);
+    transform: none;
     transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
     opacity: 1 !important;
+    visibility: visible;
     /* Single-column card layout */
     flex-direction: column !important;
     gap: var(--spacing-md) !important;
@@ -971,6 +972,7 @@ input[type="color"]::-webkit-color-swatch {
     transform: translateY(110%) !important;
     pointer-events: none;
     opacity: 1 !important;
+    visibility: hidden;
   }
   /* Cards: full-width single column */
   .control-card {
@@ -1066,7 +1068,7 @@ input[type="color"]::-webkit-color-swatch {
     left: 0 !important;
     right: 0 !important;
     top: auto !important;
-    display: none;
+    display: flex;
     flex-direction: column;
     background: var(--surface);
     border: none;
@@ -1077,9 +1079,18 @@ input[type="color"]::-webkit-color-swatch {
     z-index: 165;
     box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.65);
     min-width: 100% !important;
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transform: translateY(calc(100% + 56px));
+    transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease, visibility 0s linear 0.32s;
   }
   .action-btns.open {
-    display: flex;
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+    transform: none;
+    transition-delay: 0s;
   }
   .action-btns button {
     width: 100%;
