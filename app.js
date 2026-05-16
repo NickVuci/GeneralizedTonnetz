@@ -122,15 +122,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     } catch (e) { console.error('Error initializing controls collapse state', e); }
 
-    // On mobile (coarse pointer or narrow viewport), start with sidebar collapsed
-    // so the canvas gets maximum space. This can be overridden by saved state.
+    // On mobile, sidebar is managed as a bottom sheet via .mobile-open (not .collapsed).
+    // On desktop, start sidebar expanded.
     try {
-        if (overlaySidebar && window.innerWidth <= 768) {
-            overlaySidebar.classList.add('collapsed');
-            if (toggleSidebarBtn) {
-                toggleSidebarBtn.textContent = '∨';
-                toggleSidebarBtn.title = 'Expand sidebar';
-            }
+        if (overlaySidebar && window.innerWidth > 768) {
+            // Desktop: sidebar visible by default (already no .collapsed class)
+        } else if (overlaySidebar && toggleSidebarBtn) {
+            toggleSidebarBtn.textContent = '⟩';
+            toggleSidebarBtn.title = 'Expand sidebar';
         }
     } catch (e) { console.error('Error initializing sidebar collapse state', e); }
 
@@ -453,10 +452,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!overlaySidebar) return;
         const isCollapsed = overlaySidebar.classList.toggle('collapsed');
         if (toggleSidebarBtn) {
-            const isHorizontal = window.innerWidth <= 768;
-            toggleSidebarBtn.textContent = isCollapsed
-                ? (isHorizontal ? '∨' : '⟩')
-                : (isHorizontal ? '∧' : '⟨');
+            toggleSidebarBtn.textContent = isCollapsed ? '⟩' : '⟨';
             toggleSidebarBtn.title = isCollapsed ? 'Expand sidebar' : 'Collapse sidebar';
         }
         saveStateToStorage();
@@ -564,22 +560,28 @@ document.addEventListener('DOMContentLoaded', function () {
                     downOverlayId = overlays[state.downOverlayIdx].id;
             }
 
-            // Restore UI collapse states
-            if (state.controlsCollapsed) {
+            // Restore UI collapse states — on mobile all panels always start closed
+            if (window.innerWidth <= 768) {
                 controlsContent?.classList.add('collapsed');
                 if (toggleControlsBtn) toggleControlsBtn.classList.remove('expanded');
-                if (controlsBackdrop) controlsBackdrop.classList.remove('visible');
+                controlsBackdrop?.classList.remove('visible');
+                overlaySidebar?.classList.remove('mobile-open');
             } else {
-                controlsContent?.classList.remove('collapsed');
-                if (toggleControlsBtn) toggleControlsBtn.classList.add('expanded');
-                if (controlsBackdrop) controlsBackdrop.classList.toggle('visible', window.innerWidth <= 768);
-            }
-            if (state.sidebarCollapsed) {
-                overlaySidebar?.classList.add('collapsed');
-                if (toggleSidebarBtn) toggleSidebarBtn.textContent = window.innerWidth <= 768 ? '∨' : '⟩';
-            } else {
-                overlaySidebar?.classList.remove('collapsed');
-                if (toggleSidebarBtn) toggleSidebarBtn.textContent = window.innerWidth <= 768 ? '∧' : '⟨';
+                if (state.controlsCollapsed) {
+                    controlsContent?.classList.add('collapsed');
+                    if (toggleControlsBtn) toggleControlsBtn.classList.remove('expanded');
+                    if (controlsBackdrop) controlsBackdrop.classList.remove('visible');
+                } else {
+                    controlsContent?.classList.remove('collapsed');
+                    if (toggleControlsBtn) toggleControlsBtn.classList.add('expanded');
+                }
+                if (state.sidebarCollapsed) {
+                    overlaySidebar?.classList.add('collapsed');
+                    if (toggleSidebarBtn) toggleSidebarBtn.textContent = '⟩';
+                } else {
+                    overlaySidebar?.classList.remove('collapsed');
+                    if (toggleSidebarBtn) toggleSidebarBtn.textContent = '⟨';
+                }
             }
 
             handleCanvasSizeChange();
@@ -697,4 +699,87 @@ document.addEventListener('DOMContentLoaded', function () {
         renderOverlayListPanel();
         drawTonnetz();
     }
+
+    // ==============================
+    // Mobile Bottom Navigation
+    // Manages three slide-up panels: Settings, Chords, More
+    // Only active on mobile (<=768px). CSS hides the nav bar on desktop.
+    // ==============================
+    (function initMobileNav() {
+        const mobileNavSettings = document.getElementById('mobileNavSettings');
+        const mobileNavChords   = document.getElementById('mobileNavChords');
+        const mobileNavMore     = document.getElementById('mobileNavMore');
+        if (!mobileNavSettings && !mobileNavChords && !mobileNavMore) return;
+
+        let activeMobilePanel = null; // 'settings' | 'chords' | 'more' | null
+
+        const navTabIds = { settings: 'mobileNavSettings', chords: 'mobileNavChords', more: 'mobileNavMore' };
+
+        function updateNavPressed() {
+            Object.keys(navTabIds).forEach(function (panel) {
+                document.getElementById(navTabIds[panel])
+                    ?.setAttribute('aria-pressed', String(activeMobilePanel === panel));
+            });
+        }
+
+        function closeMobilePanel() {
+            if (!activeMobilePanel) return;
+            if (activeMobilePanel === 'settings') {
+                controlsContent?.classList.add('collapsed');
+                if (toggleControlsBtn) toggleControlsBtn.classList.remove('expanded');
+            } else if (activeMobilePanel === 'chords') {
+                overlaySidebar?.classList.remove('mobile-open');
+            } else if (activeMobilePanel === 'more') {
+                actionBtns?.classList.remove('open');
+                moreMenuBtn?.setAttribute('aria-expanded', 'false');
+            }
+            controlsBackdrop?.classList.remove('visible');
+            activeMobilePanel = null;
+            updateNavPressed();
+        }
+
+        function openMobilePanel(panel) {
+            if (activeMobilePanel === panel) {
+                closeMobilePanel();
+                return;
+            }
+            closeMobilePanel();
+            if (panel === 'settings') {
+                controlsContent?.classList.remove('collapsed');
+                if (toggleControlsBtn) toggleControlsBtn.classList.add('expanded');
+            } else if (panel === 'chords') {
+                overlaySidebar?.classList.add('mobile-open');
+            } else if (panel === 'more') {
+                actionBtns?.classList.add('open');
+                moreMenuBtn?.setAttribute('aria-expanded', 'true');
+            }
+            controlsBackdrop?.classList.add('visible');
+            activeMobilePanel = panel;
+            updateNavPressed();
+        }
+
+        mobileNavSettings?.addEventListener('click', function () { openMobilePanel('settings'); });
+        mobileNavChords?.addEventListener('click',   function () { openMobilePanel('chords'); });
+        mobileNavMore?.addEventListener('click',     function () { openMobilePanel('more'); });
+
+        // Backdrop click closes the active panel (overrides the desktop handler that only toggled settings)
+        if (controlsBackdrop) {
+            controlsBackdrop.removeEventListener('click', toggleControls);
+            controlsBackdrop.addEventListener('click', closeMobilePanel);
+        }
+
+        // Close More panel after any action button is tapped
+        if (actionBtns) {
+            actionBtns.addEventListener('click', function (e) {
+                if (e.target.closest('button') && activeMobilePanel === 'more') {
+                    closeMobilePanel();
+                }
+            });
+        }
+
+        // Ensure all panels start closed
+        closeMobilePanel();
+        controlsContent?.classList.add('collapsed');
+        overlaySidebar?.classList.remove('mobile-open');
+    })();
 });

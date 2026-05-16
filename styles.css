@@ -729,96 +729,158 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 /* ===========================
-   Responsive: Mobile (≤768px) — bottom-panel sidebar + bottom-sheet settings
+   Mobile Bottom Navigation bar
+   Hidden on desktop, always visible on mobile.
+   =========================== */
+.mobile-nav {
+  display: none;
+}
+
+/* ===========================
+   Responsive: Mobile (≤768px) — bottom nav + panel sheets
    =========================== */
 @media (max-width: 768px) {
-  /* --- Header --- */
-  .controls-header {
-    min-height: 52px;
-  }
-  .title-section {
-    min-width: 0;
-  }
 
-  /* Show more-menu button; keep action-btns as a dropdown */
-  #moreMenuBtn {
-    display: inline-flex;
-  }
-  .action-btns {
-    display: none;
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    flex-direction: column;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: var(--spacing-sm);
-    gap: 4px;
-    z-index: 300;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-    min-width: 170px;
-  }
-  .action-btns.open {
+  /* ---- Bottom navigation bar ---- */
+  .mobile-nav {
     display: flex;
-  }
-  .action-btns button {
-    width: 100%;
-    justify-content: flex-start;
-    padding: 10px 14px;
-    font-size: 13px;
-    height: auto;
-    min-height: 44px;
-    border-radius: var(--radius);
-    border: none;
-  }
-  .action-btns button:hover {
-    background: var(--surface-hover);
-  }
-
-  /* Settings toggle: add label on mobile */
-  .settings-label {
-    display: inline;
-  }
-  #toggleControls {
-    border-radius: var(--radius);
-    width: auto;
-    padding: 0 10px;
-    border: 1px solid var(--border);
-    gap: 6px;
-    flex-shrink: 0;
-  }
-  #toggleControls:hover {
-    background: var(--surface-hover);
-    border-color: var(--border-active);
-    color: var(--text);
-  }
-  #toggleControls.expanded {
-    background: rgba(55, 148, 255, 0.12);
-    border-color: var(--primary);
-    color: var(--primary);
-  }
-
-  /* --- Controls panel: slide-up bottom sheet --- */
-  .controls-content {
-    position: fixed !important;
+    position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 150;
+    height: 56px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    z-index: 200;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.4);
+  }
+  .mobile-nav-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    height: 56px;
+    min-height: 56px;
+    padding: 0;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    transition: color 0.15s, background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .mobile-nav-tab:active {
+    background: var(--surface-hover);
+  }
+  .mobile-nav-tab[aria-pressed="true"] {
+    color: var(--primary);
+  }
+  .mobile-nav-tab[aria-pressed="true"] svg {
+    stroke: var(--primary);
+  }
+  /* The More tab uses fill, not stroke */
+  #mobileNavMore[aria-pressed="true"] svg {
+    fill: var(--primary);
+    stroke: none;
+  }
+
+  /* ---- Header: two-row layout — title+actions row, then params row ---- */
+  .controls-header {
+    padding: 0 12px;
+    min-height: 48px;
+    flex-wrap: wrap;
+    height: auto;
+    gap: 0;
+  }
+  .title-section {
+    flex: 1 1 auto;
+    order: 1;
+    min-width: 0;
+    padding: 6px 0;
+  }
+  .header-actions {
+    order: 2;
+    padding: 6px 0;
+    flex-shrink: 0;
+  }
+  /* Replace header-level toggle buttons with bottom nav on mobile */
+  #toggleControls,
+  #moreMenuBtn {
+    display: none !important;
+  }
+  /* Lattice params: full-width second row, centered */
+  .header-lattice {
+    order: 3;
+    flex: 1 1 100%;
+    border-left: none;
+    border-right: none;
+    border-top: 1px solid var(--border);
+    height: auto;
+    padding: 8px 0 10px;
+    justify-content: center;
+    gap: 32px;
+    margin: 0;
+  }
+  .param-group input[type="number"] {
+    font-size: 16px; /* Prevent iOS auto-zoom */
+    min-height: 44px;
+    height: 44px;
+    width: 64px;
+    text-align: center;
+  }
+  .param-group label {
+    font-size: 10px;
+  }
+
+  /* ---- Workspace ---- */
+  .workspace {
+    flex-direction: column;
+  }
+  .canvas-wrap {
+    flex: 1;
+    min-height: 0;
+    order: 1;
+    /* Padding for the fixed bottom nav bar */
+    padding-bottom: 56px;
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 8px;
+  }
+  /* Desktop sidebar toggle hidden on mobile; nav handles it */
+  #toggleSidebarBtn {
+    display: none;
+  }
+
+  /* ---- Settings panel: slide-up bottom sheet ---- */
+  .controls-content {
+    position: fixed !important;
+    bottom: 56px; /* sit above the nav bar */
+    left: 0;
+    right: 0;
+    z-index: 165;
     max-height: 78vh !important;
     overflow-y: auto !important;
     overflow-x: hidden;
     border-radius: 16px 16px 0 0;
     border-bottom: none !important;
     box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.65);
-    /* Replace max-height transition with translate */
     transform: translateY(0);
     transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
     opacity: 1 !important;
-    padding: 20px var(--spacing-lg) var(--spacing-lg) !important;
-    /* Pull-handle */
-    padding-top: 28px !important;
+    /* Single-column card layout */
+    flex-direction: column !important;
+    gap: var(--spacing-md) !important;
+    align-items: stretch !important;
+    padding: 28px var(--spacing-md) var(--spacing-md) !important;
   }
   /* Pull-handle bar */
   .controls-content::before {
@@ -835,109 +897,147 @@ input[type="color"]::-webkit-color-swatch {
     pointer-events: none;
   }
   .controls-content.collapsed {
-    transform: translateY(105%) !important;
+    transform: translateY(110%) !important;
     pointer-events: none;
+    opacity: 1 !important;
+  }
+  /* Cards: full-width single column */
+  .control-card {
+    min-width: 0 !important;
+    max-width: none !important;
+    width: 100%;
+    flex: none !important;
+    padding: var(--spacing-md);
+  }
+  /* 2-col control groups: stack to 2-col label+input (2 rows of pairs) */
+  .control-group.control-group-2col {
+    grid-template-columns: auto 1fr;
+    gap: 8px;
   }
 
-  /* --- Workspace & sidebar: canvas on top, sidebar bar at bottom --- */
-  .workspace {
-    flex-direction: column;
-  }
-  .canvas-wrap {
-    flex: 1;
-    min-height: 0;
-    order: 1;
-    /* Padding for the collapsed sidebar bar height */
-    padding-bottom: 52px;
-  }
+  /* ---- Chord Overlays panel: slide-up bottom sheet ---- */
   .overlay-sidebar {
-    order: 2;
+    position: fixed;
+    bottom: 56px; /* sit above the nav bar */
+    left: 0;
+    right: 0;
+    z-index: 165;
     width: 100% !important;
     max-width: 100% !important;
     min-width: 100% !important;
-    max-height: 50vh;
-    min-height: 52px;
+    max-height: 72vh;
+    min-height: unset;
     border-right: none;
     border-top: 1px solid var(--border);
     border-bottom: none;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.65);
     resize: none !important;
     overflow: hidden;
-    transition: max-height 0.3s ease;
-    /* Fixed at bottom so it doesn't affect canvas layout */
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 40;
+    /* Hidden by default — slides down off-screen */
+    transform: translateY(110%);
+    transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    padding-top: 18px;
   }
+  /* Pull-handle bar for chords panel */
+  .overlay-sidebar::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: var(--border-active);
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  /* Open state: slides up into view */
+  .overlay-sidebar.mobile-open {
+    transform: translateY(0);
+  }
+  /* Allow overlay list to scroll when open */
+  .overlay-sidebar.mobile-open .overlay-list {
+    overflow-y: auto;
+    flex: 1;
+  }
+  /* Always show full header and Add button inside the sheet */
+  .overlay-sidebar .overlay-header-title,
+  .overlay-sidebar #addOverlayBtn {
+    display: flex !important;
+  }
+  /* Hide summary text (compact header) */
+  .overlay-summary {
+    display: none;
+  }
+  /* Override the desktop .collapsed styles — not used on mobile */
   .overlay-sidebar.collapsed {
-    max-height: 52px;
-    min-height: 52px;
+    /* Reset desktop collapsed style; mobile uses .mobile-open instead */
     width: 100% !important;
     min-width: 100% !important;
     max-width: 100% !important;
     resize: none !important;
-    overflow: hidden;
   }
-  /* On mobile, always show the sidebar header (title + toggle), even when collapsed */
-  .overlay-sidebar.collapsed .overlay-header-title {
+  .overlay-sidebar.collapsed .overlay-header-title,
+  .overlay-sidebar.collapsed #addOverlayBtn,
+  .overlay-sidebar.collapsed .overlay-list {
     display: flex !important;
   }
-  .overlay-sidebar.collapsed .overlay-summary {
-    display: none !important;
-  }
-  .overlay-sidebar.collapsed #addOverlayBtn {
-    display: none !important;
-  }
-  .overlay-sidebar.collapsed .overlay-list {
-    display: none !important;
-  }
-  /* Hide summary text on mobile to keep header bar compact */
-  .overlay-summary {
+
+  /* ---- More / Actions panel: slide-up bottom sheet ---- */
+  .action-btns {
+    position: fixed !important;
+    bottom: 56px !important; /* sit above nav bar */
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
     display: none;
+    flex-direction: column;
+    background: var(--surface);
+    border: none;
+    border-top: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    padding: 20px var(--spacing-md) var(--spacing-md) !important;
+    gap: 8px !important;
+    z-index: 165;
+    box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.65);
+    min-width: 100% !important;
+  }
+  .action-btns.open {
+    display: flex;
+  }
+  .action-btns button {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 14px 16px !important;
+    font-size: 15px !important;
+    height: auto !important;
+    min-height: 52px !important;
+    border-radius: var(--radius) !important;
+    border: 1px solid var(--border) !important;
+    background: var(--surface-muted) !important;
+    color: var(--text) !important;
+  }
+  .action-btns button:active {
+    background: var(--surface-hover) !important;
   }
 
-  /* Cards */
-  .control-card {
-    min-width: 220px;
+  /* ---- Backdrop: sits below panels, above canvas ---- */
+  .controls-backdrop {
+    z-index: 155;
   }
-}
 
-/* ===========================
-   Responsive: Large phone (≤600px)
-   =========================== */
-@media (max-width: 600px) {
-  .header-lattice {
-    gap: var(--spacing-md);
-  }
-  .param-group input[type="number"] {
-    width: 52px;
-    font-size: 16px; /* Prevent iOS auto-zoom */
-    min-height: 44px;
-  }
-  .param-group label {
-    font-size: 9px;
-  }
+  /* ---- Overlay fields: single column on mobile ---- */
   .ov-fields {
     grid-template-columns: 1fr;
   }
   .overlay-list {
     padding: var(--spacing-sm);
     gap: var(--spacing-sm);
-  }
-  .controls-content {
-    padding: var(--spacing-md) !important;
-    gap: var(--spacing-md);
-  }
-  .control-card {
-    min-width: 0;
-    max-width: none;
-    padding: var(--spacing-md);
-  }
-  /* Larger touch targets for form inputs on phone */
-  .control-group input[type="number"],
-  .control-group select {
-    min-height: 44px;
   }
 }
 
@@ -954,9 +1054,11 @@ input[type="color"]::-webkit-color-swatch {
   .title-section {
     min-width: 0;
   }
-  /* On very small screens hide PDF (save space in the more-menu) */
-  #savePdfButton {
-    display: none;
+  .param-group input[type="number"] {
+    width: 56px;
+  }
+  .header-lattice {
+    gap: 20px;
   }
   .ov-mapping label {
     font-size: 10px;
@@ -1084,6 +1186,11 @@ input[type="color"]::-webkit-color-swatch {
   .param-group input[type="number"] {
     min-height: 44px;
     height: 44px;
+  }
+
+  /* Mobile nav tabs already have 56px height, keep as-is */
+  .mobile-nav-tab {
+    min-height: 56px;
   }
 }
 
