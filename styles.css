@@ -936,6 +936,7 @@ input[type="color"]::-webkit-color-swatch {
     visibility: visible;
     /* Single-column card layout */
     flex-direction: column !important;
+    flex-wrap: nowrap !important;
     gap: var(--spacing-md) !important;
     align-items: stretch !important;
     padding: 28px var(--spacing-md) var(--spacing-md) !important;
