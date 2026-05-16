@@ -231,11 +231,11 @@ function renderOverlayListPanel() {
         anchorsSpan.appendChild(anchorsStrong);
 
         const btnClear = document.createElement('button');
-        btnClear.className = 'ov-clear-anchors';
+        btnClear.className = 'ov-clear-anchors ov-action';
         btnClear.textContent = 'Clear Anchors';
 
         const btnDelete = document.createElement('button');
-        btnDelete.className = 'ov-delete';
+        btnDelete.className = 'ov-delete ov-action ov-action-danger';
         btnDelete.textContent = 'Delete';
 
         const headerRow = document.createElement('div');

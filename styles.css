@@ -2,6 +2,9 @@
    Design Tokens
    ========================= */
 :root {
+  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-canvas-label: var(--font-ui);
+
   /* Color - Dark Theme */
   --bg: #121212;
   --surface: #1e1e1e;
@@ -46,7 +49,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 body {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-ui);
   background-color: var(--bg);
   color: var(--text);
   margin: 0;
@@ -267,7 +270,7 @@ button {
   opacity: 1;
 }
 
-.controls-content.collapsed {
+.controls-content.desktop-collapsed {
   max-height: 0;
   padding-top: 0;
   padding-bottom: 0;
@@ -340,6 +343,76 @@ label {
 }
 .control-group.control-group-2col label {
     text-align: right;
+}
+
+/* Color controls */
+.axis-colors {
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--surface-muted);
+  padding: 8px;
+  border-radius: var(--radius);
+}
+
+.color-pair {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.color-pair label {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.separator {
+  height: 0;
+  border-top: 1px solid var(--border);
+  margin: var(--spacing-sm) 0;
+  width: 100%;
+}
+
+.axis-colors .color-pair {
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.axis-colors .color-pair input[type="color"] {
+  height: 36px;
+  width: 100%;
+}
+
+.axis-colors .color-pair label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.axis-colors-secondary .color-pair label {
+  font-size: 11px;
+  letter-spacing: 0.4px;
+}
+
+.note-zero-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+}
+
+.note-zero-label label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.4px;
+  margin: 0;
+}
+
+.note-zero-label input[type="checkbox"] {
+  margin: 0;
 }
 
 /* =========================
@@ -433,17 +506,17 @@ input[type="color"]::-webkit-color-swatch {
   max-width: 420px;
 }
 
-.overlay-sidebar.collapsed {
+.overlay-sidebar.desktop-collapsed {
   width: 44px;
   min-width: 44px;
   max-width: 44px;
   resize: none;
 }
 
-.overlay-sidebar.collapsed .overlay-header-title,
-.overlay-sidebar.collapsed #addOverlayBtn,
-.overlay-sidebar.collapsed .overlay-summary,
-.overlay-sidebar.collapsed .overlay-list {
+.overlay-sidebar.desktop-collapsed .overlay-header-title,
+.overlay-sidebar.desktop-collapsed #addOverlayBtn,
+.overlay-sidebar.desktop-collapsed .overlay-summary,
+.overlay-sidebar.desktop-collapsed .overlay-list {
   display: none;
 }
 
@@ -474,7 +547,7 @@ input[type="color"]::-webkit-color-swatch {
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
-.overlay-header button {
+#addOverlayBtn {
     background: var(--primary);
     border: 1px solid var(--primary);
     color: var(--on-primary);
@@ -507,7 +580,7 @@ input[type="color"]::-webkit-color-swatch {
   border-color: var(--border-active);
   color: var(--text);
 }
-.overlay-header button:hover {
+#addOverlayBtn:hover {
     background: var(--primary-hover);
     border-color: var(--primary-hover);
 }
@@ -609,6 +682,35 @@ input[type="color"]::-webkit-color-swatch {
 
 .ov-anchors-row {
   justify-content: space-between;
+}
+
+.ov-action {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  padding: 6px 10px;
+  height: auto;
+  min-height: 30px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.ov-action:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-active);
+  color: var(--text);
+}
+
+.ov-action-danger {
+  border-color: rgba(255, 99, 99, 0.28);
+  color: #ff9b9b;
+}
+
+.ov-action-danger:hover {
+  background: rgba(255, 99, 99, 0.12);
+  border-color: rgba(255, 99, 99, 0.42);
+  color: #ffd0d0;
 }
 
 /* Canvas Area */
@@ -743,13 +845,19 @@ input[type="color"]::-webkit-color-swatch {
   .overlay-sidebar,
   .action-btns {
     --sheet-drag-offset: 0px;
-    position: fixed !important;
-    bottom: var(--mobile-nav-height) !important;
-    left: 0 !important;
-    right: 0 !important;
+    position: fixed;
+    bottom: var(--mobile-nav-height);
+    left: 0;
+    right: 0;
     z-index: var(--mobile-sheet-z);
     border-radius: var(--mobile-sheet-radius) var(--mobile-sheet-radius) 0 0;
     box-shadow: var(--mobile-sheet-shadow);
+  }
+
+  .controls-content,
+  .overlay-sidebar {
+    overflow: hidden;
+    transform: translateY(calc(110% + var(--sheet-drag-offset)));
   }
 
   /* ---- Bottom navigation bar ---- */
@@ -824,7 +932,7 @@ input[type="color"]::-webkit-color-swatch {
   }
   /* Replace header-level toggle buttons with bottom nav on mobile */
   #toggleControls {
-    display: none !important;
+    display: none;
   }
   /* Lattice params: full-width second row, centered */
   .header-lattice {
@@ -871,17 +979,16 @@ input[type="color"]::-webkit-color-swatch {
 
   /* ---- Settings panel: slide-up bottom sheet ---- */
   .controls-content {
-    max-height: 78vh !important;
-    overflow-y: hidden !important;
+    max-height: 78vh;
+    overflow-y: hidden;
     overflow-x: hidden;
-    border-bottom: none !important;
-    transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    border-bottom: none;
+    transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
     /* Single-column card layout */
-    flex-direction: column !important;
-    gap: 0 !important;
-    align-items: stretch !important;
-    padding: 12px 0 0 !important;
-    transform: translateY(calc(110% + var(--sheet-drag-offset)));
+    flex-direction: column;
+    gap: 0;
+    align-items: stretch;
+    padding: 12px 0 0;
     pointer-events: none;
     visibility: hidden;
   }
@@ -897,26 +1004,28 @@ input[type="color"]::-webkit-color-swatch {
     padding: 0 var(--spacing-md) var(--spacing-md);
   }
   .controls-content.mobile-open {
-    transform: translateY(var(--sheet-drag-offset)) !important;
+    transform: translateY(var(--sheet-drag-offset));
     pointer-events: auto;
-    max-height: 78vh !important;
-    padding-top: 12px !important;
-    padding-bottom: 0 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+    max-height: 78vh;
+    padding-top: 12px;
+    padding-bottom: 0;
+    opacity: 1;
+    visibility: visible;
   }
-  .controls-content.collapsed:not(.mobile-open) {
-    transform: translateY(calc(110% + var(--sheet-drag-offset))) !important;
+  .controls-content.desktop-collapsed:not(.mobile-open) {
     pointer-events: none;
-    opacity: 1 !important;
+    opacity: 1;
     visibility: hidden;
+  }
+  .overlay-sidebar.mobile-open {
+    transform: translateY(var(--sheet-drag-offset));
   }
   /* Cards: full-width single column */
   .control-card {
-    min-width: 0 !important;
-    max-width: none !important;
+    min-width: 0;
+    max-width: none;
     width: 100%;
-    flex: none !important;
+    flex: none;
     padding: var(--spacing-md);
   }
   /* 2-col control groups: stack to 2-col label+input (2 rows of pairs) */
@@ -927,66 +1036,50 @@ input[type="color"]::-webkit-color-swatch {
 
   /* ---- Chord Overlays panel: slide-up bottom sheet ---- */
   .overlay-sidebar {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 100% !important;
     max-height: 72vh;
     min-height: unset;
     border-right: none;
     border-top: 1px solid var(--border);
     border-bottom: none;
-    resize: none !important;
-    overflow: hidden;
-    /* Hidden by default — slides down off-screen */
-    transform: translateY(calc(110% + var(--sheet-drag-offset)));
+    resize: none;
     transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
     display: flex;
     flex-direction: column;
     padding-top: 24px;
   }
-  /* Open state: slides up into view */
-  .overlay-sidebar.mobile-open {
-    transform: translateY(var(--sheet-drag-offset));
+  .overlay-sidebar,
+  .overlay-sidebar.desktop-collapsed {
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+    resize: none;
   }
   /* Allow overlay list to scroll when open */
   .overlay-sidebar.mobile-open .overlay-list {
     overflow-y: auto;
     flex: 1;
   }
-  /* Always show full header and Add button inside the sheet */
-  .overlay-sidebar .overlay-header-title,
-  .overlay-sidebar #addOverlayBtn {
-    display: flex !important;
-  }
   /* Hide summary text (compact header) */
   .overlay-summary {
     display: none;
   }
-  /* Override the desktop .collapsed styles — not used on mobile */
-  .overlay-sidebar.collapsed {
-    /* Reset desktop collapsed style; mobile uses .mobile-open instead */
-    width: 100% !important;
-    min-width: 100% !important;
-    max-width: 100% !important;
-    resize: none !important;
-  }
-  .overlay-sidebar.collapsed .overlay-header-title,
-  .overlay-sidebar.collapsed #addOverlayBtn,
-  .overlay-sidebar.collapsed .overlay-list {
-    display: flex !important;
+  .overlay-sidebar.desktop-collapsed .overlay-header-title,
+  .overlay-sidebar.desktop-collapsed #addOverlayBtn,
+  .overlay-sidebar.desktop-collapsed .overlay-list {
+    display: flex;
   }
 
   /* ---- More / Actions panel: slide-up bottom sheet ---- */
   .action-btns {
-    top: auto !important;
+    top: auto;
     display: flex;
     flex-direction: column;
     background: var(--surface);
     border: none;
     border-top: 1px solid var(--border);
-    padding: 12px var(--spacing-md) var(--spacing-md) !important;
-    gap: 8px !important;
-    min-width: 100% !important;
+    padding: 12px var(--spacing-md) var(--spacing-md);
+    gap: 8px;
+    min-width: 100%;
     opacity: 0;
     pointer-events: none;
     visibility: hidden;
@@ -1021,7 +1114,7 @@ input[type="color"]::-webkit-color-swatch {
     pointer-events: none;
   }
   .mobile-sheet-dragging {
-    transition: none !important;
+    transition: none;
   }
   .mobile-sheet-dragging .mobile-sheet-handle {
     cursor: grabbing;
@@ -1029,17 +1122,17 @@ input[type="color"]::-webkit-color-swatch {
   .action-btns button {
     width: 100%;
     justify-content: flex-start;
-    padding: 14px 16px !important;
-    font-size: 15px !important;
-    height: auto !important;
-    min-height: 52px !important;
-    border-radius: var(--radius) !important;
-    border: 1px solid var(--border) !important;
-    background: var(--surface-muted) !important;
-    color: var(--text) !important;
+    padding: 14px 16px;
+    font-size: 15px;
+    height: auto;
+    min-height: 52px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface-muted);
+    color: var(--text);
   }
   .action-btns button:active {
-    background: var(--surface-hover) !important;
+    background: var(--surface-hover);
   }
 
   /* ---- Backdrop: sits below panels, above canvas ---- */
@@ -1084,74 +1177,6 @@ input[type="color"]::-webkit-color-swatch {
     padding: 8px;
     gap: 6px;
   }
-}
-
-/* Axis Colors Group handling */
-.axis-colors {
-    justify-content: space-between;
-    gap: 8px;
-    background: var(--surface-muted);
-    padding: 8px;
-    border-radius: var(--radius);
-}
-
-.color-pair {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.color-pair label {
-    font-size: 11px;
-    font-weight: 700;
-}
-
-.separator {
-    height: 0;
-    border-top: 1px solid var(--border);
-    margin: var(--spacing-sm) 0;
-    width: 100%;
-}
-
-/* Axis colors specifically */
-.axis-colors .color-pair {
-    flex: 1;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-.axis-colors .color-pair input[type="color"] {
-    height: 36px;
-    width: 100%;
-}
-.axis-colors .color-pair label {
-    font-size: 10px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-}
-
-.axis-colors-secondary .color-pair label {
-  font-size: 11px;
-  letter-spacing: 0.4px;
-}
-
-.note-zero-label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 8px;
-}
-
-.note-zero-label label {
-  font-size: 11px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  letter-spacing: 0.4px;
-  margin: 0;
-}
-
-.note-zero-label input[type="checkbox"] {
-  margin: 0;
 }
 
 /* =========================

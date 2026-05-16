@@ -1,5 +1,5 @@
 // Drawing functions for grid and overlays
-function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, ctx, scaleSet, scaleSizeFactor) {
+function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, ctx, scaleSet, scaleSizeFactor, labelFontFamily) {
     const h = size * SQRT3_HALF;
     const xOffset = ((row % 2 + 2) % 2) * (size / 2);
     const x = col * size + xOffset;
@@ -56,7 +56,8 @@ function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, in
     const inScale = !!(scaleSet && scaleSet.has(label));
     const factor = Number.isFinite(scaleSizeFactor) && scaleSizeFactor > 0 ? scaleSizeFactor : 1;
     const finalSize = inScale ? baseLabelSize * factor : baseLabelSize;
-    ctx.font = `${finalSize}px Arial`;
+    const resolvedLabelFontFamily = labelFontFamily || 'Arial, sans-serif';
+    ctx.font = `${finalSize}px ${resolvedLabelFontFamily}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
     ctx.fillText(label.toString(), labelX, labelY);

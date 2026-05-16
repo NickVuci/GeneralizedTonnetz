@@ -107,9 +107,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function setControlsCollapsedState(isCollapsed) {
+    function setControlsDesktopCollapsedState(isCollapsed) {
         if (!controlsContent) return;
-        controlsContent.classList.toggle('collapsed', isCollapsed);
+        controlsContent.classList.toggle('desktop-collapsed', isCollapsed);
         if (toggleControlsBtn) {
             toggleControlsBtn.classList.toggle('expanded', !isCollapsed);
             toggleControlsBtn.title = isCollapsed ? 'Expand settings' : 'Collapse settings';
@@ -117,16 +117,25 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function setSidebarDesktopCollapsedState(isCollapsed) {
+        if (!overlaySidebar) return;
+        overlaySidebar.classList.toggle('desktop-collapsed', isCollapsed);
+        if (toggleSidebarBtn) {
+            toggleSidebarBtn.textContent = isCollapsed ? '⟩' : '⟨';
+            toggleSidebarBtn.title = isCollapsed ? 'Expand sidebar' : 'Collapse sidebar';
+        }
+    }
+
     // Start with controls collapsed by default
     try {
-        setControlsCollapsedState(true);
+        setControlsDesktopCollapsedState(true);
     } catch (e) { console.error('Error initializing controls collapse state', e); }
 
-    // On mobile, sidebar is managed as a bottom sheet via .mobile-open (not .collapsed).
+    // On mobile, sidebar is managed as a bottom sheet via .mobile-open.
     // On desktop, start sidebar expanded.
     try {
         if (overlaySidebar && window.innerWidth > 768) {
-            // Desktop: sidebar visible by default (already no .collapsed class)
+            // Desktop: sidebar visible by default.
         } else if (overlaySidebar && toggleSidebarBtn) {
             toggleSidebarBtn.textContent = '⟩';
             toggleSidebarBtn.title = 'Expand sidebar';
@@ -203,9 +212,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const colorY = hexToRgbString(colorYInput.value);
         const colorZ = hexToRgbString(colorZInput.value);
         const backgroundColor = hexToRgbString(backgroundColorInput.value);
-    const labelColor = hexToRgbString(labelColorInput.value);
-    const highlightZeroColor = hexToRgbString(highlightZeroColorInput.value, 0.3);
+        const labelColor = hexToRgbString(labelColorInput.value);
+        const highlightZeroColor = hexToRgbString(highlightZeroColorInput.value, 0.3);
         const highlightZero = highlightZeroInput.checked;
+        const rootStyles = getComputedStyle(document.documentElement);
+        const canvasLabelFontFamily = rootStyles.getPropertyValue('--font-canvas-label').trim()
+            || getComputedStyle(document.body).fontFamily
+            || 'Arial, sans-serif';
 
         const size = parseInt(triangleSizeInput.value) || 40;
         const edo = parseInt(edoInput.value) || 12;
@@ -228,10 +241,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (set.size > 0) scaleSet = set;
             }
         } catch (e) { console.error('Error parsing scale degrees', e); }
-    const scaleSizeFactor = clamp(parseFloat(scaleSizeInput?.value), 0.5, 4, 1.5);
-    const drawScaleDots = !!(scaleDotsInput?.checked);
-    const scaleDotColor = hexToRgbString(scaleDotColorInput?.value || '#000000');
-    const scaleDotSize = clamp(parseFloat(scaleDotSizeInput?.value), 1, 50, 6);
+        const scaleSizeFactor = clamp(parseFloat(scaleSizeInput?.value), 0.5, 4, 1.5);
+        const drawScaleDots = !!(scaleDotsInput?.checked);
+        const scaleDotColor = hexToRgbString(scaleDotColorInput?.value || '#000000');
+        const scaleDotSize = clamp(parseFloat(scaleDotSizeInput?.value), 1, 50, 6);
 
         // Keep the two default overlays synced to current X/Z if they are autoSync
         try { synchronizeDefaultOverlaySteps(intervalX, intervalZ, edo); } catch (e) { console.error('Error synchronizing default overlays', e); }
@@ -247,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const cols = Math.ceil(w / size) + 4;
             for (let row = -2; row < rows; row++) {
                 for (let col = -2; col < cols; col++) {
-                    drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, targetCtx, scaleSet, scaleSizeFactor);
+                    drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, targetCtx, scaleSet, scaleSizeFactor, canvasLabelFontFamily);
                 }
             }
             if (overlays.length) {
@@ -439,8 +452,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function toggleControls() {
         if (!controlsContent) return;
-        const isCollapsed = !controlsContent.classList.contains('collapsed');
-        setControlsCollapsedState(isCollapsed);
+        const isCollapsed = !controlsContent.classList.contains('desktop-collapsed');
+        setControlsDesktopCollapsedState(isCollapsed);
         // Show/hide backdrop on mobile (bottom-sheet mode)
         if (controlsBackdrop) {
             controlsBackdrop.classList.toggle('visible', !isCollapsed && window.innerWidth <= 768);
@@ -450,11 +463,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function toggleSidebar() {
         if (!overlaySidebar) return;
-        const isCollapsed = overlaySidebar.classList.toggle('collapsed');
-        if (toggleSidebarBtn) {
-            toggleSidebarBtn.textContent = isCollapsed ? '⟩' : '⟨';
-            toggleSidebarBtn.title = isCollapsed ? 'Expand sidebar' : 'Collapse sidebar';
-        }
+        const isCollapsed = !overlaySidebar.classList.contains('desktop-collapsed');
+        setSidebarDesktopCollapsedState(isCollapsed);
         saveStateToStorage();
     }
 
@@ -500,8 +510,8 @@ document.addEventListener('DOMContentLoaded', function () {
             activeOverlayIdx: overlays.findIndex(o => o.id === activeOverlayId),
             upOverlayIdx: overlays.findIndex(o => o.id === upOverlayId),
             downOverlayIdx: overlays.findIndex(o => o.id === downOverlayId),
-            sidebarCollapsed: overlaySidebar?.classList.contains('collapsed') || false,
-            controlsCollapsed: controlsContent?.classList.contains('collapsed') || false
+            sidebarCollapsed: overlaySidebar?.classList.contains('desktop-collapsed') || false,
+            controlsCollapsed: controlsContent?.classList.contains('desktop-collapsed') || false
         };
     }
 
@@ -562,23 +572,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Restore UI collapse states — on mobile all panels always start closed
             if (window.innerWidth <= 768) {
-                setControlsCollapsedState(true);
+                setControlsDesktopCollapsedState(true);
                 controlsBackdrop?.classList.remove('visible');
                 overlaySidebar?.classList.remove('mobile-open');
             } else {
                 if (state.controlsCollapsed) {
-                    setControlsCollapsedState(true);
+                    setControlsDesktopCollapsedState(true);
                     if (controlsBackdrop) controlsBackdrop.classList.remove('visible');
                 } else {
-                    setControlsCollapsedState(false);
+                    setControlsDesktopCollapsedState(false);
                 }
-                if (state.sidebarCollapsed) {
-                    overlaySidebar?.classList.add('collapsed');
-                    if (toggleSidebarBtn) toggleSidebarBtn.textContent = '⟩';
-                } else {
-                    overlaySidebar?.classList.remove('collapsed');
-                    if (toggleSidebarBtn) toggleSidebarBtn.textContent = '⟨';
-                }
+                setSidebarDesktopCollapsedState(!!state.sidebarCollapsed);
             }
 
             handleCanvasSizeChange();
@@ -720,13 +724,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 panel: controlsContent,
                 handle: controlsContent?.querySelector('[data-sheet-handle]'),
                 open() {
-                    setControlsCollapsedState(false);
-                    controlsContent?.classList.remove('collapsed');
                     controlsContent?.classList.add('mobile-open');
                 },
                 close() {
                     controlsContent?.classList.remove('mobile-open');
-                    setControlsCollapsedState(true);
                 }
             },
             chords: {
@@ -896,7 +897,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Ensure all panels start closed
         closeMobilePanel();
-        setControlsCollapsedState(true);
+        setControlsDesktopCollapsedState(true);
         controlsContent?.classList.remove('mobile-open');
         overlaySidebar?.classList.remove('mobile-open');
         setMoreMenuOpen(false);
