@@ -947,7 +947,7 @@ input[type="color"]::-webkit-color-swatch {
   .controls-scroll-body {
     overflow-y: auto;
     overflow-x: hidden;
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
