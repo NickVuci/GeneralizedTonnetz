@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const toggleControlsBtn = document.getElementById('toggleControls');
     const controlsContainer = document.getElementById('controls');
     const controlsContent = document.getElementById('controlsContent');
+    const scaleContent = document.getElementById('scaleContent');
     const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
     const overlaySidebar = document.getElementById('overlaySidebar');
     const actionBtns = document.getElementById('actionBtns');
@@ -738,12 +739,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const DRAG_CLOSE_VELOCITY_PX_PER_MS = 0.45;
         const mobileNavSettings = document.getElementById('mobileNavSettings');
         const mobileNavChords   = document.getElementById('mobileNavChords');
+        const mobileNavScale    = document.getElementById('mobileNavScale');
         const mobileNavMore     = document.getElementById('mobileNavMore');
-        if (!mobileNavSettings && !mobileNavChords && !mobileNavMore) return;
+        if (!mobileNavSettings && !mobileNavChords && !mobileNavScale && !mobileNavMore) return;
 
-        let activeMobilePanel = null; // 'settings' | 'chords' | 'more' | null
+        let activeMobilePanel = null; // 'settings' | 'chords' | 'scale' | 'more' | null
 
-        const navTabIds = { settings: 'mobileNavSettings', chords: 'mobileNavChords', more: 'mobileNavMore' };
+        const navTabIds = { settings: 'mobileNavSettings', chords: 'mobileNavChords', scale: 'mobileNavScale', more: 'mobileNavMore' };
         const panelDefs = {
             settings: {
                 key: 'settings',
@@ -765,6 +767,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 },
                 close() {
                     overlaySidebar?.classList.remove('mobile-open');
+                }
+            },
+            scale: {
+                key: 'scale',
+                panel: scaleContent,
+                handle: scaleContent?.querySelector('[data-sheet-handle]'),
+                open() {
+                    scaleContent?.classList.add('mobile-open');
+                },
+                close() {
+                    scaleContent?.classList.remove('mobile-open');
                 }
             },
             more: {
@@ -892,6 +905,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         mobileNavSettings?.addEventListener('click', function () { openMobilePanel('settings'); });
         mobileNavChords?.addEventListener('click',   function () { openMobilePanel('chords'); });
+        mobileNavScale?.addEventListener('click',    function () { openMobilePanel('scale'); });
         mobileNavMore?.addEventListener('click',     function () { openMobilePanel('more'); });
 
         // Close More panel after any action button is tapped
@@ -916,6 +930,7 @@ document.addEventListener('DOMContentLoaded', function () {
         setControlsDesktopCollapsedState(true);
         controlsContent?.classList.remove('mobile-open');
         overlaySidebar?.classList.remove('mobile-open');
+        scaleContent?.classList.remove('mobile-open');
         setMoreMenuOpen(false);
         syncControlsOffset();
     })();

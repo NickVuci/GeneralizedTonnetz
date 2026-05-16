@@ -124,30 +124,38 @@
             </div>
         </div>
 
-        <div class="control-card">
-            <h3 class="card-title">Scale Highlight</h3>
-            <div class="control-group">
-                <label for="scaleDegrees">Scale degrees</label>
-                <textarea id="scaleDegrees" rows="2" placeholder="e.g. 0,2,4,5,7,9,11"></textarea>
-            </div>
-            <div class="control-group">
-                <label for="scaleSize">Scale label size</label>
-                <input type="number" id="scaleSize" value="1.5" min="0.5" max="4" step="0.1">
-            </div>
-            <div class="control-group">
-                <label for="scaleDots">Show dots</label>
-                <input type="checkbox" id="scaleDots" checked>
-            </div>
-            <div class="control-group">
-                <label for="scaleDotColor">Dot color</label>
-                <input type="color" id="scaleDotColor" value="#000000">
-            </div>
-            <div class="control-group">
-                <label for="scaleDotSize">Dot size (px)</label>
-                <input type="number" id="scaleDotSize" value="6" min="1" max="50" step="1">
+        </div><!-- /.controls-scroll-body -->
+    </div>
+
+    <div class="scale-content" id="scaleContent">
+        <div class="mobile-sheet-handle" data-sheet-handle aria-hidden="true">
+            <span class="mobile-sheet-handle-bar"></span>
+        </div>
+        <div class="controls-scroll-body">
+            <div class="control-card">
+                <h3 class="card-title">Scale Highlight</h3>
+                <div class="control-group">
+                    <label for="scaleDegrees">Scale degrees</label>
+                    <textarea id="scaleDegrees" rows="2" placeholder="e.g. 0,2,4,5,7,9,11"></textarea>
+                </div>
+                <div class="control-group">
+                    <label for="scaleSize">Scale label size</label>
+                    <input type="number" id="scaleSize" value="1.5" min="0.5" max="4" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label for="scaleDots">Show dots</label>
+                    <input type="checkbox" id="scaleDots" checked>
+                </div>
+                <div class="control-group">
+                    <label for="scaleDotColor">Dot color</label>
+                    <input type="color" id="scaleDotColor" value="#000000">
+                </div>
+                <div class="control-group">
+                    <label for="scaleDotSize">Dot size (px)</label>
+                    <input type="number" id="scaleDotSize" value="6" min="1" max="50" step="1">
+                </div>
             </div>
         </div>
-        </div><!-- /.controls-scroll-body -->
     </div>
 </div>
 
@@ -186,6 +194,10 @@
     <button class="mobile-nav-tab" id="mobileNavChords" aria-pressed="false" aria-label="Chord overlays">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 22 21 2 21"/><line x1="12" y1="8" x2="12" y2="14"/></svg>
         <span>Chords</span>
+    </button>
+    <button class="mobile-nav-tab" id="mobileNavScale" aria-pressed="false" aria-label="Scale highlight">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19h16"/><path d="M6 16l3-8 3 4 3-6 3 10"/></svg>
+        <span>Scale</span>
     </button>
     <button class="mobile-nav-tab" id="mobileNavMore" aria-pressed="false" aria-label="More actions">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/></svg>

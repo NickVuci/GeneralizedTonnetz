@@ -259,7 +259,8 @@ button {
 /* =========================
    Collapsible Controls Content
    ========================= */
-.controls-content {
+.controls-content,
+.scale-content {
   background-color: var(--surface-muted);
   border-bottom: 1px solid var(--border);
   display: flex;
@@ -271,6 +272,10 @@ button {
   overflow: hidden;
   max-height: calc(100vh - var(--header-height));
   opacity: 1;
+}
+
+.scale-content {
+  display: none;
 }
 
 .controls-content.desktop-collapsed {
@@ -944,6 +949,7 @@ input[type="color"]::-webkit-color-swatch {
   }
 
   .controls-content,
+  .scale-content,
   .overlay-sidebar,
   .action-btns {
     --sheet-drag-offset: 0px;
@@ -959,12 +965,15 @@ input[type="color"]::-webkit-color-swatch {
   }
 
   .controls-content,
+  .scale-content,
   .overlay-sidebar {
     overflow: hidden;
     transform: translateX(calc(-110% - var(--sheet-drag-offset)));
   }
 
-  .controls-content {
+  .controls-content,
+  .scale-content {
+    display: flex;
     max-height: none;
     border-bottom: none;
     flex-direction: column;
@@ -976,7 +985,8 @@ input[type="color"]::-webkit-color-swatch {
     visibility: hidden;
   }
 
-  .controls-content.mobile-open {
+  .controls-content.mobile-open,
+  .scale-content.mobile-open {
     transform: translateX(var(--sheet-drag-offset));
     pointer-events: auto;
     opacity: 1;
@@ -1098,6 +1108,7 @@ input[type="color"]::-webkit-color-swatch {
   }
 
   .controls-content,
+  .scale-content,
   .overlay-sidebar,
   .action-btns {
     --sheet-drag-offset: 0px;
@@ -1111,6 +1122,7 @@ input[type="color"]::-webkit-color-swatch {
   }
 
   .controls-content,
+  .scale-content,
   .overlay-sidebar {
     overflow: hidden;
     transform: translateY(calc(110% + var(--sheet-drag-offset)));
@@ -1234,7 +1246,9 @@ input[type="color"]::-webkit-color-swatch {
   }
 
   /* ---- Settings panel: slide-up bottom sheet ---- */
-  .controls-content {
+  .controls-content,
+  .scale-content {
+    display: flex;
     max-height: 78vh;
     overflow-y: hidden;
     overflow-x: hidden;
@@ -1260,7 +1274,8 @@ input[type="color"]::-webkit-color-swatch {
     gap: var(--spacing-md);
     padding: 0 var(--spacing-md) var(--spacing-md);
   }
-  .controls-content.mobile-open {
+  .controls-content.mobile-open,
+  .scale-content.mobile-open {
     transform: translateY(var(--sheet-drag-offset));
     pointer-events: auto;
     max-height: 78vh;
