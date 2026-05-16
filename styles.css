@@ -176,27 +176,6 @@ input[type="radio"] {
   flex-shrink: 0;
 }
 
-/* More-menu toggle (hidden on desktop, shown on mobile) */
-#moreMenuBtn {
-  display: none;
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border-radius: var(--radius);
-  flex-shrink: 0;
-}
-#moreMenuBtn:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-active);
-  color: var(--text);
-}
-#moreMenuBtn:active {
-  background: var(--surface-active);
-}
-
 /* Settings label */
 .settings-label {
   display: inline-block;
@@ -885,8 +864,7 @@ input[type="color"]::-webkit-color-swatch {
     flex-shrink: 0;
   }
   /* Replace header-level toggle buttons with bottom nav on mobile */
-  #toggleControls,
-  #moreMenuBtn {
+  #toggleControls {
     display: none !important;
   }
   .collapsed-settings-strip {
@@ -1273,8 +1251,7 @@ input[type="color"]::-webkit-color-swatch {
   }
 
   /* Sidebar toggle and more-menu button */
-  .sidebar-toggle,
-  #moreMenuBtn {
+  .sidebar-toggle {
     width: 44px;
     height: 44px;
   }

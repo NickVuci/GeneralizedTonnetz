@@ -34,7 +34,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const settingsStateText = document.getElementById('settingsStateText');
     const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
     const overlaySidebar = document.getElementById('overlaySidebar');
-    const moreMenuBtn = document.getElementById('moreMenuBtn');
     const actionBtns = document.getElementById('actionBtns');
     const controlsBackdrop = document.getElementById('controlsBackdrop');
     // Debounced draw function will be assigned after drawTonnetz is defined.
@@ -97,25 +96,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!actionBtns) return;
         actionBtns.classList.toggle('open', !!isOpen);
         actionBtns.classList.toggle('mobile-open', !!isOpen);
-        moreMenuBtn?.setAttribute('aria-expanded', String(!!isOpen));
     }
 
-    // More-menu (⋮) toggle — shown on mobile, hidden on desktop
-    if (moreMenuBtn && actionBtns) {
-        moreMenuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isOpen = actionBtns.classList.contains('open') || actionBtns.classList.contains('mobile-open');
-            setMoreMenuOpen(!isOpen);
-        });
+    if (actionBtns) {
         // Close on any outside click
         document.addEventListener('click', (e) => {
-            if (!actionBtns.contains(e.target) && !e.target.closest('#moreMenuBtn') && !e.target.closest('#mobileNavMore')) {
-                setMoreMenuOpen(false);
-            }
-        });
-        // Close only when an action button is tapped (not when tapping sheet spacing)
-        actionBtns.addEventListener('click', (e) => {
-            if (e.target.closest('button')) {
+            if (!actionBtns.contains(e.target) && !e.target.closest('#mobileNavMore')) {
                 setMoreMenuOpen(false);
             }
         });
