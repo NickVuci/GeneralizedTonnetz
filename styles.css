@@ -19,7 +19,6 @@
   /* Brand */
   --primary: #3794ff;
   --primary-hover: #1e80f0;
-  --primary-active: #0066cc;
   --on-primary: #ffffff;
   
   /* Inputs */
@@ -29,16 +28,17 @@
   
   /* Dimensions */
   --header-height: 52px;
+  --mobile-nav-height: 56px;
+  --mobile-sheet-radius: 16px;
+  --mobile-sheet-shadow: 0 -4px 32px rgba(0, 0, 0, 0.65);
+  --mobile-sheet-z: 165;
   --radius: 6px;
-  --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 24px;
   
   --sidebar-width: 320px;
 }
-
-/* Light Theme support via media query if needed later */
 
 /* =========================
    Base / Resets
@@ -250,35 +250,6 @@ button {
 .toggle-btn.expanded .toggle-icon {
   transform: rotate(180deg);
 }
-.collapsed-settings-strip {
-  display: none;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: 8px 16px 10px;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
-}
-
-.collapsed-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  padding: 4px 10px;
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-
-.collapsed-hint {
-  margin-left: auto;
-  font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 600;
-}
-
 /* =========================
    Collapsible Controls Content
    ========================= */
@@ -361,9 +332,6 @@ label {
   user-select: none;
 }
 
-/* Handling the specific layout for 2col group rewritten in HTML logic via CSS */
-/* We need to target the flat label+input structure if we didn't change HTML structure much */
-/* The previous HTML had label, input, label, input. Let's use Grid properly */
 .control-group.control-group-2col {
     display: grid;
     grid-template-columns: auto 1fr auto 1fr;
@@ -771,6 +739,19 @@ input[type="color"]::-webkit-color-swatch {
     z-index: 170;
   }
 
+  .controls-content,
+  .overlay-sidebar,
+  .action-btns {
+    --sheet-drag-offset: 0px;
+    position: fixed !important;
+    bottom: var(--mobile-nav-height) !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: var(--mobile-sheet-z);
+    border-radius: var(--mobile-sheet-radius) var(--mobile-sheet-radius) 0 0;
+    box-shadow: var(--mobile-sheet-shadow);
+  }
+
   /* ---- Bottom navigation bar ---- */
   .mobile-nav {
     display: flex;
@@ -778,7 +759,7 @@ input[type="color"]::-webkit-color-swatch {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 56px;
+    height: var(--mobile-nav-height);
     background: var(--surface);
     border-top: 1px solid var(--border);
     z-index: 200;
@@ -797,8 +778,7 @@ input[type="color"]::-webkit-color-swatch {
     background: transparent;
     border: none;
     border-radius: 0;
-    height: 56px;
-    min-height: 56px;
+    min-height: var(--mobile-nav-height);
     padding: 0;
     letter-spacing: 0.4px;
     text-transform: uppercase;
@@ -846,9 +826,6 @@ input[type="color"]::-webkit-color-swatch {
   #toggleControls {
     display: none !important;
   }
-  .collapsed-settings-strip {
-    display: none !important;
-  }
   /* Lattice params: full-width second row, centered */
   .header-lattice {
     order: 3;
@@ -882,7 +859,7 @@ input[type="color"]::-webkit-color-swatch {
     min-height: 0;
     order: 1;
     /* Padding for the fixed bottom nav bar */
-    padding-bottom: 56px;
+    padding-bottom: var(--mobile-nav-height);
     padding-left: 8px;
     padding-right: 8px;
     padding-top: 8px;
@@ -894,21 +871,11 @@ input[type="color"]::-webkit-color-swatch {
 
   /* ---- Settings panel: slide-up bottom sheet ---- */
   .controls-content {
-    --sheet-drag-offset: 0px;
-    position: fixed !important;
-    bottom: 56px; /* sit above the nav bar */
-    left: 0;
-    right: 0;
-    z-index: 165;
     max-height: 78vh !important;
     overflow-y: hidden !important;
     overflow-x: hidden;
-    border-radius: 16px 16px 0 0;
     border-bottom: none !important;
-    box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.65);
     transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
-    opacity: 1 !important;
-    visibility: visible;
     /* Single-column card layout */
     flex-direction: column !important;
     gap: 0 !important;
@@ -960,12 +927,6 @@ input[type="color"]::-webkit-color-swatch {
 
   /* ---- Chord Overlays panel: slide-up bottom sheet ---- */
   .overlay-sidebar {
-    --sheet-drag-offset: 0px;
-    position: fixed;
-    bottom: 56px; /* sit above the nav bar */
-    left: 0;
-    right: 0;
-    z-index: 165;
     width: 100% !important;
     max-width: 100% !important;
     min-width: 100% !important;
@@ -974,8 +935,6 @@ input[type="color"]::-webkit-color-swatch {
     border-right: none;
     border-top: 1px solid var(--border);
     border-bottom: none;
-    border-radius: 16px 16px 0 0;
-    box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.65);
     resize: none !important;
     overflow: hidden;
     /* Hidden by default — slides down off-screen */
@@ -1019,27 +978,19 @@ input[type="color"]::-webkit-color-swatch {
 
   /* ---- More / Actions panel: slide-up bottom sheet ---- */
   .action-btns {
-    --sheet-drag-offset: 0px;
-    position: fixed !important;
-    bottom: 56px !important; /* sit above nav bar */
-    left: 0 !important;
-    right: 0 !important;
     top: auto !important;
     display: flex;
     flex-direction: column;
     background: var(--surface);
     border: none;
     border-top: 1px solid var(--border);
-    border-radius: 16px 16px 0 0;
     padding: 12px var(--spacing-md) var(--spacing-md) !important;
     gap: 8px !important;
-    z-index: 165;
-    box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.65);
     min-width: 100% !important;
     opacity: 0;
     pointer-events: none;
     visibility: hidden;
-    transform: translateY(calc(100% + 56px + var(--sheet-drag-offset)));
+    transform: translateY(calc(100% + var(--mobile-nav-height) + var(--sheet-drag-offset)));
     transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease, visibility 0s linear 0.32s;
   }
   .action-btns.open,
@@ -1161,14 +1112,6 @@ input[type="color"]::-webkit-color-swatch {
     width: 100%;
 }
 
-/* Toggle Button Rotation */
-.toggle-btn .toggle-icon {
-  transition: transform 0.3s ease;
-}
-.toggle-btn.expanded .toggle-icon {
-  transform: rotate(180deg);
-}
-
 /* Axis colors specifically */
 .axis-colors .color-pair {
     flex: 1;
@@ -1253,8 +1196,4 @@ input[type="color"]::-webkit-color-swatch {
     height: 44px;
   }
 
-  /* Mobile nav tabs already have 56px height, keep as-is */
-  .mobile-nav-tab {
-    min-height: 56px;
-  }
 }

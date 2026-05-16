@@ -9,7 +9,7 @@
 </head>
 <body>
 
-<div id="controls" class="header-controls">
+<div id="controls">
     <div class="controls-header">
         <div class="title-section">
             <h1 class="main-title">Generalized Tonnetz</h1>
@@ -53,12 +53,6 @@
             </div>
         </div>
     </div>
-    <div class="collapsed-settings-strip" id="collapsedSettingsStrip" aria-hidden="true">
-        <span class="collapsed-pill">Size &amp; Shape</span>
-        <span class="collapsed-pill">Color</span>
-        <span class="collapsed-pill">Scale Highlight</span>
-        <span class="collapsed-hint">Settings are collapsed</span>
-    </div>
     <div class="controls-content collapsed" id="controlsContent">
         <div class="mobile-sheet-handle" data-sheet-handle aria-hidden="true">
             <span class="mobile-sheet-handle-bar"></span>
@@ -99,15 +93,15 @@
             <div class="control-group axis-colors">
                 <div class="color-pair">
                     <label for="colorX">X</label>
-                    <input type="color" id="colorX" class="axis-color">
+                    <input type="color" id="colorX">
                 </div>
                 <div class="color-pair">
                     <label for="colorY">Y</label>
-                    <input type="color" id="colorY" class="axis-color">
+                    <input type="color" id="colorY">
                 </div>
                 <div class="color-pair">
                     <label for="colorZ">Z</label>
-                    <input type="color" id="colorZ" class="axis-color">
+                    <input type="color" id="colorZ">
                 </div>
             </div>
             <div class="separator"></div>
@@ -120,7 +114,7 @@
                     <label for="labelColor">Labels</label>
                     <input type="color" id="labelColor">
                 </div>
-                <div class="color-pair note-zero">
+                <div class="color-pair">
                     <div class="note-zero-label">
                         <label for="highlightZeroColor">Note-0</label>
                         <input type="checkbox" id="highlightZero" title="Toggle Note-0 highlight">
@@ -153,12 +147,6 @@
                 <input type="number" id="scaleDotSize" value="6" min="1" max="50" step="1">
             </div>
         </div>
-
-        <!-- Canvas & Export fieldset removed; options moved to Lattice Parameters -->
-
-        <!-- Overlays moved to left sidebar below -->
-
-            <!-- Draw and Save Image moved to header -->
         </div><!-- /.controls-scroll-body -->
     </div>
 </div>

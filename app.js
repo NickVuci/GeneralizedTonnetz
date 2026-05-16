@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const saveImageButton = document.getElementById('saveImageButton');
     const savePdfButton = document.getElementById('savePdfButton');
     const toggleControlsBtn = document.getElementById('toggleControls');
-    const controlsContainer = document.getElementById('controls');
     const controlsContent = document.getElementById('controlsContent');
     const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
     const overlaySidebar = document.getElementById('overlaySidebar');
@@ -116,7 +115,6 @@ document.addEventListener('DOMContentLoaded', function () {
             toggleControlsBtn.title = isCollapsed ? 'Expand settings' : 'Collapse settings';
             toggleControlsBtn.setAttribute('aria-expanded', String(!isCollapsed));
         }
-        controlsContainer?.classList.toggle('settings-collapsed', isCollapsed);
     }
 
     // Start with controls collapsed by default
