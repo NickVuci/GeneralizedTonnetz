@@ -707,6 +707,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Only active on mobile (<=768px). CSS hides the nav bar on desktop.
     // ==============================
     (function initMobileNav() {
+        const MOBILE_BREAKPOINT = 768;
+        const DRAG_CLOSE_DISTANCE_PX = 72;
+        const DRAG_CLOSE_VELOCITY_PX_PER_MS = 0.45;
         const mobileNavSettings = document.getElementById('mobileNavSettings');
         const mobileNavChords   = document.getElementById('mobileNavChords');
         const mobileNavMore     = document.getElementById('mobileNavMore');
@@ -715,6 +718,47 @@ document.addEventListener('DOMContentLoaded', function () {
         let activeMobilePanel = null; // 'settings' | 'chords' | 'more' | null
 
         const navTabIds = { settings: 'mobileNavSettings', chords: 'mobileNavChords', more: 'mobileNavMore' };
+        const panelDefs = {
+            settings: {
+                key: 'settings',
+                panel: controlsContent,
+                handle: controlsContent?.querySelector('[data-sheet-handle]'),
+                open() {
+                    setControlsCollapsedState(false);
+                    controlsContent?.classList.add('mobile-open');
+                },
+                close() {
+                    setControlsCollapsedState(true);
+                    controlsContent?.classList.remove('mobile-open');
+                }
+            },
+            chords: {
+                key: 'chords',
+                panel: overlaySidebar,
+                handle: overlaySidebar?.querySelector('[data-sheet-handle]'),
+                open() {
+                    overlaySidebar?.classList.add('mobile-open');
+                },
+                close() {
+                    overlaySidebar?.classList.remove('mobile-open');
+                }
+            },
+            more: {
+                key: 'more',
+                panel: actionBtns,
+                handle: actionBtns?.querySelector('[data-sheet-handle]'),
+                open() {
+                    setMoreMenuOpen(true);
+                },
+                close() {
+                    setMoreMenuOpen(false);
+                }
+            }
+        };
+
+        function isMobileViewport() {
+            return window.innerWidth <= MOBILE_BREAKPOINT;
+        }
 
         function updateNavPressed() {
             Object.keys(navTabIds).forEach(function (panel) {
@@ -723,38 +767,98 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
+        function resetPanelDragVisual(panelEl) {
+            if (!panelEl) return;
+            panelEl.style.removeProperty('--sheet-drag-offset');
+            panelEl.classList.remove('mobile-sheet-dragging');
+        }
+
         function closeMobilePanel() {
-            if (!activeMobilePanel) return;
-            if (activeMobilePanel === 'settings') {
-                setControlsCollapsedState(true);
-                controlsContent?.classList.remove('mobile-open');
-            } else if (activeMobilePanel === 'chords') {
-                overlaySidebar?.classList.remove('mobile-open');
-            } else if (activeMobilePanel === 'more') {
-                setMoreMenuOpen(false);
+            if (activeMobilePanel && panelDefs[activeMobilePanel]) {
+                panelDefs[activeMobilePanel].close();
             }
+            Object.values(panelDefs).forEach(def => resetPanelDragVisual(def.panel));
             controlsBackdrop?.classList.remove('visible');
             activeMobilePanel = null;
             updateNavPressed();
         }
 
         function openMobilePanel(panel) {
+            if (!isMobileViewport()) return;
             if (activeMobilePanel === panel) {
                 closeMobilePanel();
                 return;
             }
             closeMobilePanel();
-            if (panel === 'settings') {
-                setControlsCollapsedState(false);
-                controlsContent?.classList.add('mobile-open');
-            } else if (panel === 'chords') {
-                overlaySidebar?.classList.add('mobile-open');
-            } else if (panel === 'more') {
-                setMoreMenuOpen(true);
-            }
+            panelDefs[panel]?.open();
             controlsBackdrop?.classList.add('visible');
             activeMobilePanel = panel;
             updateNavPressed();
+        }
+
+        function bindDragToCollapse(def) {
+            const panel = def?.panel;
+            const handle = def?.handle;
+            const panelKey = def?.key;
+            if (!panel || !handle || !panelKey) return;
+
+            let dragging = false;
+            let pointerId = null;
+            let startY = 0;
+            let startTs = 0;
+            let lastY = 0;
+
+            function detachPointerListeners() {
+                window.removeEventListener('pointermove', onPointerMove);
+                window.removeEventListener('pointerup', onPointerUpOrCancel);
+                window.removeEventListener('pointercancel', onPointerUpOrCancel);
+            }
+
+            function onPointerMove(e) {
+                if (!dragging || e.pointerId !== pointerId) return;
+                const dy = Math.max(0, e.clientY - startY);
+                lastY = e.clientY;
+                panel.style.setProperty('--sheet-drag-offset', `${dy}px`);
+                if (e.cancelable) e.preventDefault();
+            }
+
+            function onPointerUpOrCancel(e) {
+                if (!dragging || e.pointerId !== pointerId) return;
+                const dy = Math.max(0, (lastY || e.clientY) - startY);
+                const elapsedMs = Math.max(1, performance.now() - startTs);
+                const velocity = dy / elapsedMs;
+                const shouldClose = activeMobilePanel === panelKey && (
+                    dy >= DRAG_CLOSE_DISTANCE_PX || velocity >= DRAG_CLOSE_VELOCITY_PX_PER_MS
+                );
+
+                dragging = false;
+                pointerId = null;
+                detachPointerListeners();
+                resetPanelDragVisual(panel);
+
+                if (shouldClose) closeMobilePanel();
+            }
+
+            handle.addEventListener('pointerdown', function (e) {
+                if (!isMobileViewport()) return;
+                if (activeMobilePanel !== panelKey) return;
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+                dragging = true;
+                pointerId = e.pointerId;
+                startY = e.clientY;
+                lastY = e.clientY;
+                startTs = performance.now();
+
+                panel.classList.add('mobile-sheet-dragging');
+                panel.style.setProperty('--sheet-drag-offset', '0px');
+                if (handle.setPointerCapture) handle.setPointerCapture(pointerId);
+
+                window.addEventListener('pointermove', onPointerMove, { passive: false });
+                window.addEventListener('pointerup', onPointerUpOrCancel);
+                window.addEventListener('pointercancel', onPointerUpOrCancel);
+                if (e.cancelable) e.preventDefault();
+            });
         }
 
         mobileNavSettings?.addEventListener('click', function () { openMobilePanel('settings'); });
@@ -775,6 +879,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
         }
+
+        Object.values(panelDefs).forEach(bindDragToCollapse);
+
+        window.addEventListener('resize', function () {
+            if (isMobileViewport()) return;
+            closeMobilePanel();
+            controlsContent?.classList.remove('mobile-open');
+            overlaySidebar?.classList.remove('mobile-open');
+            setMoreMenuOpen(false);
+            controlsBackdrop?.classList.remove('visible');
+            Object.values(panelDefs).forEach(def => resetPanelDragVisual(def.panel));
+            updateNavPressed();
+        });
 
         // Ensure all panels start closed
         closeMobilePanel();
