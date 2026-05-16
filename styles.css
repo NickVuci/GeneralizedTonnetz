@@ -808,6 +808,10 @@ input[type="color"]::-webkit-color-swatch {
    Responsive: Mobile (≤768px) — bottom nav + panel sheets
    =========================== */
 @media (max-width: 768px) {
+  /* Keep mobile sheets from header above the backdrop layer */
+  #controls {
+    z-index: 170;
+  }
 
   /* ---- Bottom navigation bar ---- */
   .mobile-nav {
@@ -1110,6 +1114,7 @@ input[type="color"]::-webkit-color-swatch {
 
   /* ---- Backdrop: sits below panels, above canvas ---- */
   .controls-backdrop {
+    background: rgba(0, 0, 0, 0.35);
     z-index: 155;
   }
 
