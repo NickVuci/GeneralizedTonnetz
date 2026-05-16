@@ -957,6 +957,9 @@ input[type="color"]::-webkit-color-swatch {
     gap: var(--spacing-md) !important;
     align-items: stretch !important;
     padding: 28px var(--spacing-md) var(--spacing-md) !important;
+    transform: translateY(110%);
+    pointer-events: none;
+    visibility: hidden;
   }
   /* Pull-handle bar */
   .controls-content::before {
@@ -971,6 +974,12 @@ input[type="color"]::-webkit-color-swatch {
     background: var(--border-active);
     border-radius: 2px;
     pointer-events: none;
+  }
+  .controls-content.mobile-open {
+    transform: translateY(0) !important;
+    pointer-events: auto;
+    opacity: 1 !important;
+    visibility: visible;
   }
   .controls-content.collapsed {
     transform: translateY(110%) !important;
@@ -1089,7 +1098,8 @@ input[type="color"]::-webkit-color-swatch {
     transform: translateY(calc(100% + 56px));
     transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease, visibility 0s linear 0.32s;
   }
-  .action-btns.open {
+  .action-btns.open,
+  .action-btns.mobile-open {
     opacity: 1;
     pointer-events: auto;
     visibility: visible;

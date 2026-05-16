@@ -93,24 +93,31 @@ document.addEventListener('DOMContentLoaded', function () {
     toggleSidebarBtn?.addEventListener('click', toggleSidebar);
     controlsBackdrop?.addEventListener('click', toggleControls);
 
+    function setMoreMenuOpen(isOpen) {
+        if (!actionBtns) return;
+        actionBtns.classList.toggle('open', !!isOpen);
+        actionBtns.classList.toggle('mobile-open', !!isOpen);
+        moreMenuBtn?.setAttribute('aria-expanded', String(!!isOpen));
+    }
+
     // More-menu (⋮) toggle — shown on mobile, hidden on desktop
     if (moreMenuBtn && actionBtns) {
         moreMenuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const isOpen = actionBtns.classList.toggle('open');
-            moreMenuBtn.setAttribute('aria-expanded', String(isOpen));
+            const isOpen = actionBtns.classList.contains('open') || actionBtns.classList.contains('mobile-open');
+            setMoreMenuOpen(!isOpen);
         });
         // Close on any outside click
         document.addEventListener('click', (e) => {
-            if (!actionBtns.contains(e.target) && e.target !== moreMenuBtn) {
-                actionBtns.classList.remove('open');
-                moreMenuBtn.setAttribute('aria-expanded', 'false');
+            if (!actionBtns.contains(e.target) && !e.target.closest('#moreMenuBtn') && !e.target.closest('#mobileNavMore')) {
+                setMoreMenuOpen(false);
             }
         });
-        // Close after an action button is tapped
-        actionBtns.addEventListener('click', () => {
-            actionBtns.classList.remove('open');
-            moreMenuBtn.setAttribute('aria-expanded', 'false');
+        // Close only when an action button is tapped (not when tapping sheet spacing)
+        actionBtns.addEventListener('click', (e) => {
+            if (e.target.closest('button')) {
+                setMoreMenuOpen(false);
+            }
         });
     }
 
@@ -734,11 +741,11 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!activeMobilePanel) return;
             if (activeMobilePanel === 'settings') {
                 setControlsCollapsedState(true);
+                controlsContent?.classList.remove('mobile-open');
             } else if (activeMobilePanel === 'chords') {
                 overlaySidebar?.classList.remove('mobile-open');
             } else if (activeMobilePanel === 'more') {
-                actionBtns?.classList.remove('open');
-                moreMenuBtn?.setAttribute('aria-expanded', 'false');
+                setMoreMenuOpen(false);
             }
             controlsBackdrop?.classList.remove('visible');
             activeMobilePanel = null;
@@ -753,11 +760,11 @@ document.addEventListener('DOMContentLoaded', function () {
             closeMobilePanel();
             if (panel === 'settings') {
                 setControlsCollapsedState(false);
+                controlsContent?.classList.add('mobile-open');
             } else if (panel === 'chords') {
                 overlaySidebar?.classList.add('mobile-open');
             } else if (panel === 'more') {
-                actionBtns?.classList.add('open');
-                moreMenuBtn?.setAttribute('aria-expanded', 'true');
+                setMoreMenuOpen(true);
             }
             controlsBackdrop?.classList.add('visible');
             activeMobilePanel = panel;
@@ -786,6 +793,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Ensure all panels start closed
         closeMobilePanel();
         setControlsCollapsedState(true);
+        controlsContent?.classList.remove('mobile-open');
         overlaySidebar?.classList.remove('mobile-open');
+        setMoreMenuOpen(false);
     })();
 });
