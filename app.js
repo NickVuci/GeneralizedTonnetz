@@ -105,12 +105,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 setMoreMenuOpen(false);
             }
         });
-        // Close only when an action button is tapped (not when tapping sheet spacing)
-        actionBtns.addEventListener('click', (e) => {
-            if (e.target.closest('button')) {
-                setMoreMenuOpen(false);
-            }
-        });
     }
 
     function setControlsCollapsedState(isCollapsed) {
