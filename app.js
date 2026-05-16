@@ -62,6 +62,28 @@ document.addEventListener('DOMContentLoaded', function () {
     overlayListContainer?.addEventListener('change', (e) => { onOverlayPanelEvent(e); if (debouncedDraw) debouncedDraw(); else drawTonnetz(); }, true);
     overlayListContainer?.addEventListener('click', (e) => { onOverlayPanelEvent(e); if (debouncedDraw) debouncedDraw(); else drawTonnetz(); }, true);
     canvas.addEventListener('click', onCanvasClick);
+    // Touch tap support — convert single-finger tap to the same handler as click.
+    // Track touchstart position so we can distinguish a tap from a pan/scroll.
+    let touchStartX = 0;
+    let touchStartY = 0;
+    canvas.addEventListener('touchstart', function (evt) {
+        if (evt.touches.length === 1) {
+            touchStartX = evt.touches[0].clientX;
+            touchStartY = evt.touches[0].clientY;
+        }
+    }, { passive: true });
+    canvas.addEventListener('touchend', function (evt) {
+        if (evt.changedTouches.length === 1) {
+            const touch = evt.changedTouches[0];
+            const dx = touch.clientX - touchStartX;
+            const dy = touch.clientY - touchStartY;
+            // Only treat as a tap if movement was small (< 10px)
+            if (Math.hypot(dx, dy) < 10) {
+                evt.preventDefault();
+                onCanvasClick({ clientX: touch.clientX, clientY: touch.clientY });
+            }
+        }
+    }, { passive: false });
     toggleControlsBtn?.addEventListener('click', toggleControls);
     toggleSidebarBtn?.addEventListener('click', toggleSidebar);
 
@@ -75,6 +97,18 @@ document.addEventListener('DOMContentLoaded', function () {
             toggleControlsBtn.title = 'Expand controls';
         }
     } catch (e) { console.error('Error initializing controls collapse state', e); }
+
+    // On mobile (coarse pointer or narrow viewport), start with sidebar collapsed
+    // so the canvas gets maximum space. This can be overridden by saved state.
+    try {
+        if (overlaySidebar && window.innerWidth <= 768) {
+            overlaySidebar.classList.add('collapsed');
+            if (toggleSidebarBtn) {
+                toggleSidebarBtn.textContent = '∨';
+                toggleSidebarBtn.title = 'Expand sidebar';
+            }
+        }
+    } catch (e) { console.error('Error initializing sidebar collapse state', e); }
 
     // Limits
     const MAX_CANVAS_WIDTH = 2000;

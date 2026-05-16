@@ -51,8 +51,11 @@ body {
   color: var(--text);
   margin: 0;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
+  /* Prevent overscroll / bounce on iOS */
+  overscroll-behavior: none;
 }
 
 h1, h2, h3, h4 { margin: 0; font-weight: 500; }
@@ -179,6 +182,12 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  /* Prevent text selection on double-tap */
+  -webkit-user-select: none;
+  user-select: none;
+  /* Remove tap highlight on mobile */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .secondary-action {
@@ -309,6 +318,8 @@ textarea {
   font-family: inherit;
   transition: all 0.2s;
   width: 100%;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 textarea {
@@ -579,6 +590,9 @@ input[type="color"]::-webkit-color-swatch {
   max-width: 100%;
   max-height: 100%;
   transition: box-shadow 0.3s ease;
+  /* Allow panning/scrolling while still receiving tap events */
+  touch-action: pan-x pan-y;
+  -webkit-tap-highlight-color: transparent;
 }
 
 #tonnetzCanvas.canvas-flash {
@@ -680,6 +694,7 @@ input[type="color"]::-webkit-color-swatch {
     width: 100%;
     min-width: 100%;
     max-width: 100%;
+    resize: none;
   }
   .canvas-wrap {
     flex: 1;
@@ -687,6 +702,10 @@ input[type="color"]::-webkit-color-swatch {
   }
   .control-card {
     min-width: 220px;
+  }
+  /* Increase touch targets inside the header at tablet size */
+  .controls-header {
+    min-height: 52px;
   }
 }
 
@@ -698,10 +717,15 @@ input[type="color"]::-webkit-color-swatch {
   .header-actions button {
     padding: 6px 10px;
     font-size: 12px;
+    min-height: 44px;
   }
   .param-group input[type="number"] {
     width: 48px;
-    font-size: 14px;
+    font-size: 16px; /* Prevent iOS auto-zoom */
+    min-height: 44px;
+  }
+  .param-group label {
+    font-size: 9px;
   }
   .ov-fields {
     grid-template-columns: 1fr;
@@ -719,6 +743,11 @@ input[type="color"]::-webkit-color-swatch {
     max-width: none;
     padding: var(--spacing-md);
   }
+  /* Larger touch targets for form inputs on phone */
+  .control-group input[type="number"],
+  .control-group select {
+    min-height: 44px;
+  }
 }
 
 /* Small phone */
@@ -735,6 +764,12 @@ input[type="color"]::-webkit-color-swatch {
   .header-actions button {
     padding: 6px 8px;
     font-size: 11px;
+    min-height: 44px;
+  }
+  /* Hide Copy Link and Save PDF on very small screens to reduce clutter */
+  #copyLinkBtn,
+  #savePdfButton {
+    display: none;
   }
   .ov-mapping label {
     font-size: 10px;
@@ -820,3 +855,47 @@ input[type="color"]::-webkit-color-swatch {
 .note-zero-label input[type="checkbox"] {
   margin: 0;
 }
+
+/* =========================
+   Touch / Pointer Coarse (phones, tablets)
+   ========================= */
+@media (pointer: coarse) {
+  /* Enforce 44px minimum touch targets on coarse-pointer devices */
+  button {
+    min-height: 44px;
+  }
+
+  input[type="number"],
+  input[type="text"],
+  select {
+    min-height: 44px;
+    /* Prevent iOS auto-zoom by using 16px font size */
+    font-size: 16px;
+  }
+
+  textarea {
+    font-size: 16px;
+  }
+
+  input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+  }
+
+  input[type="color"] {
+    min-height: 44px;
+  }
+
+  /* Slightly larger overlay toggle */
+  .sidebar-toggle {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Param group inputs keep compact width but meet height target */
+  .param-group input[type="number"] {
+    min-height: 44px;
+    height: 44px;
+  }
+}
+
