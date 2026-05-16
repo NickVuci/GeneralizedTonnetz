@@ -29,7 +29,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const saveImageButton = document.getElementById('saveImageButton');
     const savePdfButton = document.getElementById('savePdfButton');
     const toggleControlsBtn = document.getElementById('toggleControls');
+    const controlsContainer = document.getElementById('controls');
     const controlsContent = document.getElementById('controlsContent');
+    const settingsStateText = document.getElementById('settingsStateText');
     const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
     const overlaySidebar = document.getElementById('overlaySidebar');
     const moreMenuBtn = document.getElementById('moreMenuBtn');
@@ -112,14 +114,23 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function setControlsCollapsedState(isCollapsed) {
+        if (!controlsContent) return;
+        controlsContent.classList.toggle('collapsed', isCollapsed);
+        if (toggleControlsBtn) {
+            toggleControlsBtn.classList.toggle('expanded', !isCollapsed);
+            toggleControlsBtn.title = isCollapsed ? 'Expand settings' : 'Collapse settings';
+            toggleControlsBtn.setAttribute('aria-expanded', String(!isCollapsed));
+        }
+        if (settingsStateText) {
+            settingsStateText.textContent = isCollapsed ? 'Collapsed' : 'Expanded';
+        }
+        controlsContainer?.classList.toggle('settings-collapsed', isCollapsed);
+    }
+
     // Start with controls collapsed by default
     try {
-        if (controlsContent && !controlsContent.classList.contains('collapsed')) {
-            controlsContent.classList.add('collapsed');
-        }
-        if (toggleControlsBtn) {
-            toggleControlsBtn.title = 'Expand settings';
-        }
+        setControlsCollapsedState(true);
     } catch (e) { console.error('Error initializing controls collapse state', e); }
 
     // On mobile, sidebar is managed as a bottom sheet via .mobile-open (not .collapsed).
@@ -438,9 +449,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function toggleControls() {
-        const isCollapsed = controlsContent.classList.toggle('collapsed');
-        toggleControlsBtn.classList.toggle('expanded', !isCollapsed);
-        toggleControlsBtn.title = isCollapsed ? 'Expand settings' : 'Collapse settings';
+        if (!controlsContent) return;
+        const isCollapsed = !controlsContent.classList.contains('collapsed');
+        setControlsCollapsedState(isCollapsed);
         // Show/hide backdrop on mobile (bottom-sheet mode)
         if (controlsBackdrop) {
             controlsBackdrop.classList.toggle('visible', !isCollapsed && window.innerWidth <= 768);
@@ -562,18 +573,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Restore UI collapse states — on mobile all panels always start closed
             if (window.innerWidth <= 768) {
-                controlsContent?.classList.add('collapsed');
-                if (toggleControlsBtn) toggleControlsBtn.classList.remove('expanded');
+                setControlsCollapsedState(true);
                 controlsBackdrop?.classList.remove('visible');
                 overlaySidebar?.classList.remove('mobile-open');
             } else {
                 if (state.controlsCollapsed) {
-                    controlsContent?.classList.add('collapsed');
-                    if (toggleControlsBtn) toggleControlsBtn.classList.remove('expanded');
+                    setControlsCollapsedState(true);
                     if (controlsBackdrop) controlsBackdrop.classList.remove('visible');
                 } else {
-                    controlsContent?.classList.remove('collapsed');
-                    if (toggleControlsBtn) toggleControlsBtn.classList.add('expanded');
+                    setControlsCollapsedState(false);
                 }
                 if (state.sidebarCollapsed) {
                     overlaySidebar?.classList.add('collapsed');
@@ -725,8 +733,7 @@ document.addEventListener('DOMContentLoaded', function () {
         function closeMobilePanel() {
             if (!activeMobilePanel) return;
             if (activeMobilePanel === 'settings') {
-                controlsContent?.classList.add('collapsed');
-                if (toggleControlsBtn) toggleControlsBtn.classList.remove('expanded');
+                setControlsCollapsedState(true);
             } else if (activeMobilePanel === 'chords') {
                 overlaySidebar?.classList.remove('mobile-open');
             } else if (activeMobilePanel === 'more') {
@@ -745,8 +752,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             closeMobilePanel();
             if (panel === 'settings') {
-                controlsContent?.classList.remove('collapsed');
-                if (toggleControlsBtn) toggleControlsBtn.classList.add('expanded');
+                setControlsCollapsedState(false);
             } else if (panel === 'chords') {
                 overlaySidebar?.classList.add('mobile-open');
             } else if (panel === 'more') {
@@ -779,7 +785,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Ensure all panels start closed
         closeMobilePanel();
-        controlsContent?.classList.add('collapsed');
+        setControlsCollapsedState(true);
         overlaySidebar?.classList.remove('mobile-open');
     })();
 });
