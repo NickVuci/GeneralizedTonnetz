@@ -281,10 +281,6 @@ button {
   background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
 }
 
-#controls.settings-collapsed .collapsed-settings-strip {
-  display: flex;
-}
-
 .collapsed-pill {
   display: inline-flex;
   align-items: center;
