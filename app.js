@@ -99,8 +99,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (actionBtns) {
-        // Close on any outside click
+        // Close on any outside click — desktop only; on mobile the backdrop + closeMobilePanel handle this
         document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) return;
             if (!actionBtns.contains(e.target) && !e.target.closest('#mobileNavMore')) {
                 setMoreMenuOpen(false);
             }
@@ -805,8 +806,9 @@ document.addEventListener('DOMContentLoaded', function () {
             let dragging = false;
             let pointerId = null;
             let startY = 0;
-            let startTs = 0;
             let lastY = 0;
+            let lastMoveTs = 0;
+            let recentVelocity = 0;
 
             function detachPointerListeners() {
                 window.removeEventListener('pointermove', onPointerMove);
@@ -816,6 +818,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
             function onPointerMove(e) {
                 if (!dragging || e.pointerId !== pointerId) return;
+                const now = performance.now();
+                const dt = Math.max(1, now - lastMoveTs);
+                recentVelocity = (e.clientY - lastY) / dt;
+                lastMoveTs = now;
                 const dy = Math.max(0, e.clientY - startY);
                 lastY = e.clientY;
                 panel.style.setProperty('--sheet-drag-offset', `${dy}px`);
@@ -825,10 +831,8 @@ document.addEventListener('DOMContentLoaded', function () {
             function onPointerUpOrCancel(e) {
                 if (!dragging || e.pointerId !== pointerId) return;
                 const dy = Math.max(0, (lastY || e.clientY) - startY);
-                const elapsedMs = Math.max(1, performance.now() - startTs);
-                const velocity = dy / elapsedMs;
                 const shouldClose = activeMobilePanel === panelKey && (
-                    dy >= DRAG_CLOSE_DISTANCE_PX || velocity >= DRAG_CLOSE_VELOCITY_PX_PER_MS
+                    dy >= DRAG_CLOSE_DISTANCE_PX || recentVelocity >= DRAG_CLOSE_VELOCITY_PX_PER_MS
                 );
 
                 dragging = false;
@@ -848,7 +852,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 pointerId = e.pointerId;
                 startY = e.clientY;
                 lastY = e.clientY;
-                startTs = performance.now();
+                lastMoveTs = performance.now();
+                recentVelocity = 0;
 
                 panel.classList.add('mobile-sheet-dragging');
                 panel.style.setProperty('--sheet-drag-offset', '0px');
