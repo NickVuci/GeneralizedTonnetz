@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const saveImageButton = document.getElementById('saveImageButton');
     const savePdfButton = document.getElementById('savePdfButton');
     const toggleControlsBtn = document.getElementById('toggleControls');
+    const controlsContainer = document.getElementById('controls');
     const controlsContent = document.getElementById('controlsContent');
     const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
     const overlaySidebar = document.getElementById('overlaySidebar');
@@ -115,6 +116,12 @@ document.addEventListener('DOMContentLoaded', function () {
         actionBtns.classList.toggle('mobile-open', !!isOpen);
     }
 
+    function syncControlsOffset() {
+        if (!controlsContainer) return;
+        const offset = Math.round(controlsContainer.getBoundingClientRect().height);
+        document.documentElement.style.setProperty('--controls-offset', `${offset}px`);
+    }
+
     if (actionBtns) {
         // Close on any outside click — desktop only; on mobile the backdrop + closeMobilePanel handle this
         document.addEventListener('click', (e) => {
@@ -147,6 +154,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Start with controls collapsed by default
     try {
         setControlsDesktopCollapsedState(true);
+        syncControlsOffset();
     } catch (e) { console.error('Error initializing controls collapse state', e); }
 
     // On mobile, sidebar is managed as a bottom sheet via .mobile-open.
@@ -720,11 +728,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ==============================
-    // Mobile Bottom Navigation
-    // Manages three slide-up panels: Settings, Chords, More
-    // Only active on mobile (<=768px). CSS hides the nav bar on desktop.
+    // Adaptive Navigation
+    // Uses the same tab/panel controller across viewports.
+    // On narrow screens the nav sits at the bottom; on wide screens it becomes a left rail.
     // ==============================
-    (function initMobileNav() {
+    (function initAdaptiveNav() {
         const MOBILE_BREAKPOINT = 768;
         const DRAG_CLOSE_DISTANCE_PX = 72;
         const DRAG_CLOSE_VELOCITY_PX_PER_MS = 0.45;
@@ -772,7 +780,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         };
 
-        function isMobileViewport() {
+        function isBottomNavViewport() {
             return window.innerWidth <= MOBILE_BREAKPOINT;
         }
 
@@ -802,7 +810,6 @@ document.addEventListener('DOMContentLoaded', function () {
         closeActiveMobilePanel = closeMobilePanel;
 
         function openMobilePanel(panel) {
-            if (!isMobileViewport()) return;
             if (activeMobilePanel === panel) {
                 closeMobilePanel();
                 return;
@@ -861,7 +868,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             handle.addEventListener('pointerdown', function (e) {
-                if (!isMobileViewport()) return;
+                if (!isBottomNavViewport()) return;
                 if (activeMobilePanel !== panelKey) return;
                 if (e.pointerType === 'mouse' && e.button !== 0) return;
 
@@ -899,13 +906,8 @@ document.addEventListener('DOMContentLoaded', function () {
         Object.values(panelDefs).forEach(bindDragToCollapse);
 
         window.addEventListener('resize', function () {
-            if (isMobileViewport()) return;
-            closeMobilePanel();
-            controlsContent?.classList.remove('mobile-open');
-            overlaySidebar?.classList.remove('mobile-open');
-            setMoreMenuOpen(false);
-            controlsBackdrop?.classList.remove('visible');
             Object.values(panelDefs).forEach(def => resetPanelDragVisual(def.panel));
+            syncControlsOffset();
             updateNavPressed();
         });
 
@@ -915,5 +917,6 @@ document.addEventListener('DOMContentLoaded', function () {
         controlsContent?.classList.remove('mobile-open');
         overlaySidebar?.classList.remove('mobile-open');
         setMoreMenuOpen(false);
+        syncControlsOffset();
     })();
 });

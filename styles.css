@@ -31,7 +31,10 @@
   
   /* Dimensions */
   --header-height: 52px;
+  --controls-offset: 118px;
   --mobile-nav-height: 56px;
+  --desktop-nav-width: 92px;
+  --desktop-panel-width: min(360px, calc(100vw - var(--desktop-nav-width) - 32px));
   --mobile-sheet-radius: 16px;
   --mobile-sheet-shadow: 0 -4px 32px rgba(0, 0, 0, 0.65);
   --mobile-sheet-z: 165;
@@ -829,6 +832,260 @@ input[type="color"]::-webkit-color-swatch {
 
 .mobile-sheet-handle {
   display: none;
+}
+
+/* ===========================
+   Responsive: Wide layout (>=769px)
+   Match the compact mobile UI, but use a left rail instead of a bottom nav.
+   =========================== */
+@media (min-width: 769px) {
+  .controls-header {
+    padding: 0 16px;
+    min-height: 48px;
+    flex-wrap: wrap;
+    height: auto;
+    gap: 0;
+  }
+
+  .title-section {
+    flex: 1 1 auto;
+    order: 1;
+    min-width: 0;
+    padding: 6px 0;
+  }
+
+  .header-actions {
+    order: 2;
+    flex: 0 0 0;
+    width: 0;
+    min-width: 0;
+    overflow: visible;
+    padding: 0;
+    gap: 0;
+  }
+
+  #toggleControls,
+  #toggleSidebarBtn {
+    display: none;
+  }
+
+  .header-lattice {
+    order: 3;
+    flex: 1 1 100%;
+    border-left: none;
+    border-right: none;
+    border-top: 1px solid var(--border);
+    height: auto;
+    padding: 8px 0 10px;
+    justify-content: center;
+    gap: 32px;
+    margin: 0;
+  }
+
+  .workspace {
+    padding-left: var(--desktop-nav-width);
+  }
+
+  .canvas-wrap {
+    padding: 16px 16px 16px 24px;
+  }
+
+  .mobile-nav {
+    display: flex;
+    position: fixed;
+    top: var(--controls-offset);
+    bottom: 0;
+    left: 0;
+    width: var(--desktop-nav-width);
+    flex-direction: column;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    z-index: 200;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.35);
+  }
+
+  .mobile-nav-tab {
+    flex: none;
+    width: 100%;
+    min-height: 84px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 8px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
+  .mobile-nav-tab:active {
+    background: var(--surface-hover);
+  }
+
+  .mobile-nav-tab[aria-pressed="true"] {
+    color: var(--primary);
+    background: linear-gradient(180deg, rgba(55, 148, 255, 0.14), rgba(55, 148, 255, 0.04));
+  }
+
+  .mobile-nav-tab[aria-pressed="true"] svg {
+    stroke: var(--primary);
+  }
+
+  #mobileNavMore[aria-pressed="true"] svg {
+    fill: var(--primary);
+    stroke: none;
+  }
+
+  .controls-content,
+  .overlay-sidebar,
+  .action-btns {
+    --sheet-drag-offset: 0px;
+    position: fixed;
+    top: var(--controls-offset);
+    bottom: 16px;
+    left: var(--desktop-nav-width);
+    width: var(--desktop-panel-width);
+    max-width: 420px;
+    z-index: var(--mobile-sheet-z);
+    border-radius: 0 var(--mobile-sheet-radius) var(--mobile-sheet-radius) 0;
+    box-shadow: 12px 0 32px rgba(0, 0, 0, 0.45);
+  }
+
+  .controls-content,
+  .overlay-sidebar {
+    overflow: hidden;
+    transform: translateX(calc(-110% - var(--sheet-drag-offset)));
+  }
+
+  .controls-content {
+    max-height: none;
+    border-bottom: none;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 0;
+    align-items: stretch;
+    padding: 12px 0 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  .controls-content.mobile-open {
+    transform: translateX(var(--sheet-drag-offset));
+    pointer-events: auto;
+    opacity: 1;
+    visibility: visible;
+    padding-top: 12px;
+    padding-bottom: 0;
+    max-height: none;
+  }
+
+  .controls-scroll-body {
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: 0 var(--spacing-md) var(--spacing-md);
+  }
+
+  .control-card {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    flex: none;
+    padding: var(--spacing-md);
+  }
+
+  .control-group.control-group-2col {
+    grid-template-columns: auto 1fr;
+    gap: 8px;
+  }
+
+  .overlay-sidebar {
+    max-height: none;
+    min-height: unset;
+    border-right: 1px solid var(--border);
+    border-top: none;
+    border-bottom: none;
+    padding-top: 0;
+    background: var(--surface);
+    resize: none;
+    transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .overlay-sidebar.mobile-open {
+    transform: translateX(var(--sheet-drag-offset));
+  }
+
+  .overlay-sidebar.desktop-collapsed .overlay-header-title,
+  .overlay-sidebar.desktop-collapsed #addOverlayBtn,
+  .overlay-sidebar.desktop-collapsed .overlay-list {
+    display: flex;
+  }
+
+  .overlay-summary {
+    display: none;
+  }
+
+  .overlay-list {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+
+  .action-btns {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: none;
+    border-right: 1px solid var(--border);
+    padding: 12px var(--spacing-md) var(--spacing-md);
+    gap: 8px;
+    min-width: 0;
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transform: translateX(calc(-110% - var(--sheet-drag-offset)));
+    transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease, visibility 0s linear 0.32s;
+  }
+
+  .action-btns.mobile-open {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+    transform: translateX(var(--sheet-drag-offset));
+    transition-delay: 0s;
+  }
+
+  .action-btns button {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 14px 16px;
+    font-size: 15px;
+    height: auto;
+    min-height: 52px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface-muted);
+    color: var(--text);
+  }
+
+  .action-btns button:active {
+    background: var(--surface-hover);
+  }
+
+  .controls-backdrop {
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 155;
+  }
 }
 
 /* ===========================
