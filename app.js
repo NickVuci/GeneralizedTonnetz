@@ -856,8 +856,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const activePanel = panelDefs[activeMobilePanel]?.panel;
             const activeNavTab = document.getElementById(navTabIds[activeMobilePanel]);
+            const clickedNavTab = Object.values(navTabIds).some(function (navTabId) {
+                return document.getElementById(navTabId)?.contains(e.target);
+            });
             if (!activePanel) return;
-            if (activePanel.contains(e.target) || activeNavTab?.contains(e.target)) return;
+            if (activePanel.contains(e.target) || activeNavTab?.contains(e.target) || clickedNavTab) return;
 
             e.preventDefault();
             e.stopPropagation();

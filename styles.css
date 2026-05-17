@@ -298,7 +298,7 @@ button {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: transparent;
   z-index: 149;
 }
 .controls-backdrop.visible {
@@ -1085,7 +1085,7 @@ input[type="color"]::-webkit-color-swatch {
   }
 
   .controls-backdrop {
-    background: rgba(0, 0, 0, 0.35);
+    background: transparent;
     z-index: 155;
   }
 }
@@ -1379,7 +1379,7 @@ input[type="color"]::-webkit-color-swatch {
 
   /* ---- Backdrop: sits below panels, above canvas ---- */
   .controls-backdrop {
-    background: rgba(0, 0, 0, 0.35);
+    background: transparent;
     z-index: 155;
     pointer-events: none;
   }
