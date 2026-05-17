@@ -284,6 +284,13 @@ button {
   border-bottom: none;
 }
 
+.controls-content.desktop-collapsed.mobile-open {
+  max-height: none;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 1;
+}
+
 /* =========================
    Controls Backdrop (mobile bottom sheet)
    ========================= */
@@ -947,6 +954,7 @@ input[type="color"]::-webkit-color-swatch {
     z-index: var(--mobile-sheet-z);
     border-radius: 0 var(--mobile-sheet-radius) var(--mobile-sheet-radius) 0;
     box-shadow: 12px 0 32px rgba(0, 0, 0, 0.45);
+    transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .controls-content,
@@ -966,6 +974,7 @@ input[type="color"]::-webkit-color-swatch {
     gap: 0;
     align-items: stretch;
     padding: 12px 0 0;
+    opacity: 0;
     pointer-events: none;
     visibility: hidden;
   }
@@ -973,12 +982,12 @@ input[type="color"]::-webkit-color-swatch {
   .controls-content.mobile-open,
   .scale-content.mobile-open {
     transform: translateX(var(--sheet-drag-offset));
-    pointer-events: auto;
-    opacity: 1;
-    visibility: visible;
     padding-top: 12px;
     padding-bottom: 0;
     max-height: none;
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
   }
 
   .controls-scroll-body {
@@ -1045,19 +1054,17 @@ input[type="color"]::-webkit-color-swatch {
     padding: 12px var(--spacing-md) var(--spacing-md);
     gap: 8px;
     min-width: 0;
+    transform: translateX(calc(-110% - var(--sheet-drag-offset)));
     opacity: 0;
     pointer-events: none;
     visibility: hidden;
-    transform: translateX(calc(-110% - var(--sheet-drag-offset)));
-    transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease, visibility 0s linear 0.32s;
   }
 
   .action-btns.mobile-open {
+    transform: translateX(var(--sheet-drag-offset));
     opacity: 1;
     pointer-events: auto;
     visibility: visible;
-    transform: translateX(var(--sheet-drag-offset));
-    transition-delay: 0s;
   }
 
   .action-btns button {
@@ -1104,11 +1111,13 @@ input[type="color"]::-webkit-color-swatch {
     z-index: var(--mobile-sheet-z);
     border-radius: var(--mobile-sheet-radius) var(--mobile-sheet-radius) 0 0;
     box-shadow: var(--mobile-sheet-shadow);
+    transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .controls-content,
   .scale-content,
-  .overlay-sidebar {
+  .overlay-sidebar,
+  .action-btns {
     overflow: hidden;
     transform: translateY(calc(110% + var(--sheet-drag-offset)));
   }
@@ -1221,17 +1230,18 @@ input[type="color"]::-webkit-color-swatch {
   .controls-content,
   .scale-content {
     display: flex;
-    max-height: 78vh;
+    max-height: 72vh;
     overflow-y: hidden;
     overflow-x: hidden;
     border-bottom: none;
-    transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+    border-top: 1px solid var(--border);
     /* Single-column card layout */
     flex-direction: column;
     flex-wrap: nowrap;
     gap: 0;
     align-items: stretch;
-    padding: 12px 0 0;
+    padding: 24px 0 0;
+    opacity: 0;
     pointer-events: none;
     visibility: hidden;
   }
@@ -1249,11 +1259,11 @@ input[type="color"]::-webkit-color-swatch {
   .controls-content.mobile-open,
   .scale-content.mobile-open {
     transform: translateY(var(--sheet-drag-offset));
-    pointer-events: auto;
-    max-height: 78vh;
-    padding-top: 12px;
+    max-height: 72vh;
+    padding-top: 24px;
     padding-bottom: 0;
     opacity: 1;
+    pointer-events: auto;
     visibility: visible;
   }
   .overlay-sidebar.mobile-open {
@@ -1315,18 +1325,16 @@ input[type="color"]::-webkit-color-swatch {
     padding: 12px var(--spacing-md) var(--spacing-md);
     gap: 8px;
     min-width: 100%;
+    transform: translateY(calc(110% + var(--sheet-drag-offset)));
     opacity: 0;
     pointer-events: none;
     visibility: hidden;
-    transform: translateY(calc(100% + var(--mobile-nav-height) + var(--sheet-drag-offset)));
-    transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease, visibility 0s linear 0.32s;
   }
   .action-btns.mobile-open {
+    transform: translateY(var(--sheet-drag-offset));
     opacity: 1;
     pointer-events: auto;
     visibility: visible;
-    transform: translateY(var(--sheet-drag-offset));
-    transition-delay: 0s;
   }
   .mobile-sheet-handle {
     display: flex;
@@ -1373,6 +1381,7 @@ input[type="color"]::-webkit-color-swatch {
   .controls-backdrop {
     background: rgba(0, 0, 0, 0.35);
     z-index: 155;
+    pointer-events: none;
   }
 
   /* ---- Overlay fields: single column on mobile ---- */

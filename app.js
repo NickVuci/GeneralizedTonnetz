@@ -105,11 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
     toggleControlsBtn?.addEventListener('click', toggleControls);
     toggleSidebarBtn?.addEventListener('click', toggleSidebar);
     controlsBackdrop?.addEventListener('click', () => {
-        if (window.innerWidth <= 768) {
-            closeActiveMobilePanel?.();
-            return;
-        }
-        toggleControls();
+        closeActiveMobilePanel?.();
     });
 
     function setMoreMenuOpen(isOpen) {
@@ -752,6 +748,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 panel: controlsContent,
                 handle: controlsContent?.querySelector('[data-sheet-handle]'),
                 open() {
+                    controlsContent?.classList.remove('desktop-collapsed');
                     controlsContent?.classList.add('mobile-open');
                 },
                 close() {
@@ -804,20 +801,38 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
+        function focusMobilePanel(panelEl) {
+            if (!isBottomNavViewport() || !panelEl) return;
+            if (!panelEl.hasAttribute('tabindex')) panelEl.tabIndex = -1;
+            requestAnimationFrame(function () {
+                if (!panelEl.classList.contains('mobile-open')) return;
+                panelEl.focus({ preventScroll: true });
+            });
+        }
+
         function resetPanelDragVisual(panelEl) {
             if (!panelEl) return;
             panelEl.style.removeProperty('--sheet-drag-offset');
             panelEl.classList.remove('mobile-sheet-dragging');
         }
 
-        function closeMobilePanel() {
-            if (activeMobilePanel && panelDefs[activeMobilePanel]) {
-                panelDefs[activeMobilePanel].close();
+        function closeMobilePanel(options) {
+            const shouldRestoreFocus = options?.restoreFocus !== false;
+            const closingPanelKey = activeMobilePanel;
+            const closingPanel = closingPanelKey ? panelDefs[closingPanelKey]?.panel : null;
+            const restoreFocusTarget = closingPanelKey ? document.getElementById(navTabIds[closingPanelKey]) : null;
+
+            if (closingPanelKey && panelDefs[closingPanelKey]) {
+                panelDefs[closingPanelKey].close();
             }
             Object.values(panelDefs).forEach(def => resetPanelDragVisual(def.panel));
             controlsBackdrop?.classList.remove('visible');
             activeMobilePanel = null;
             updateNavPressed();
+
+            if (shouldRestoreFocus && closingPanel?.contains(document.activeElement)) {
+                restoreFocusTarget?.focus({ preventScroll: true });
+            }
         }
 
         closeActiveMobilePanel = closeMobilePanel;
@@ -827,12 +842,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 closeMobilePanel();
                 return;
             }
-            closeMobilePanel();
+            closeMobilePanel({ restoreFocus: false });
+            const nextPanel = panelDefs[panel]?.panel;
             panelDefs[panel]?.open();
-            controlsBackdrop?.classList.add('visible');
+            controlsBackdrop?.classList.toggle('visible', isBottomNavViewport());
             activeMobilePanel = panel;
             updateNavPressed();
+            focusMobilePanel(nextPanel);
         }
+
+        document.addEventListener('click', function (e) {
+            if (!isBottomNavViewport() || !activeMobilePanel) return;
+
+            const activePanel = panelDefs[activeMobilePanel]?.panel;
+            const activeNavTab = document.getElementById(navTabIds[activeMobilePanel]);
+            if (!activePanel) return;
+            if (activePanel.contains(e.target) || activeNavTab?.contains(e.target)) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            closeMobilePanel();
+        }, true);
 
         function bindDragToCollapse(def) {
             const panel = def?.panel;
@@ -908,19 +938,11 @@ document.addEventListener('DOMContentLoaded', function () {
         mobileNavScale?.addEventListener('click',    function () { openMobilePanel('scale'); });
         mobileNavMore?.addEventListener('click',     function () { openMobilePanel('more'); });
 
-        // Close More panel after any action button is tapped
-        if (actionBtns) {
-            actionBtns.addEventListener('click', function (e) {
-                if (e.target.closest('button') && activeMobilePanel === 'more') {
-                    closeMobilePanel();
-                }
-            });
-        }
-
         Object.values(panelDefs).forEach(bindDragToCollapse);
 
         window.addEventListener('resize', function () {
             Object.values(panelDefs).forEach(def => resetPanelDragVisual(def.panel));
+            if (!isBottomNavViewport()) controlsBackdrop?.classList.remove('visible');
             syncControlsOffset();
             updateNavPressed();
         });
