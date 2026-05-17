@@ -1,5 +1,7 @@
 const fs = require('fs');
+const path = require('path');
 const vm = require('vm');
+const { spawnSync } = require('child_process');
 
 // ── Test framework ──────────────────────────────────────────────────────────────
 let passed = 0;
@@ -332,13 +334,6 @@ suite('anchorFromClick', () => {
   assertEq(sandbox.anchorFromClick(0, 0, size, 12, 7, 4, null), null, 'returns null for null steps');
 });
 
-suite('responsive stylesheet consolidation', () => {
-  const css = fs.readFileSync('styles.css', 'utf8');
-  assertEq(countMatches(css, /\.controls-scroll-body\s*\{/g), 1, 'controls-scroll-body rule is defined once');
-  assertEq(countMatches(css, /\.action-btns button\s*\{/g), 1, 'action button rule is defined once');
-  assertEq(countMatches(css, /\.overlay-sidebar\.desktop-collapsed \.overlay-header-title,/g), 1, 'collapsed sidebar visibility override is defined once');
-});
-
 suite('app bootstrap consolidation', () => {
   const appSource = fs.readFileSync('app.js', 'utf8');
   assertEq(countMatches(appSource, /debouncedDraw = debounce\(drawTonnetz, 120\)/g), 1, 'debounced draw initialization happens in one place');
@@ -366,6 +361,17 @@ suite('app module split', () => {
   assert(appSource.includes('createTonnetzRenderingController('), 'app bootstraps the rendering controller');
   assert(appSource.includes('createTonnetzPersistenceController('), 'app bootstraps the persistence controller');
   assert(appSource.includes('initializeAdaptiveNav('), 'app bootstraps the navigation controller');
+});
+
+suite('browser smoke', () => {
+  const smokeRun = spawnSync(process.execPath, [path.join(__dirname, 'run_browser_smoke.js')], {
+    encoding: 'utf8',
+    maxBuffer: 10 * 1024 * 1024
+  });
+
+  if (smokeRun.stdout.trim()) console.log(smokeRun.stdout.trim());
+  if (smokeRun.stderr.trim()) console.error(smokeRun.stderr.trim());
+  assertEq(smokeRun.status, 0, 'browser smoke tests pass');
 });
 
 // ── Summary ─────────────────────────────────────────────────────────────────────

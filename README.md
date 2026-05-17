@@ -36,7 +36,8 @@ python -m http.server 8000
 ## Testing
 
 - Run the current unit/regression suite with `node tests/run_tests.js`.
-- The existing tests cover helper and geometry logic plus a few source-level regression guards for the responsive stylesheet.
+- The main test command now includes a headless browser smoke pass for the responsive panel interactions and backdrop behavior when a local Edge/Chrome executable is available.
+- If no supported local browser executable is found, the browser smoke pass reports a skip and the rest of the suite still runs.
 
 ## Repository structure
 
@@ -46,7 +47,10 @@ python -m http.server 8000
 - `geometry.js` – Lattice math: coordinate transforms, hit‑testing, period vectors
 - `drawing.js` – Rendering the grid and overlay geometry
 - `overlays.js` – Overlay state, panel UI, up/down mapping, repeat flag
-- `app.js` – Wiring controls, click behavior, export, and draw orchestration
+- `app-rendering.js` – Canvas sizing, drawing, and click-to-anchor rendering behavior
+- `app-persistence.js` – State restore/save and export actions
+- `app-navigation.js` – Adaptive navigation and mobile sheet behavior
+- `app.js` – Bootstrap and event wiring across the controllers
 
 ## Controls overview
 
