@@ -740,6 +740,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!mobileNavSettings && !mobileNavChords && !mobileNavScale && !mobileNavMore) return;
 
         let activeMobilePanel = null; // 'settings' | 'chords' | 'scale' | 'more' | null
+        let lastBottomNavViewport = isBottomNavViewport();
 
         const navTabIds = { settings: 'mobileNavSettings', chords: 'mobileNavChords', scale: 'mobileNavScale', more: 'mobileNavMore' };
         const panelDefs = {
@@ -792,6 +793,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         function isBottomNavViewport() {
             return window.innerWidth <= MOBILE_BREAKPOINT;
+        }
+
+        function suppressLayoutTransitions() {
+            document.documentElement.classList.add('suppress-layout-transitions');
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    document.documentElement.classList.remove('suppress-layout-transitions');
+                });
+            });
         }
 
         function updateNavPressed() {
@@ -944,8 +954,13 @@ document.addEventListener('DOMContentLoaded', function () {
         Object.values(panelDefs).forEach(bindDragToCollapse);
 
         window.addEventListener('resize', function () {
+            const isBottomNav = isBottomNavViewport();
+            if (isBottomNav !== lastBottomNavViewport) {
+                suppressLayoutTransitions();
+                lastBottomNavViewport = isBottomNav;
+            }
             Object.values(panelDefs).forEach(def => resetPanelDragVisual(def.panel));
-            if (!isBottomNavViewport()) controlsBackdrop?.classList.remove('visible');
+            if (!isBottomNav) controlsBackdrop?.classList.remove('visible');
             syncControlsOffset();
             updateNavPressed();
         });

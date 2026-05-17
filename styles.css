@@ -844,6 +844,15 @@ input[type="color"]::-webkit-color-swatch {
   display: none;
 }
 
+html.suppress-layout-transitions .mobile-nav,
+html.suppress-layout-transitions .mobile-nav-tab,
+html.suppress-layout-transitions .controls-content,
+html.suppress-layout-transitions .scale-content,
+html.suppress-layout-transitions .overlay-sidebar,
+html.suppress-layout-transitions .action-btns {
+  transition: none !important;
+}
+
 /* ===========================
    Responsive: Wide layout (>=769px)
    Match the compact mobile UI, but use a left rail instead of a bottom nav.
