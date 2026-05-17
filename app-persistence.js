@@ -179,6 +179,19 @@ function createTonnetzPersistenceController(options) {
         return `#${btoa(JSON.stringify(state))}`;
     }
 
+    function buildShareUrl(hash) {
+        const shareUrl = new URL(location.href);
+        shareUrl.hash = hash;
+        return shareUrl.toString();
+    }
+
+    function updateShareHash(hash) {
+        try {
+            history.replaceState(null, '', hash);
+        } catch (e) {
+        }
+    }
+
     function hashToState(hash) {
         try {
             if (!hash || hash.length < 2) return null;
@@ -224,29 +237,40 @@ function createTonnetzPersistenceController(options) {
         }
     }
 
+    function showCopyLinkSuccess() {
+        if (!copyLinkBtn) return;
+        copyLinkBtn.classList.add('copied');
+        setTimeout(function () {
+            copyLinkBtn.classList.remove('copied');
+        }, 1500);
+    }
+
+    function copyUrlToClipboard(url) {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            return navigator.clipboard.writeText(url);
+        }
+        return Promise.reject(new Error('Clipboard API unavailable'));
+    }
+
+    function promptManualCopy(url) {
+        try {
+            window.prompt('Copy this link:', url);
+        } catch (e) {
+            alert(`Copy this link: ${url}`);
+        }
+    }
+
     function wirePersistenceControls() {
         if (copyLinkBtn) {
             copyLinkBtn.addEventListener('click', function () {
                 const state = serializeState();
                 const hash = stateToHash(state);
-                history.replaceState(null, '', hash);
-                const url = location.href;
-                navigator.clipboard.writeText(url).then(function () {
-                    copyLinkBtn.classList.add('copied');
-                    setTimeout(function () {
-                        copyLinkBtn.classList.remove('copied');
-                    }, 1500);
+                const url = buildShareUrl(hash);
+                updateShareHash(hash);
+                copyUrlToClipboard(url).then(function () {
+                    showCopyLinkSuccess();
                 }).catch(function () {
-                    const textarea = document.createElement('textarea');
-                    textarea.value = url;
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textarea);
-                    copyLinkBtn.classList.add('copied');
-                    setTimeout(function () {
-                        copyLinkBtn.classList.remove('copied');
-                    }, 1500);
+                    promptManualCopy(url);
                 });
             });
         }

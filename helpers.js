@@ -30,11 +30,6 @@ function hexToRgbString(hex, alpha) {
     return alpha == null ? `rgb(${r} ${g} ${b})` : `rgb(${r} ${g} ${b} / ${alpha})`;
 }
 
-// Back-compat alias: return rgb() with optional alpha using slash syntax
-function hexToRgba(hex, alpha = 0.35) {
-    return hexToRgbString(hex, alpha);
-}
-
 function rgbStringToHex(rgb) {
     const toHex = (n) => {
         const v = Math.max(0, Math.min(255, parseInt(n, 10)));

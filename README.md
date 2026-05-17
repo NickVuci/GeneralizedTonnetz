@@ -67,6 +67,7 @@ Settings panel:
 
 More panel:
 - Copy Link, Save PNG, Save PDF, Reset
+Copy Link uses the browser clipboard API when available and falls back to a manual copy prompt otherwise.
 
 Chord overlays panel:
 - Add Overlay

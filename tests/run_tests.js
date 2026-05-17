@@ -363,6 +363,14 @@ suite('app module split', () => {
   assert(appSource.includes('initializeAdaptiveNav('), 'app bootstraps the navigation controller');
 });
 
+suite('legacy cleanup', () => {
+  const helpersSource = fs.readFileSync('helpers.js', 'utf8');
+  const persistenceSource = fs.readFileSync('app-persistence.js', 'utf8');
+
+  assert(!helpersSource.includes('function hexToRgba('), 'unused hexToRgba alias has been removed');
+  assert(!persistenceSource.includes("document.execCommand('copy')"), 'copy fallback no longer uses deprecated execCommand');
+});
+
 suite('browser smoke', () => {
   const smokeRun = spawnSync(process.execPath, [path.join(__dirname, 'run_browser_smoke.js')], {
     encoding: 'utf8',
