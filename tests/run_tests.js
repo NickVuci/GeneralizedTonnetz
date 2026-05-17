@@ -344,6 +344,30 @@ suite('app bootstrap consolidation', () => {
   assertEq(countMatches(appSource, /debouncedDraw = debounce\(drawTonnetz, 120\)/g), 1, 'debounced draw initialization happens in one place');
 });
 
+suite('app module split', () => {
+  assert(fs.existsSync('app-rendering.js'), 'rendering controller file exists');
+  assert(fs.existsSync('app-persistence.js'), 'persistence controller file exists');
+  assert(fs.existsSync('app-navigation.js'), 'navigation controller file exists');
+
+  const html = fs.readFileSync('index.html', 'utf8');
+  const renderingIdx = html.indexOf('app-rendering.js');
+  const persistenceIdx = html.indexOf('app-persistence.js');
+  const navigationIdx = html.indexOf('app-navigation.js');
+  const appIdx = html.indexOf('app.js');
+
+  assert(renderingIdx >= 0, 'index loads rendering controller');
+  assert(persistenceIdx >= 0, 'index loads persistence controller');
+  assert(navigationIdx >= 0, 'index loads navigation controller');
+  assert(renderingIdx < appIdx, 'rendering controller loads before app bootstrap');
+  assert(persistenceIdx < appIdx, 'persistence controller loads before app bootstrap');
+  assert(navigationIdx < appIdx, 'navigation controller loads before app bootstrap');
+
+  const appSource = fs.readFileSync('app.js', 'utf8');
+  assert(appSource.includes('createTonnetzRenderingController('), 'app bootstraps the rendering controller');
+  assert(appSource.includes('createTonnetzPersistenceController('), 'app bootstraps the persistence controller');
+  assert(appSource.includes('initializeAdaptiveNav('), 'app bootstraps the navigation controller');
+});
+
 // ── Summary ─────────────────────────────────────────────────────────────────────
 console.log(`\n${'='.repeat(50)}`);
 console.log(`Tests: ${passed} passed, ${failed} failed, ${passed + failed} total`);
