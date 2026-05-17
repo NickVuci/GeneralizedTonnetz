@@ -526,12 +526,6 @@ input[type="color"]::-webkit-color-swatch {
   resize: none;
 }
 
-.overlay-sidebar.desktop-collapsed .overlay-header-title,
-.overlay-sidebar.desktop-collapsed #addOverlayBtn,
-.overlay-sidebar.desktop-collapsed .overlay-list {
-  display: none;
-}
-
 .overlay-header {
   padding: var(--spacing-md);
   border-bottom: 1px solid var(--border);
@@ -853,6 +847,58 @@ html.suppress-layout-transitions .action-btns {
   transition: none !important;
 }
 
+/* Shared adaptive panel primitives used by both wide-rail and narrow-sheet layouts */
+.controls-scroll-body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: 0 var(--spacing-md) var(--spacing-md);
+}
+
+.control-card {
+  min-width: 0;
+  max-width: none;
+  width: 100%;
+  flex: none;
+  padding: var(--spacing-md);
+}
+
+.control-group.control-group-2col {
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+}
+
+.overlay-summary {
+  display: none;
+}
+
+.overlay-sidebar.desktop-collapsed .overlay-header-title,
+.overlay-sidebar.desktop-collapsed #addOverlayBtn,
+.overlay-sidebar.desktop-collapsed .overlay-list {
+  display: flex;
+}
+
+.action-btns button {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 14px 16px;
+  font-size: 15px;
+  height: auto;
+  min-height: 52px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.action-btns button:active {
+  background: var(--surface-hover);
+}
+
 /* ===========================
    Responsive: Wide layout (>=769px)
    Match the compact mobile UI, but use a left rail instead of a bottom nav.
@@ -999,30 +1045,6 @@ html.suppress-layout-transitions .action-btns {
     visibility: visible;
   }
 
-  .controls-scroll-body {
-    overflow-y: auto;
-    overflow-x: hidden;
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-    padding: 0 var(--spacing-md) var(--spacing-md);
-  }
-
-  .control-card {
-    min-width: 0;
-    max-width: none;
-    width: 100%;
-    flex: none;
-    padding: var(--spacing-md);
-  }
-
-  .control-group.control-group-2col {
-    grid-template-columns: auto 1fr;
-    gap: 8px;
-  }
-
   .overlay-sidebar {
     max-height: none;
     min-height: unset;
@@ -1037,16 +1059,6 @@ html.suppress-layout-transitions .action-btns {
 
   .overlay-sidebar.mobile-open {
     transform: translateX(var(--sheet-drag-offset));
-  }
-
-  .overlay-sidebar.desktop-collapsed .overlay-header-title,
-  .overlay-sidebar.desktop-collapsed #addOverlayBtn,
-  .overlay-sidebar.desktop-collapsed .overlay-list {
-    display: flex;
-  }
-
-  .overlay-summary {
-    display: none;
   }
 
   .overlay-list {
@@ -1074,23 +1086,6 @@ html.suppress-layout-transitions .action-btns {
     opacity: 1;
     pointer-events: auto;
     visibility: visible;
-  }
-
-  .action-btns button {
-    width: 100%;
-    justify-content: flex-start;
-    padding: 14px 16px;
-    font-size: 15px;
-    height: auto;
-    min-height: 52px;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    background: var(--surface-muted);
-    color: var(--text);
-  }
-
-  .action-btns button:active {
-    background: var(--surface-hover);
   }
 
   .controls-backdrop {
@@ -1254,17 +1249,6 @@ html.suppress-layout-transitions .action-btns {
     pointer-events: none;
     visibility: hidden;
   }
-  /* Scrollable area inside the settings sheet — sits below the drag handle */
-  .controls-scroll-body {
-    overflow-y: auto;
-    overflow-x: hidden;
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-    padding: 0 var(--spacing-md) var(--spacing-md);
-  }
   .controls-content.mobile-open,
   .scale-content.mobile-open {
     transform: translateY(var(--sheet-drag-offset));
@@ -1277,19 +1261,6 @@ html.suppress-layout-transitions .action-btns {
   }
   .overlay-sidebar.mobile-open {
     transform: translateY(var(--sheet-drag-offset));
-  }
-  /* Cards: full-width single column */
-  .control-card {
-    min-width: 0;
-    max-width: none;
-    width: 100%;
-    flex: none;
-    padding: var(--spacing-md);
-  }
-  /* 2-col control groups: stack to 2-col label+input (2 rows of pairs) */
-  .control-group.control-group-2col {
-    grid-template-columns: auto 1fr;
-    gap: 8px;
   }
 
   .settings-lattice {
@@ -1312,15 +1283,6 @@ html.suppress-layout-transitions .action-btns {
     max-width: 100%;
     min-width: 100%;
     resize: none;
-  }
-  /* Hide summary text (compact header) */
-  .overlay-summary {
-    display: none;
-  }
-  .overlay-sidebar.desktop-collapsed .overlay-header-title,
-  .overlay-sidebar.desktop-collapsed #addOverlayBtn,
-  .overlay-sidebar.desktop-collapsed .overlay-list {
-    display: flex;
   }
 
   /* ---- More / Actions panel: slide-up bottom sheet ---- */
@@ -1369,21 +1331,6 @@ html.suppress-layout-transitions .action-btns {
   }
   .mobile-sheet-dragging .mobile-sheet-handle {
     cursor: grabbing;
-  }
-  .action-btns button {
-    width: 100%;
-    justify-content: flex-start;
-    padding: 14px 16px;
-    font-size: 15px;
-    height: auto;
-    min-height: 52px;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    background: var(--surface-muted);
-    color: var(--text);
-  }
-  .action-btns button:active {
-    background: var(--surface-hover);
   }
 
   /* ---- Backdrop: sits below panels, above canvas ---- */

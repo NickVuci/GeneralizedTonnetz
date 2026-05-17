@@ -42,6 +42,11 @@ function normalize(value, modulus) {
   return value < 0 ? value + modulus : value;
 }
 
+function countMatches(text, pattern) {
+  const matches = text.match(pattern);
+  return matches ? matches.length : 0;
+}
+
 // ── Sandbox setup ───────────────────────────────────────────────────────────────
 function loadIntoSandbox(path, sandbox) {
   const code = fs.readFileSync(path, 'utf8');
@@ -83,6 +88,8 @@ suite('parseChordSteps', () => {
   assertEq(pcs('0,4,7').join(','), '0,4,7', 'comma-separated');
   assertEq(pcs('0 4 7').join(','), '0,4,7', 'space-separated');
   assertEq(pcs('0, 4, 7').join(','), '0,4,7', 'comma-space separated');
+  assertEq(pcs('0,\n4\t7').join(','), '0,4,7', 'mixed whitespace separated');
+  assertEq(pcs('-1,14').join(','), '-1,14', 'preserves signed and out-of-range integers for later normalization');
   assertEq(pcs('').join(','), '0', 'empty string returns [0]');
   assertEq(pcs(null).join(','), '0', 'null returns [0]');
   assertEq(pcs(undefined).join(','), '0', 'undefined returns [0]');
@@ -115,6 +122,14 @@ suite('hexToRgbString <-> rgbStringToHex round-trip', () => {
     const back = sandbox.rgbStringToHex(rgb);
     assertEq(back, hex.toUpperCase(), `round-trip ${hex}`);
   }
+});
+
+suite('normalizeColorToRgb', () => {
+  assertEq(sandbox.normalizeColorToRgb('#FF0000'), 'rgb(255 0 0)', 'hex normalizes via hexToRgbString');
+  assertEq(sandbox.normalizeColorToRgb('rgb(1 2 3)'), 'rgb(1 2 3)', 'rgb string is preserved');
+  assertEq(sandbox.normalizeColorToRgb('blue'), 'rgb(0 0 255)', 'named color is expanded');
+  assertEq(sandbox.normalizeColorToRgb('mystery'), 'mystery', 'unknown value is passed through');
+  assertEq(sandbox.normalizeColorToRgb(null), 'rgb(0 0 0)', 'null falls back to black');
 });
 
 // ── geometry.js tests ───────────────────────────────────────────────────────────
@@ -164,6 +179,14 @@ suite('qrToPixel <-> pixelToQR round-trip', () => {
     assertEq(result.q, q, `round-trip q for (${q},${r})`);
     assertEq(result.r, r, `round-trip r for (${q},${r})`);
   }
+});
+
+suite('approximateQR', () => {
+  const size = 40;
+  const pt = sandbox.qrToPixel(2, 3, size);
+  const approx = sandbox.approximateQR(pt.x + 1, pt.y - 1, size);
+  assertEq(approx.q, 2, 'approximateQR recovers q near the apex');
+  assertEq(approx.r, 3, 'approximateQR recovers r near the apex');
 });
 
 suite('solveStepToUV', () => {
@@ -307,6 +330,18 @@ suite('anchorFromClick', () => {
   // Null for insufficient steps
   assertEq(sandbox.anchorFromClick(0, 0, size, 12, 7, 4, [0, 4]), null, 'returns null for < 3 steps');
   assertEq(sandbox.anchorFromClick(0, 0, size, 12, 7, 4, null), null, 'returns null for null steps');
+});
+
+suite('responsive stylesheet consolidation', () => {
+  const css = fs.readFileSync('styles.css', 'utf8');
+  assertEq(countMatches(css, /\.controls-scroll-body\s*\{/g), 1, 'controls-scroll-body rule is defined once');
+  assertEq(countMatches(css, /\.action-btns button\s*\{/g), 1, 'action button rule is defined once');
+  assertEq(countMatches(css, /\.overlay-sidebar\.desktop-collapsed \.overlay-header-title,/g), 1, 'collapsed sidebar visibility override is defined once');
+});
+
+suite('app bootstrap consolidation', () => {
+  const appSource = fs.readFileSync('app.js', 'utf8');
+  assertEq(countMatches(appSource, /debouncedDraw = debounce\(drawTonnetz, 120\)/g), 1, 'debounced draw initialization happens in one place');
 });
 
 // ── Summary ─────────────────────────────────────────────────────────────────────

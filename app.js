@@ -194,11 +194,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Install debounced draw using helper (reduces frequent redraws during rapid input)
-    try {
-        if (typeof debounce === 'function') debouncedDraw = debounce(drawTonnetz, 120);
-    } catch (e) { console.error('Failed to create debounced draw', e); }
-
     function getCanvasDimensions() {
         let width, height, scale = 1;
         const paperSizes = {

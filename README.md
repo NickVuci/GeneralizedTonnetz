@@ -33,6 +33,11 @@ python -m http.server 8000
 
 > Any static server works; the app is a single‑page site with no backend.
 
+## Testing
+
+- Run the current unit/regression suite with `node tests/run_tests.js`.
+- The existing tests cover helper and geometry logic plus a few source-level regression guards for the responsive stylesheet.
+
 ## Repository structure
 
 - `index.html` – Page layout and control panel
@@ -42,21 +47,24 @@ python -m http.server 8000
 - `drawing.js` – Rendering the grid and overlay geometry
 - `overlays.js` – Overlay state, panel UI, up/down mapping, repeat flag
 - `app.js` – Wiring controls, click behavior, export, and draw orchestration
-- `data/presets.json` – Placeholder for preset configurations (optional)
 
 ## Controls overview
 
-Header (always visible):
+Navigation:
+- Wide view uses a left rail; narrow view uses a bottom tab bar.
+- Settings, Chords, Scale, and More each open a dedicated panel.
+
+Settings panel:
 - EDO – integer divisions of the octave
 - Interval X / Interval Z – steps along the two displayed axes
-- Draw Tonnetz, Save PNG, Save PDF
-
-Controls panel (toggle +):
 - Canvas size and orientation (A4/A3/Letter/Legal/Custom)
 - Triangle size
 - Colors: axis strokes, background, labels, highlight for note 0
 
-Overlay sidebar:
+More panel:
+- Copy Link, Save PNG, Save PDF, Reset
+
+Chord overlays panel:
 - Add Overlay
 - For each overlay:
   - Visible – toggle drawing
