@@ -346,10 +346,6 @@ function createTonnetzRenderingController(options) {
         }
 
         drawTonnetz();
-        canvas.classList.add('canvas-flash');
-        setTimeout(function () {
-            canvas.classList.remove('canvas-flash');
-        }, 300);
     }
 
     return {
