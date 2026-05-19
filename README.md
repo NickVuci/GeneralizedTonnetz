@@ -14,7 +14,7 @@ Interactive Tonnetz lattice visualizer for arbitrary EDOs with configurable dire
   - Repeat toggle: tile each placed overlay anchor periodically across the lattice
   - Click to add/remove anchors
 - Smart click hit‑testing so neighbors don’t accidentally toggle the same triangle
-- Default overlays auto‑sync to the directional axes (Down: `[0, ↘, →]`, Up: `[0, ↗, →]`)
+- Default overlays auto‑sync to the directional axes (Up: `[0, ↗, →]`, Down: `[0, ↘, →]`)
   - Their Steps inputs update automatically when directional axes or EDO change
   - Manual edits disable auto‑sync for that overlay
 - Export to PNG and PDF
@@ -92,8 +92,8 @@ Chord overlays panel:
 ## Default overlays and auto‑sync
 
 - On first load, two overlays are created:
-  - Down overlay: `[0, ↘, →]`
-  - Up overlay: `[0, ↗, →]`
+  - Up overlay: `[0, ↗, →]` in red
+  - Down overlay: `[0, ↘, →]` in blue
 - They auto‑update with directional axis/EDO changes and the Steps inputs refresh automatically.
 - If you edit an overlay’s Steps, its auto‑sync is disabled so your edits persist.
 

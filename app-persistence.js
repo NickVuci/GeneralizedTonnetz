@@ -39,7 +39,23 @@ function createTonnetzPersistenceController(options) {
     } = options;
 
     const STATE_KEY = 'tonnetz-state';
-    const STATE_VERSION = 2;
+    const STATE_VERSION = 3;
+
+    function isOldDefaultOverlayRoleState(state) {
+        if (!state || state.version >= 3 || !Array.isArray(state.overlays) || state.overlays.length < 2) return false;
+
+        const first = state.overlays[0];
+        const second = state.overlays[1];
+        const firstColor = normalizeColorToRgb(first?.color || '');
+        const secondColor = normalizeColorToRgb(second?.color || '');
+
+        return state.upOverlayIdx === 1
+            && state.downOverlayIdx === 0
+            && first?.autoSync === true
+            && second?.autoSync === true
+            && firstColor === 'rgb(255 0 0)'
+            && secondColor === 'rgb(0 0 255)';
+    }
 
     function serializeState() {
         const edo = coerceEdoValue(edoInput.value);
@@ -101,9 +117,11 @@ function createTonnetzPersistenceController(options) {
     }
 
     function deserializeState(state) {
-        if (!state || (state.version !== STATE_VERSION && state.version !== 1)) return false;
+        if (!state || (state.version !== STATE_VERSION && state.version !== 2 && state.version !== 1)) return false;
 
         try {
+            const shouldMigrateDefaultOverlayRoles = isOldDefaultOverlayRoleState(state);
+
             edoInput.value = state.edo;
             if (state.version === 1) {
                 const edo = coerceEdoValue(state.edo);
@@ -168,6 +186,17 @@ function createTonnetzPersistenceController(options) {
                 }
                 if (state.downOverlayIdx >= 0 && state.downOverlayIdx < overlays.length) {
                     downOverlayId = overlays[state.downOverlayIdx].id;
+                }
+                if (shouldMigrateDefaultOverlayRoles && overlays.length >= 2) {
+                    upOverlayId = overlays[0].id;
+                    downOverlayId = overlays[1].id;
+                    const edo = coerceEdoValue(edoInput.value);
+                    const axes = directionalAxesToIntervals({
+                        right: axisRightInput?.value,
+                        upRight: axisUpRightInput?.value,
+                        downRight: axisDownRightInput?.value
+                    }, edo);
+                    synchronizeDefaultOverlaySteps(axes.intervalX, axes.intervalZ, edo);
                 }
             }
 

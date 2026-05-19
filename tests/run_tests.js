@@ -101,6 +101,232 @@ suite('directional axis helpers', () => {
   assertEq(downDerived.downRight, 9, 'down-right derives modulo EDO from right minus up-right');
 });
 
+suite('default overlay triangle roles', () => {
+  function createElementStub(tagName) {
+    return {
+      tagName,
+      children: [],
+      appendChild(child) {
+        this.children.push(child);
+        return child;
+      },
+      setAttribute(name, value) {
+        this[name] = String(value);
+      }
+    };
+  }
+
+  const overlayList = createElementStub('div');
+  const overlaySandbox = vm.createContext({
+    console, Math, Set, Map, Number, Array, String, parseInt, parseFloat,
+    RegExp, Object, Boolean, Error, clearTimeout, setTimeout, JSON,
+    document: {
+      getElementById(id) {
+        if (id === 'overlayList') return overlayList;
+        const values = {
+          edo: '12',
+          axisRight: '7',
+          axisUpRight: '3',
+          axisDownRight: '4'
+        };
+        return Object.prototype.hasOwnProperty.call(values, id) ? { value: values[id] } : null;
+      },
+      createElement: createElementStub
+    }
+  });
+  loadIntoSandbox('helpers.js', overlaySandbox);
+  loadIntoSandbox('overlays.js', overlaySandbox);
+
+  vm.runInContext("addOverlay({ color: 'rgb(255 0 0)' }); addOverlay({ color: 'rgb(0 0 255)' });", overlaySandbox);
+
+  assertEq(vm.runInContext('upOverlayId', overlaySandbox), 1, 'first default overlay is mapped to up-triangle clicks');
+  assertEq(vm.runInContext('downOverlayId', overlaySandbox), 2, 'second default overlay is mapped to down-triangle clicks');
+  assertEq(vm.runInContext('overlays[0].color', overlaySandbox), 'rgb(255 0 0)', 'first default overlay stays red');
+  assertEq(vm.runInContext('overlays[1].color', overlaySandbox), 'rgb(0 0 255)', 'second default overlay stays blue');
+  assertEq(vm.runInContext('overlays[0].steps.join(",")', overlaySandbox), '0,3,7', 'first default overlay uses upward steps');
+  assertEq(vm.runInContext('overlays[1].steps.join(",")', overlaySandbox), '0,4,7', 'second default overlay uses downward steps');
+
+  vm.runInContext('synchronizeDefaultOverlaySteps(9, 4, 12)', overlaySandbox);
+  assertEq(vm.runInContext('overlays[0].steps.join(",")', overlaySandbox), '0,5,9', 'first auto-sync overlay remains upward after axis changes');
+  assertEq(vm.runInContext('overlays[1].steps.join(",")', overlaySandbox), '0,4,9', 'second auto-sync overlay remains downward after axis changes');
+
+  vm.runInContext('renderOverlayListPanel()', overlaySandbox);
+  assertEq(overlayList.children[0].children[1].children[1].checked, true, 'first overlay up radio is checked by default');
+  assertEq(overlayList.children[0].children[1].children[3].checked, false, 'first overlay down radio is unchecked by default');
+  assertEq(overlayList.children[1].children[1].children[1].checked, false, 'second overlay up radio is unchecked by default');
+  assertEq(overlayList.children[1].children[1].children[3].checked, true, 'second overlay down radio is checked by default');
+});
+
+suite('default overlay role migration', () => {
+  function createElementStub(tagName) {
+    return {
+      tagName,
+      children: [],
+      classList: {
+        add() {},
+        remove() {},
+        toggle() {},
+        contains() { return false; }
+      },
+      appendChild(child) {
+        this.children.push(child);
+        return child;
+      },
+      setAttribute(name, value) {
+        this[name] = String(value);
+      }
+    };
+  }
+
+  function createInputStub(value) {
+    return {
+      value,
+      checked: false,
+      addEventListener() {},
+      classList: {
+        add() {},
+        remove() {},
+        toggle() {},
+        contains() { return false; }
+      }
+    };
+  }
+
+  const overlayList = createElementStub('div');
+  const elementMap = {
+    overlayList,
+    edo: createInputStub('12'),
+    axisRight: createInputStub('7'),
+    axisUpRight: createInputStub('3'),
+    axisDownRight: createInputStub('4')
+  };
+  const oldDefaultState = {
+    version: 2,
+    edo: 12,
+    axisRight: 7,
+    axisUpRight: 3,
+    axisDownRight: 4,
+    axisEditOrder: ['right', 'downRight'],
+    canvasSize: 'A4',
+    orientation: 'portrait',
+    canvasWidth: 1000,
+    canvasHeight: 1000,
+    triangleSize: 75,
+    colorX: '#FFFF00',
+    colorY: '#FF0000',
+    colorZ: '#0000FF',
+    backgroundColor: '#FFFFFF',
+    labelColor: '#000000',
+    highlightZero: false,
+    highlightZeroColor: '#FFFF00',
+    overlays: [
+      { steps: [0, 4, 7], color: 'rgb(255 0 0)', opacity: 0.35, anchors: [], repeatAll: false, nonTriangleMode: false, visible: true, autoSync: true },
+      { steps: [0, 3, 7], color: 'rgb(0 0 255)', opacity: 0.35, anchors: [], repeatAll: false, nonTriangleMode: false, visible: true, autoSync: true }
+    ],
+    activeOverlayIdx: 1,
+    upOverlayIdx: 1,
+    downOverlayIdx: 0,
+    sidebarCollapsed: false,
+    controlsCollapsed: false
+  };
+  const storage = new Map([['tonnetz-state', JSON.stringify(oldDefaultState)]]);
+  const migrationSandbox = vm.createContext({
+    console, Math, Set, Map, Number, Array, String, parseInt, parseFloat,
+    RegExp, Object, Boolean, Error, clearTimeout, setTimeout, JSON,
+    window: { innerWidth: 1024 },
+    location: { hash: '', pathname: '/' },
+    history: { replaceState() {} },
+    localStorage: {
+      getItem(key) { return storage.get(key) || null; },
+      setItem(key, value) { storage.set(key, String(value)); },
+      removeItem(key) { storage.delete(key); }
+    },
+    document: {
+      getElementById(id) {
+        return elementMap[id] || null;
+      },
+      createElement: createElementStub,
+      body: {
+        appendChild() {},
+        removeChild() {}
+      }
+    },
+    navigator: {}
+  });
+  loadIntoSandbox('helpers.js', migrationSandbox);
+  loadIntoSandbox('overlays.js', migrationSandbox);
+  loadIntoSandbox('app-persistence.js', migrationSandbox);
+
+  vm.runInContext(`
+    const stub = function (value) {
+      return {
+        value: value || '',
+        checked: false,
+        addEventListener: function () {},
+        classList: {
+          add: function () {},
+          remove: function () {},
+          toggle: function () {},
+          contains: function () { return false; }
+        }
+      };
+    };
+    const controller = createTonnetzPersistenceController({
+      canvas: stub(),
+      controlsBackdrop: stub(),
+      controlsContent: stub(),
+      overlaySidebar: stub(),
+      canvasSizeSelect: stub('A4'),
+      orientationSelect: stub('portrait'),
+      canvasWidthInput: stub('1000'),
+      canvasHeightInput: stub('1000'),
+      triangleSizeInput: stub('75'),
+      colorXInput: stub('#FFFF00'),
+      colorYInput: stub('#FF0000'),
+      colorZInput: stub('#0000FF'),
+      backgroundColorInput: stub('#FFFFFF'),
+      labelColorInput: stub('#000000'),
+      highlightZeroInput: stub(),
+      highlightZeroColorInput: stub('#FFFF00'),
+      scaleDegreesInput: stub(''),
+      scaleSizeInput: stub('1.5'),
+      scaleDotsInput: stub(),
+      scaleDotColorInput: stub('#000000'),
+      scaleDotSizeInput: stub('6'),
+      edoInput: document.getElementById('edo'),
+      axisRightInput: document.getElementById('axisRight'),
+      axisUpRightInput: document.getElementById('axisUpRight'),
+      axisDownRightInput: document.getElementById('axisDownRight'),
+      syncDirectionalAxes: function () {},
+      getAxisEditOrder: function () { return ['right', 'downRight']; },
+      setAxisEditOrder: function () {},
+      copyLinkBtn: null,
+      resetBtn: null,
+      DEFAULT_COLORS: {
+        x: 'rgb(255 255 0)',
+        y: 'rgb(255 0 0)',
+        z: 'rgb(0 0 255)',
+        bg: 'rgb(255 255 255)',
+        label: 'rgb(0 0 0)',
+        highlightZero: 'rgb(255 255 0)'
+      },
+      handleCanvasSizeChange: function () {},
+      getDrawTonnetz: function () { return function () {}; },
+      getLastOffscreenCanvas: function () { return null; },
+      setControlsDesktopCollapsedState: function () {},
+      setSidebarDesktopCollapsedState: function () {}
+    });
+    controller.initializePersistence();
+  `, migrationSandbox);
+
+  assertEq(vm.runInContext('upOverlayId', migrationSandbox), 1, 'old saved default maps first overlay to up on restore');
+  assertEq(vm.runInContext('downOverlayId', migrationSandbox), 2, 'old saved default maps second overlay to down on restore');
+  assertEq(vm.runInContext('overlays[0].steps.join(",")', migrationSandbox), '0,3,7', 'old saved first default is re-synced to upward steps');
+  assertEq(vm.runInContext('overlays[1].steps.join(",")', migrationSandbox), '0,4,7', 'old saved second default is re-synced to downward steps');
+  assertEq(overlayList.children[0].children[1].children[1].checked, true, 'restored first overlay up radio is checked');
+  assertEq(overlayList.children[1].children[1].children[3].checked, true, 'restored second overlay down radio is checked');
+});
+
 suite('parseChordSteps', () => {
   const pcs = sandbox.parseChordSteps;
   assert(Array.isArray(pcs('0,4,7')), 'returns array');
@@ -363,6 +589,14 @@ suite('directional axis controls markup', () => {
   assert(html.includes('id="axisDownRight"'), 'down-right axis input exists');
   assert(!html.includes('id="intervalX"'), 'old interval X input is removed');
   assert(!html.includes('id="intervalZ"'), 'old interval Z input is removed');
+});
+
+suite('default overlay docs', () => {
+  const readme = fs.readFileSync('README.md', 'utf8');
+  assert(readme.includes('Up: `[0, ↗, →]`, Down: `[0, ↘, →]`'), 'feature summary documents the new default overlay order');
+  assert(readme.includes('Up overlay: `[0, ↗, →]` in red'), 'default overlay section documents red upward overlay first');
+  assert(readme.includes('Down overlay: `[0, ↘, →]` in blue'), 'default overlay section documents blue downward overlay second');
+  assert(!readme.includes('Down: `[0, ↘, →]`, Up: `[0, ↗, →]`'), 'README no longer documents old default order');
 });
 
 suite('app module split', () => {

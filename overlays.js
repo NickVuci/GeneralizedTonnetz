@@ -28,11 +28,11 @@ function addOverlay(preset) {
         const ixMinusZ = mod(ix - iz, edo);
 
         if (overlays.length === 0) {
-            // First overlay (downward triangle): 0, down-right, right
-            stepsDefault = [0, iz, ix];
-        } else if (overlays.length === 1) {
-            // Second overlay (upward triangle, inversion of the first): 0, up-right, right
+            // First overlay (upward triangle): 0, up-right, right
             stepsDefault = [0, ixMinusZ, ix];
+        } else if (overlays.length === 1) {
+            // Second overlay (downward triangle): 0, down-right, right
+            stepsDefault = [0, iz, ix];
         }
     } catch (e) { console.error('Error computing overlay defaults', e); }
 
@@ -53,8 +53,8 @@ function addOverlay(preset) {
     overlays.push(ov);
     activeOverlayId = ov.id;
     // Auto-assign default up/down mapping for the first two overlays
-    if (overlays.length === 1 && downOverlayId == null) downOverlayId = ov.id; // first overlay is downward by default
-    else if (overlays.length === 2 && upOverlayId == null) upOverlayId = ov.id; // second overlay is upward by default
+    if (overlays.length === 1 && upOverlayId == null) upOverlayId = ov.id; // first overlay is upward by default
+    else if (overlays.length === 2 && downOverlayId == null) downOverlayId = ov.id; // second overlay is downward by default
 }
 
 function removeOverlay(id) {
@@ -130,9 +130,9 @@ function synchronizeDefaultOverlaySteps(ix, iz, edo) {
         if (!ov.autoSync) continue;
         autoIdx++;
         if (autoIdx === 1) {
-            ov.steps = downSteps.slice();
-        } else if (autoIdx === 2) {
             ov.steps = upSteps.slice();
+        } else if (autoIdx === 2) {
+            ov.steps = downSteps.slice();
         }
     }
 }
