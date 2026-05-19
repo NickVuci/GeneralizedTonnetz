@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const savePdfButton = document.getElementById('savePdfButton');
     const copyLinkBtn = document.getElementById('copyLinkBtn');
     const resetBtn = document.getElementById('resetBtn');
+    const themeToggleBtn = document.getElementById('themeToggle');
     const toggleControlsBtn = document.getElementById('toggleControls');
     const controlsContainer = document.getElementById('controls');
     const controlsContent = document.getElementById('controlsContent');
@@ -39,6 +40,38 @@ document.addEventListener('DOMContentLoaded', function () {
     const controlsBackdrop = document.getElementById('controlsBackdrop');
 
     let debouncedDraw = null;
+    const THEME_STORAGE_KEY = 'tonnetz-theme';
+
+    function applyTheme(theme) {
+        const nextTheme = theme === 'light' ? 'light' : 'dark';
+        document.body.dataset.theme = nextTheme;
+
+        if (themeToggleBtn) {
+            const isLight = nextTheme === 'light';
+            const label = isLight ? 'Switch to dark mode' : 'Switch to light mode';
+            themeToggleBtn.title = label;
+            themeToggleBtn.setAttribute('aria-label', label);
+            themeToggleBtn.setAttribute('aria-pressed', String(isLight));
+        }
+    }
+
+    function initializeTheme() {
+        let savedTheme = 'dark';
+        try {
+            savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'dark';
+        } catch (e) {
+        }
+        applyTheme(savedTheme);
+    }
+
+    function toggleTheme() {
+        const nextTheme = document.body.dataset.theme === 'light' ? 'dark' : 'light';
+        applyTheme(nextTheme);
+        try {
+            localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+        } catch (e) {
+        }
+    }
 
     function setControlsDesktopCollapsedState(isCollapsed) {
         if (!controlsContent) return;
@@ -235,6 +268,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     toggleControlsBtn?.addEventListener('click', toggleControls);
     toggleSidebarBtn?.addEventListener('click', toggleSidebar);
+    themeToggleBtn?.addEventListener('click', toggleTheme);
 
+    initializeTheme();
     initializePersistence();
 });

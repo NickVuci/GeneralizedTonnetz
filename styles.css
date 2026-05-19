@@ -38,12 +38,39 @@
   --mobile-sheet-radius: 16px;
   --mobile-sheet-shadow: 0 -4px 32px rgba(0, 0, 0, 0.65);
   --mobile-sheet-z: 165;
+  --canvas-stage-bg: #0a0a0a;
+  --canvas-stage-image: radial-gradient(ellipse at center, #0e0e0e 0%, #050505 100%);
   --radius: 6px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 24px;
   
   --sidebar-width: 320px;
+}
+
+body[data-theme="light"] {
+  --bg: #f5f7f4;
+  --surface: #ffffff;
+  --surface-hover: #eef3ef;
+  --surface-active: #e4ece6;
+  --surface-muted: #f7faf7;
+
+  --text: #0c1a18;
+  --text-secondary: #34423f;
+  --text-muted: #6a7773;
+
+  --border: #d5dfd8;
+  --border-active: #b9c8be;
+
+  --primary: #1167b1;
+  --primary-hover: #0d5594;
+  --on-primary: #ffffff;
+
+  --input-bg: #ffffff;
+  --input-border: #cbd7cf;
+  --mobile-sheet-shadow: 0 -4px 32px rgba(19, 31, 27, 0.18);
+  --canvas-stage-bg: #f5f7f4;
+  --canvas-stage-image: radial-gradient(ellipse at center, #ffffff 0%, #eef3ef 100%);
 }
 
 /* =========================
@@ -264,6 +291,55 @@ button {
 }
 .secondary-action:active {
   background-color: var(--surface-active);
+}
+
+.theme-toggle {
+  width: 54px;
+  height: 54px;
+  min-width: 54px;
+  padding: 0;
+  margin-left: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #182420;
+  color: #061210;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.theme-toggle:hover {
+  background: #1d2b26;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.theme-toggle:active {
+  transform: scale(0.97);
+}
+
+.theme-icon {
+  flex-shrink: 0;
+}
+
+.theme-icon-sun {
+  display: none;
+}
+
+body[data-theme="light"] .theme-toggle {
+  background: #ffffff;
+  border-color: #d5dfd8;
+  box-shadow: 0 1px 2px rgba(18, 33, 29, 0.04);
+}
+
+body[data-theme="light"] .theme-toggle:hover {
+  background: #f8fbf8;
+  border-color: #bdcabe;
+}
+
+body[data-theme="light"] .theme-icon-moon {
+  display: none;
+}
+
+body[data-theme="light"] .theme-icon-sun {
+  display: block;
 }
 
 .toggle-btn {
@@ -764,14 +840,13 @@ input[type="color"]::-webkit-color-swatch {
 /* Canvas Area */
 .canvas-wrap {
   flex: 1;
-  background-color: #0a0a0a;
+  background-color: var(--canvas-stage-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: auto;
   padding: 12px 16px 16px;
-  /* Subtle radial vignette for depth */
-  background-image: radial-gradient(ellipse at center, #0e0e0e 0%, #050505 100%);
+  background-image: var(--canvas-stage-image);
 }
 
 #tonnetzCanvas {
