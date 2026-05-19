@@ -16,8 +16,9 @@ function createTonnetzRenderingController(options) {
         highlightZeroInput,
         triangleSizeInput,
         edoInput,
-        intervalXInput,
-        intervalZInput,
+        axisRightInput,
+        axisUpRightInput,
+        axisDownRightInput,
         scaleDegreesInput,
         scaleSizeInput,
         scaleDotsInput,
@@ -39,6 +40,20 @@ function createTonnetzRenderingController(options) {
         label: 'rgb(0 0 0)',
         highlightZero: 'rgb(255 255 0)'
     };
+
+    function getCurrentIntervalParams() {
+        const edo = coerceEdoValue(edoInput.value);
+        const intervals = directionalAxesToIntervals({
+            right: axisRightInput?.value,
+            upRight: axisUpRightInput?.value,
+            downRight: axisDownRightInput?.value
+        }, edo);
+        return {
+            edo,
+            intervalX: intervals.intervalX,
+            intervalZ: intervals.intervalZ
+        };
+    }
 
     function handleCanvasSizeChange() {
         if (canvasSizeSelect.value === 'Custom') {
@@ -100,9 +115,7 @@ function createTonnetzRenderingController(options) {
             || 'Arial, sans-serif';
 
         const size = parseInt(triangleSizeInput.value, 10) || 40;
-        const edo = parseInt(edoInput.value, 10) || 12;
-        const intervalX = parseInt(intervalXInput.value, 10) || 7;
-        const intervalZ = parseInt(intervalZInput.value, 10) || 4;
+        const { edo, intervalX, intervalZ } = getCurrentIntervalParams();
 
         let scaleSet = null;
         try {
@@ -211,9 +224,7 @@ function createTonnetzRenderingController(options) {
     }
 
     function onIntervalParamsChange() {
-        const edo = parseInt(edoInput.value, 10) || 12;
-        const intervalX = parseInt(intervalXInput.value, 10) || 7;
-        const intervalZ = parseInt(intervalZInput.value, 10) || 4;
+        const { edo, intervalX, intervalZ } = getCurrentIntervalParams();
         if (typeof findNearestOffsets !== 'undefined' && findNearestOffsets._cache) {
             findNearestOffsets._cache.clear();
         }
@@ -289,9 +300,7 @@ function createTonnetzRenderingController(options) {
         let px = (evt.clientX - rect.left) * (canvas.width / rect.width);
         let py = (evt.clientY - rect.top) * (canvas.height / rect.height);
         const size = parseInt(triangleSizeInput.value, 10) || 40;
-        const edo = parseInt(edoInput.value, 10) || 12;
-        const intervalX = parseInt(intervalXInput.value, 10) || 7;
-        const intervalZ = parseInt(intervalZInput.value, 10) || 4;
+        const { edo, intervalX, intervalZ } = getCurrentIntervalParams();
         const { scale } = getCanvasDimensions();
         if (scale < 1) {
             px = px / scale;

@@ -12,21 +12,26 @@ function addOverlay(preset) {
     const palette = ['rgb(0 170 0)', 'rgb(170 0 170)', 'rgb(0 170 170)', 'rgb(170 85 0)', 'rgb(0 85 170)', 'rgb(170 0 85)', 'rgb(85 119 0)'];
     const color = preset?.color ? normalizeColorToRgb(preset.color) : palette[(overlayIdCounter - 1) % palette.length];
 
-    // Compute smart defaults for the first two overlays based on current X and Z
+    // Compute smart defaults for the first two overlays based on current directions
     let stepsDefault = [0, 4, 7];
     try {
-        const edo = parseInt(document.getElementById('edo')?.value) || 12;
-        const ix = parseInt(document.getElementById('intervalX')?.value) || 7; // X
-        const iz = parseInt(document.getElementById('intervalZ')?.value) || 4; // Z
+        const edo = coerceEdoValue(document.getElementById('edo')?.value);
+        const axes = directionalAxesToIntervals({
+            right: document.getElementById('axisRight')?.value,
+            upRight: document.getElementById('axisUpRight')?.value,
+            downRight: document.getElementById('axisDownRight')?.value
+        }, edo);
+        const ix = axes.intervalX; // right
+        const iz = axes.intervalZ; // down-right
         const mod = (n, m) => ((n % m) + m) % m;
-        // Upward triangle uses X - Z for its non-shared edge with X
+        // Upward triangle uses right - down-right for its non-shared edge with right
         const ixMinusZ = mod(ix - iz, edo);
 
         if (overlays.length === 0) {
-            // First overlay (downward triangle): 0, Z, X
+            // First overlay (downward triangle): 0, down-right, right
             stepsDefault = [0, iz, ix];
         } else if (overlays.length === 1) {
-            // Second overlay (upward triangle, inversion of the first): 0, (X - Z), X
+            // Second overlay (upward triangle, inversion of the first): 0, up-right, right
             stepsDefault = [0, ixMinusZ, ix];
         }
     } catch (e) { console.error('Error computing overlay defaults', e); }
@@ -43,7 +48,7 @@ function addOverlay(preset) {
         repeatAll: !!preset?.repeatAll,
         nonTriangleMode: !!preset?.nonTriangleMode
     };
-    // Auto-sync the two default overlays' steps with X/Z unless user edits them
+    // Auto-sync the two default overlays' steps with directions unless user edits them
     ov.autoSync = (preset?.steps == null) && (isFirst || isSecond);
     overlays.push(ov);
     activeOverlayId = ov.id;
@@ -112,11 +117,11 @@ function onOverlayPanelEvent(e) {
     }
 }
 
-// Keep default overlays in sync with current X/Z when autoSync is enabled
+// Keep default overlays in sync with current directional axes when autoSync is enabled
 function synchronizeDefaultOverlaySteps(ix, iz, edo) {
     const mod = (n, m) => ((n % m) + m) % m;
     const ixMinusZ = mod(ix - iz, edo);
-    // Determine canonical default steps given X/Z
+    // Determine canonical default steps given right/down-right
     const downSteps = [0, iz, ix];
     const upSteps = [0, ixMinusZ, ix];
     // Track first two autoSync overlays in creation order

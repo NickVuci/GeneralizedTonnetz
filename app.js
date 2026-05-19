@@ -16,8 +16,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const highlightZeroInput = document.getElementById('highlightZero');
     const triangleSizeInput = document.getElementById('triangleSize');
     const edoInput = document.getElementById('edo');
-    const intervalXInput = document.getElementById('intervalX');
-    const intervalZInput = document.getElementById('intervalZ');
+    const axisRightInput = document.getElementById('axisRight');
+    const axisUpRightInput = document.getElementById('axisUpRight');
+    const axisDownRightInput = document.getElementById('axisDownRight');
     const scaleDegreesInput = document.getElementById('scaleDegrees');
     const scaleSizeInput = document.getElementById('scaleSize');
     const scaleDotsInput = document.getElementById('scaleDots');
@@ -41,6 +42,63 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let debouncedDraw = null;
     const THEME_STORAGE_KEY = 'tonnetz-theme';
+    const AXIS_KEYS = ['right', 'upRight', 'downRight'];
+    let axisEditOrder = ['right', 'downRight'];
+
+    function getAxisInput(axisKey) {
+        if (axisKey === 'right') return axisRightInput;
+        if (axisKey === 'upRight') return axisUpRightInput;
+        if (axisKey === 'downRight') return axisDownRightInput;
+        return null;
+    }
+
+    function setAxisEditOrder(nextOrder) {
+        if (!Array.isArray(nextOrder)) return;
+        const filtered = nextOrder.filter(function (axisKey, index) {
+            return AXIS_KEYS.includes(axisKey) && nextOrder.indexOf(axisKey) === index;
+        });
+        if (filtered.length >= 2) axisEditOrder = filtered.slice(-2);
+    }
+
+    function getAxisEditOrder() {
+        return axisEditOrder.slice();
+    }
+
+    function rememberEditedAxis(axisKey) {
+        if (!AXIS_KEYS.includes(axisKey)) return;
+        axisEditOrder = axisEditOrder.filter(function (item) {
+            return item !== axisKey;
+        });
+        axisEditOrder.push(axisKey);
+        if (axisEditOrder.length > 2) axisEditOrder = axisEditOrder.slice(-2);
+    }
+
+    function syncDirectionalAxes(editedAxis) {
+        if (editedAxis) rememberEditedAxis(editedAxis);
+
+        const edo = coerceEdoValue(edoInput.value);
+        edoInput.value = edo;
+        const max = String(Math.max(0, edo - 1));
+        for (const axisKey of AXIS_KEYS) {
+            const input = getAxisInput(axisKey);
+            if (!input) continue;
+            input.min = '0';
+            input.max = max;
+        }
+
+        const derivedAxis = AXIS_KEYS.find(function (axisKey) {
+            return !axisEditOrder.includes(axisKey);
+        }) || 'upRight';
+        const axes = deriveDirectionalAxes({
+            right: axisRightInput?.value,
+            upRight: axisUpRightInput?.value,
+            downRight: axisDownRightInput?.value
+        }, edo, derivedAxis);
+
+        if (axisRightInput) axisRightInput.value = axes.right;
+        if (axisUpRightInput) axisUpRightInput.value = axes.upRight;
+        if (axisDownRightInput) axisDownRightInput.value = axes.downRight;
+    }
 
     function applyTheme(theme) {
         const nextTheme = theme === 'light' ? 'light' : 'dark';
@@ -109,8 +167,9 @@ document.addEventListener('DOMContentLoaded', function () {
         highlightZeroInput,
         triangleSizeInput,
         edoInput,
-        intervalXInput,
-        intervalZInput,
+        axisRightInput,
+        axisUpRightInput,
+        axisDownRightInput,
         scaleDegreesInput,
         scaleSizeInput,
         scaleDotsInput,
@@ -158,8 +217,12 @@ document.addEventListener('DOMContentLoaded', function () {
         scaleDotColorInput,
         scaleDotSizeInput,
         edoInput,
-        intervalXInput,
-        intervalZInput,
+        axisRightInput,
+        axisUpRightInput,
+        axisDownRightInput,
+        syncDirectionalAxes,
+        getAxisEditOrder,
+        setAxisEditOrder,
         copyLinkBtn,
         resetBtn,
         DEFAULT_COLORS,
@@ -224,9 +287,22 @@ document.addEventListener('DOMContentLoaded', function () {
     highlightZeroColorInput.addEventListener('input', queueDraw);
     highlightZeroInput.addEventListener('input', queueDraw);
     triangleSizeInput.addEventListener('change', queueDraw);
-    edoInput.addEventListener('change', onIntervalParamsChange);
-    intervalXInput.addEventListener('change', onIntervalParamsChange);
-    intervalZInput.addEventListener('change', onIntervalParamsChange);
+    edoInput.addEventListener('change', function () {
+        syncDirectionalAxes();
+        onIntervalParamsChange();
+    });
+    axisRightInput?.addEventListener('change', function () {
+        syncDirectionalAxes('right');
+        onIntervalParamsChange();
+    });
+    axisUpRightInput?.addEventListener('change', function () {
+        syncDirectionalAxes('upRight');
+        onIntervalParamsChange();
+    });
+    axisDownRightInput?.addEventListener('change', function () {
+        syncDirectionalAxes('downRight');
+        onIntervalParamsChange();
+    });
     saveImageButton.addEventListener('click', saveAsImage);
     savePdfButton.addEventListener('click', saveAsPdf);
     scaleDegreesInput?.addEventListener('input', queueDraw);
@@ -271,5 +347,6 @@ document.addEventListener('DOMContentLoaded', function () {
     themeToggleBtn?.addEventListener('click', toggleTheme);
 
     initializeTheme();
+    syncDirectionalAxes();
     initializePersistence();
 });

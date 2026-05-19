@@ -1,11 +1,11 @@
 # Generalized Tonnetz
 
-Interactive Tonnetz lattice visualizer for arbitrary EDOs with configurable axis intervals, overlays for chords/shapes, and high‑resolution export.
+Interactive Tonnetz lattice visualizer for arbitrary EDOs with configurable directional axes, overlays for chords/shapes, and high‑resolution export.
 
 ## Features
 
 - Any EDO (Equal Divisions of the Octave), default 12
-- Configurable lattice axes X and Z (Y is implied by geometry)
+- Configurable directional lattice axes →, ↗, and ↘, with any two deriving the third
 - Crisp lattice rendering with labels and optional highlight for note 0
 - Chord overlays
   - Steps editor (first three steps form a triangle when applicable)
@@ -14,8 +14,8 @@ Interactive Tonnetz lattice visualizer for arbitrary EDOs with configurable axis
   - Repeat toggle: tile each placed overlay anchor periodically across the lattice
   - Click to add/remove anchors
 - Smart click hit‑testing so neighbors don’t accidentally toggle the same triangle
-- Default overlays auto‑sync to X/Z (Down: `[0, Z, X]`, Up: `[0, X−Z, X]`)
-  - Their Steps inputs update automatically when X/Z/EDO change
+- Default overlays auto‑sync to the directional axes (Down: `[0, ↘, →]`, Up: `[0, ↗, →]`)
+  - Their Steps inputs update automatically when directional axes or EDO change
   - Manual edits disable auto‑sync for that overlay
 - Export to PNG and PDF
 - Controls panel starts collapsed by default
@@ -60,7 +60,7 @@ Navigation:
 
 Settings panel:
 - EDO – integer divisions of the octave
-- Interval X / Interval Z – steps along the two displayed axes
+- Directional axes → / ↗ / ↘ – steps along the three lattice directions; values are bounded from 0 to EDO-1, and any two derive the third
 - Canvas size and orientation (A4/A3/Letter/Legal/Custom)
 - Triangle size
 - Colors: axis strokes, background, labels, highlight for note 0
@@ -92,9 +92,9 @@ Chord overlays panel:
 ## Default overlays and auto‑sync
 
 - On first load, two overlays are created:
-  - Down overlay: `[0, Z, X]`
-  - Up overlay: `[0, X−Z, X]`
-- They auto‑update with X/Z/EDO changes and the Steps inputs refresh automatically.
+  - Down overlay: `[0, ↘, →]`
+  - Up overlay: `[0, ↗, →]`
+- They auto‑update with directional axis/EDO changes and the Steps inputs refresh automatically.
 - If you edit an overlay’s Steps, its auto‑sync is disabled so your edits persist.
 
 ## Export

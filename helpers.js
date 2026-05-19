@@ -9,6 +9,50 @@ function sanitizeInt(val, fallback = 0) {
     return Number.isFinite(n) ? n : fallback;
 }
 
+function coerceEdoValue(value, fallback = 12) {
+    return clamp(sanitizeInt(value, fallback), 1, 72, fallback);
+}
+
+function clampAxisDirectionValue(value, edo, fallback = 0) {
+    const max = Math.max(0, coerceEdoValue(edo) - 1);
+    return clamp(sanitizeInt(value, fallback), 0, max, fallback);
+}
+
+function normalizeAxisDirectionValue(value, edo) {
+    const modulus = coerceEdoValue(edo);
+    const n = sanitizeInt(value, 0);
+    const remainder = n % modulus;
+    return remainder < 0 ? remainder + modulus : remainder;
+}
+
+function deriveDirectionalAxes(values, edo, derivedAxis) {
+    const modulus = coerceEdoValue(edo);
+    const axes = {
+        right: clampAxisDirectionValue(values?.right, modulus, 0),
+        upRight: clampAxisDirectionValue(values?.upRight, modulus, 0),
+        downRight: clampAxisDirectionValue(values?.downRight, modulus, 0)
+    };
+
+    if (derivedAxis === 'right') {
+        axes.right = normalizeAxisDirectionValue(axes.upRight + axes.downRight, modulus);
+    } else if (derivedAxis === 'upRight') {
+        axes.upRight = normalizeAxisDirectionValue(axes.right - axes.downRight, modulus);
+    } else if (derivedAxis === 'downRight') {
+        axes.downRight = normalizeAxisDirectionValue(axes.right - axes.upRight, modulus);
+    }
+
+    return axes;
+}
+
+function directionalAxesToIntervals(values, edo) {
+    const axes = deriveDirectionalAxes(values, edo, null);
+    return {
+        intervalX: axes.right,
+        intervalZ: axes.downRight,
+        axisUpRight: axes.upRight
+    };
+}
+
 function parseChordSteps(text) {
     if (!text) return [0];
     try {

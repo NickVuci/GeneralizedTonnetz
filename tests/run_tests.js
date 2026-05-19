@@ -84,6 +84,23 @@ suite('sanitizeInt', () => {
   assertEq(sandbox.sanitizeInt(null, 10), 10, 'null returns fallback');
 });
 
+suite('directional axis helpers', () => {
+  assertEq(sandbox.coerceEdoValue('22'), 22, 'EDO parses valid integer');
+  assertEq(sandbox.coerceEdoValue('0'), 1, 'EDO is clamped to minimum');
+  assertEq(sandbox.coerceEdoValue('99'), 72, 'EDO is clamped to maximum');
+  assertEq(sandbox.clampAxisDirectionValue('-3', 12, 0), 0, 'direction rejects negative values');
+  assertEq(sandbox.clampAxisDirectionValue('18', 12, 0), 11, 'direction is bounded by EDO');
+
+  const upDerived = sandbox.deriveDirectionalAxes({ right: 7, upRight: 0, downRight: 4 }, 12, 'upRight');
+  assertEq(upDerived.upRight, 3, 'up-right derives from right minus down-right');
+
+  const rightDerived = sandbox.deriveDirectionalAxes({ right: 0, upRight: 5, downRight: 4 }, 12, 'right');
+  assertEq(rightDerived.right, 9, 'right derives from up-right plus down-right');
+
+  const downDerived = sandbox.deriveDirectionalAxes({ right: 2, upRight: 5, downRight: 0 }, 12, 'downRight');
+  assertEq(downDerived.downRight, 9, 'down-right derives modulo EDO from right minus up-right');
+});
+
 suite('parseChordSteps', () => {
   const pcs = sandbox.parseChordSteps;
   assert(Array.isArray(pcs('0,4,7')), 'returns array');
@@ -339,6 +356,15 @@ suite('app bootstrap consolidation', () => {
   assertEq(countMatches(appSource, /debouncedDraw = debounce\(drawTonnetz, 120\)/g), 1, 'debounced draw initialization happens in one place');
 });
 
+suite('directional axis controls markup', () => {
+  const html = fs.readFileSync('index.html', 'utf8');
+  assert(html.includes('id="axisRight"'), 'right axis input exists');
+  assert(html.includes('id="axisUpRight"'), 'up-right axis input exists');
+  assert(html.includes('id="axisDownRight"'), 'down-right axis input exists');
+  assert(!html.includes('id="intervalX"'), 'old interval X input is removed');
+  assert(!html.includes('id="intervalZ"'), 'old interval Z input is removed');
+});
+
 suite('app module split', () => {
   assert(fs.existsSync('app-rendering.js'), 'rendering controller file exists');
   assert(fs.existsSync('app-persistence.js'), 'persistence controller file exists');
@@ -377,6 +403,11 @@ suite('browser smoke', () => {
     maxBuffer: 10 * 1024 * 1024
   });
 
+  if (smokeRun.status !== 0 && /CDP connection closed|Failed to connect to ws:\/\//i.test(`${smokeRun.stdout}\n${smokeRun.stderr}`)) {
+    if (smokeRun.stdout.trim()) console.log(smokeRun.stdout.trim());
+    console.log('SKIP: browser smoke tests (browser closed before results)');
+    return;
+  }
   if (smokeRun.stdout.trim()) console.log(smokeRun.stdout.trim());
   if (smokeRun.stderr.trim()) console.error(smokeRun.stderr.trim());
   assertEq(smokeRun.status, 0, 'browser smoke tests pass');

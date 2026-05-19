@@ -22,8 +22,12 @@ function createTonnetzPersistenceController(options) {
         scaleDotColorInput,
         scaleDotSizeInput,
         edoInput,
-        intervalXInput,
-        intervalZInput,
+        axisRightInput,
+        axisUpRightInput,
+        axisDownRightInput,
+        syncDirectionalAxes,
+        getAxisEditOrder,
+        setAxisEditOrder,
         copyLinkBtn,
         resetBtn,
         DEFAULT_COLORS,
@@ -35,14 +39,24 @@ function createTonnetzPersistenceController(options) {
     } = options;
 
     const STATE_KEY = 'tonnetz-state';
-    const STATE_VERSION = 1;
+    const STATE_VERSION = 2;
 
     function serializeState() {
+        const edo = coerceEdoValue(edoInput.value);
+        const axes = deriveDirectionalAxes({
+            right: axisRightInput?.value,
+            upRight: axisUpRightInput?.value,
+            downRight: axisDownRightInput?.value
+        }, edo, null);
         return {
             version: STATE_VERSION,
-            edo: parseInt(edoInput.value, 10) || 12,
-            intervalX: parseInt(intervalXInput.value, 10) || 7,
-            intervalZ: parseInt(intervalZInput.value, 10) || 4,
+            edo,
+            axisRight: axes.right,
+            axisUpRight: axes.upRight,
+            axisDownRight: axes.downRight,
+            axisEditOrder: typeof getAxisEditOrder === 'function' ? getAxisEditOrder() : ['right', 'downRight'],
+            intervalX: axes.right,
+            intervalZ: axes.downRight,
             canvasSize: canvasSizeSelect.value,
             orientation: orientationSelect.value,
             canvasWidth: parseInt(canvasWidthInput.value, 10) || 1000,
@@ -87,12 +101,25 @@ function createTonnetzPersistenceController(options) {
     }
 
     function deserializeState(state) {
-        if (!state || state.version !== STATE_VERSION) return false;
+        if (!state || (state.version !== STATE_VERSION && state.version !== 1)) return false;
 
         try {
             edoInput.value = state.edo;
-            intervalXInput.value = state.intervalX;
-            intervalZInput.value = state.intervalZ;
+            if (state.version === 1) {
+                const edo = coerceEdoValue(state.edo);
+                const legacyRight = clampAxisDirectionValue(state.intervalX, edo, 7);
+                const legacyDownRight = clampAxisDirectionValue(state.intervalZ, edo, 4);
+                if (axisRightInput) axisRightInput.value = legacyRight;
+                if (axisDownRightInput) axisDownRightInput.value = legacyDownRight;
+                if (axisUpRightInput) axisUpRightInput.value = normalizeAxisDirectionValue(legacyRight - legacyDownRight, edo);
+                if (typeof setAxisEditOrder === 'function') setAxisEditOrder(['right', 'downRight']);
+            } else {
+                if (typeof setAxisEditOrder === 'function') setAxisEditOrder(state.axisEditOrder);
+                if (axisRightInput) axisRightInput.value = state.axisRight;
+                if (axisUpRightInput) axisUpRightInput.value = state.axisUpRight;
+                if (axisDownRightInput) axisDownRightInput.value = state.axisDownRight;
+            }
+            if (typeof syncDirectionalAxes === 'function') syncDirectionalAxes();
             canvasSizeSelect.value = state.canvasSize;
             orientationSelect.value = state.orientation;
             canvasWidthInput.value = state.canvasWidth;

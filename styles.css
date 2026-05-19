@@ -201,6 +201,7 @@ input[type="radio"] {
 
 .settings-lattice .param-group {
   flex: 1 1 0;
+  min-width: 0;
 }
 
 .param-group label {
@@ -222,6 +223,27 @@ input[type="radio"] {
   border: 1px solid transparent;
   color: var(--primary);
   font-size: 15px;
+}
+
+.settings-lattice .axis-direction input[type="number"] {
+  width: 54px;
+}
+
+.settings-lattice .param-group label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  font-size: 13px;
+}
+
+.settings-lattice .param-group.axis-direction label {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.settings-lattice .param-group.axis-direction-right label {
+  font-size: 24px;
 }
 
 .param-group input[type="number"]:hover,
@@ -1496,7 +1518,10 @@ html.suppress-layout-transitions .action-btns {
     min-width: 0;
   }
   .param-group input[type="number"] {
-    width: 56px;
+    width: 52px;
+  }
+  .settings-lattice .axis-direction input[type="number"] {
+    width: 48px;
   }
   .settings-lattice {
     gap: 6px;
