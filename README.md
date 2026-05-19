@@ -5,7 +5,7 @@ Interactive Tonnetz lattice visualizer for arbitrary EDOs with configurable dire
 ## Features
 
 - Any EDO (Equal Divisions of the Octave), default 12
-- Configurable directional lattice axes →, ↗, and ↘, with any two deriving the third
+- Directional lattice axes →, ↗, and ↘ auto-tune from a 5-limit major/minor preset when EDO changes, with manual editing still supported
 - Crisp lattice rendering with labels and optional highlight for note 0
 - Chord overlays
   - Steps editor (first three steps form a triangle when applicable)
@@ -59,8 +59,8 @@ Navigation:
 - Settings, Chords, Scale, and More each open a dedicated panel.
 
 Settings panel:
-- EDO – integer divisions of the octave
-- Directional axes → / ↗ / ↘ – steps along the three lattice directions; values are bounded from 0 to EDO-1, and any two derive the third
+- EDO – integer divisions of the octave; changing it auto-sets axes from 5-limit approximations
+- Directional axes → / ↗ / ↘ – steps along the three lattice directions; → approximates `3/2`, ↗ approximates `5/4`, and ↘ derives from those by default
 - Canvas size and orientation (A4/A3/Letter/Legal/Custom)
 - Triangle size
 - Colors: axis strokes, background, labels, highlight for note 0

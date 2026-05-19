@@ -99,6 +99,24 @@ suite('directional axis helpers', () => {
 
   const downDerived = sandbox.deriveDirectionalAxes({ right: 2, upRight: 5, downRight: 0 }, 12, 'downRight');
   assertEq(downDerived.downRight, 9, 'down-right derives modulo EDO from right minus up-right');
+
+  assertEq(sandbox.approximateRatioInEdo(3 / 2, 12), 7, '12-EDO fifth approximates 3/2');
+  assertEq(sandbox.approximateRatioInEdo(5 / 4, 12), 4, '12-EDO major third approximates 5/4');
+
+  const tuned12 = sandbox.getDirectionalAxesForTuning(12);
+  assertEq(tuned12.right, 7, '12-EDO tuned right axis is fifth');
+  assertEq(tuned12.upRight, 4, '12-EDO tuned up-right axis is major third');
+  assertEq(tuned12.downRight, 3, '12-EDO tuned down-right axis derives minor third');
+
+  const tuned19 = sandbox.getDirectionalAxesForTuning(19);
+  assertEq(tuned19.right, 11, '19-EDO tuned right axis is nearest fifth');
+  assertEq(tuned19.upRight, 6, '19-EDO tuned up-right axis is nearest major third');
+  assertEq(tuned19.downRight, 5, '19-EDO tuned down-right axis derives from fifth and third');
+
+  const tuned1 = sandbox.getDirectionalAxesForTuning(1);
+  assertEq(tuned1.right, 0, '1-EDO tuned right normalizes to zero');
+  assertEq(tuned1.upRight, 0, '1-EDO tuned up-right normalizes to zero');
+  assertEq(tuned1.downRight, 0, '1-EDO tuned down-right normalizes to zero');
 });
 
 suite('default overlay triangle roles', () => {
@@ -126,8 +144,8 @@ suite('default overlay triangle roles', () => {
         const values = {
           edo: '12',
           axisRight: '7',
-          axisUpRight: '3',
-          axisDownRight: '4'
+          axisUpRight: '4',
+          axisDownRight: '3'
         };
         return Object.prototype.hasOwnProperty.call(values, id) ? { value: values[id] } : null;
       },
@@ -143,8 +161,8 @@ suite('default overlay triangle roles', () => {
   assertEq(vm.runInContext('downOverlayId', overlaySandbox), 2, 'second default overlay is mapped to down-triangle clicks');
   assertEq(vm.runInContext('overlays[0].color', overlaySandbox), 'rgb(255 0 0)', 'first default overlay stays red');
   assertEq(vm.runInContext('overlays[1].color', overlaySandbox), 'rgb(0 0 255)', 'second default overlay stays blue');
-  assertEq(vm.runInContext('overlays[0].steps.join(",")', overlaySandbox), '0,3,7', 'first default overlay uses upward steps');
-  assertEq(vm.runInContext('overlays[1].steps.join(",")', overlaySandbox), '0,4,7', 'second default overlay uses downward steps');
+  assertEq(vm.runInContext('overlays[0].steps.join(",")', overlaySandbox), '0,4,7', 'first default overlay uses upward steps');
+  assertEq(vm.runInContext('overlays[1].steps.join(",")', overlaySandbox), '0,3,7', 'second default overlay uses downward steps');
 
   vm.runInContext('synchronizeDefaultOverlaySteps(9, 4, 12)', overlaySandbox);
   assertEq(vm.runInContext('overlays[0].steps.join(",")', overlaySandbox), '0,5,9', 'first auto-sync overlay remains upward after axis changes');
@@ -587,12 +605,17 @@ suite('directional axis controls markup', () => {
   assert(html.includes('id="axisRight"'), 'right axis input exists');
   assert(html.includes('id="axisUpRight"'), 'up-right axis input exists');
   assert(html.includes('id="axisDownRight"'), 'down-right axis input exists');
+  assert(html.includes('id="axisRight" value="7"'), 'right axis defaults to 12-EDO fifth');
+  assert(html.includes('id="axisUpRight" value="4"'), 'up-right axis defaults to 12-EDO major third');
+  assert(html.includes('id="axisDownRight" value="3"'), 'down-right axis defaults to derived minor third');
   assert(!html.includes('id="intervalX"'), 'old interval X input is removed');
   assert(!html.includes('id="intervalZ"'), 'old interval Z input is removed');
 });
 
 suite('default overlay docs', () => {
   const readme = fs.readFileSync('README.md', 'utf8');
+  assert(readme.includes('auto-tune from a 5-limit major/minor preset'), 'feature summary documents 5-limit axis auto-tuning');
+  assert(readme.includes('→ approximates `3/2`, ↗ approximates `5/4`, and ↘ derives from those by default'), 'controls docs describe default axis tuning ratios');
   assert(readme.includes('Up: `[0, ↗, →]`, Down: `[0, ↘, →]`'), 'feature summary documents the new default overlay order');
   assert(readme.includes('Up overlay: `[0, ↗, →]` in red'), 'default overlay section documents red upward overlay first');
   assert(readme.includes('Down overlay: `[0, ↘, →]` in blue'), 'default overlay section documents blue downward overlay second');
@@ -621,6 +644,8 @@ suite('app module split', () => {
   assert(appSource.includes('createTonnetzRenderingController('), 'app bootstraps the rendering controller');
   assert(appSource.includes('createTonnetzPersistenceController('), 'app bootstraps the persistence controller');
   assert(appSource.includes('initializeAdaptiveNav('), 'app bootstraps the navigation controller');
+  assert(appSource.includes("let axisEditOrder = ['right', 'upRight'];"), 'app defaults to deriving down-right axis');
+  assert(appSource.includes('applyDirectionalAxesTuning();'), 'EDO changes apply axis tuning preset');
 });
 
 suite('legacy cleanup', () => {

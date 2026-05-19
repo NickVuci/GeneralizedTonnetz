@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let debouncedDraw = null;
     const THEME_STORAGE_KEY = 'tonnetz-theme';
     const AXIS_KEYS = ['right', 'upRight', 'downRight'];
-    let axisEditOrder = ['right', 'downRight'];
+    let axisEditOrder = ['right', 'upRight'];
 
     function getAxisInput(axisKey) {
         if (axisKey === 'right') return axisRightInput;
@@ -98,6 +98,16 @@ document.addEventListener('DOMContentLoaded', function () {
         if (axisRightInput) axisRightInput.value = axes.right;
         if (axisUpRightInput) axisUpRightInput.value = axes.upRight;
         if (axisDownRightInput) axisDownRightInput.value = axes.downRight;
+    }
+
+    function applyDirectionalAxesTuning(presetId) {
+        const edo = coerceEdoValue(edoInput.value);
+        const axes = getDirectionalAxesForTuning(edo, presetId);
+        if (axisRightInput) axisRightInput.value = axes.right;
+        if (axisUpRightInput) axisUpRightInput.value = axes.upRight;
+        if (axisDownRightInput) axisDownRightInput.value = axes.downRight;
+        setAxisEditOrder(['right', 'upRight']);
+        syncDirectionalAxes();
     }
 
     function applyTheme(theme) {
@@ -288,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function () {
     highlightZeroInput.addEventListener('input', queueDraw);
     triangleSizeInput.addEventListener('change', queueDraw);
     edoInput.addEventListener('change', function () {
-        syncDirectionalAxes();
+        applyDirectionalAxesTuning();
         onIntervalParamsChange();
     });
     axisRightInput?.addEventListener('change', function () {

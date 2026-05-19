@@ -25,6 +25,35 @@ function normalizeAxisDirectionValue(value, edo) {
     return remainder < 0 ? remainder + modulus : remainder;
 }
 
+const DIRECTIONAL_AXIS_TUNING_PRESETS = {
+    fiveLimitMajorMinor: {
+        targets: {
+            right: 3 / 2,
+            upRight: 5 / 4
+        },
+        derivedAxis: 'downRight'
+    }
+};
+
+function approximateRatioInEdo(ratio, edo) {
+    const modulus = coerceEdoValue(edo);
+    const numericRatio = Number(ratio);
+    if (!Number.isFinite(numericRatio) || numericRatio <= 0) return 0;
+    return normalizeAxisDirectionValue(Math.round(modulus * Math.log2(numericRatio)), modulus);
+}
+
+function getDirectionalAxesForTuning(edo, presetId = 'fiveLimitMajorMinor') {
+    const modulus = coerceEdoValue(edo);
+    const preset = DIRECTIONAL_AXIS_TUNING_PRESETS[presetId] || DIRECTIONAL_AXIS_TUNING_PRESETS.fiveLimitMajorMinor;
+    const targets = preset.targets || {};
+    const axes = {
+        right: approximateRatioInEdo(targets.right, modulus),
+        upRight: approximateRatioInEdo(targets.upRight, modulus),
+        downRight: approximateRatioInEdo(targets.downRight, modulus)
+    };
+    return deriveDirectionalAxes(axes, modulus, preset.derivedAxis || 'downRight');
+}
+
 function deriveDirectionalAxes(values, edo, derivedAxis) {
     const modulus = coerceEdoValue(edo);
     const axes = {
