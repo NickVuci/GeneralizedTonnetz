@@ -203,10 +203,10 @@ suite('fixed overlay roles', () => {
   assertEq(overlayList.children[0].children[0].children[0].children[0].children[0].attributes.points, '12,5 20,19 4,19', 'up row triangle points upward');
   assertEq(overlayList.children[1].children[0].children[0].children[0].children[0].attributes.points, '4,5 20,5 12,19', 'down row triangle points downward');
   assertEq(overlayList.children[0].children[0].children[0].children[1].value, '#00FF00', 'up row color input reflects updated color');
-  assertEq(overlayList.children[0].children[0].children[1].children[0].checked, true, 'up row repeat-all toggle reflects updated state');
-  assertEq(overlayList.children[0].children[0].children[1].children[1].textContent, 'Repeat', 'up row repeat toggle uses compact label');
-  assertEq(overlayList.children[0].children[0].children[2].children[0].textContent, '1', 'up row shows anchor count');
-  assertEq(overlayList.children[1].children[0].children[2].children[0].textContent, '2', 'down row shows anchor count');
+  assertEq(overlayList.children[0].children[0].children[1].children[0].textContent, '1', 'up row shows anchor count');
+  assertEq(overlayList.children[1].children[0].children[1].children[0].textContent, '2', 'down row shows anchor count');
+  assertEq(overlayList.children[0].children[0].children[2].children[0].checked, true, 'up row repeat-all toggle reflects updated state');
+  assertEq(overlayList.children[0].children[0].children[2].children[1].textContent, 'Repeat', 'up row repeat toggle uses compact label');
   assertEq(vm.runInContext('getFixedOverlayDescriptors(7, 3, 12)[0].repeatAll', overlaySandbox), true, 'overlay descriptors include repeat-all state');
 });
 

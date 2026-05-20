@@ -220,6 +220,8 @@ function updateOverlayRepeatAllControl(role, repeatAll) {
     if (!normalizedRole) return;
     const input = overlayListContainer?.querySelector(`.overlay-card[data-role="${normalizedRole}"] .ov-repeat-all-toggle`);
     if (input) input.checked = !!repeatAll;
+    const label = input?.closest('.ov-toggle-label');
+    if (label) label.classList.toggle('is-active', !!repeatAll);
 }
 
 function syncOverlayIconColorInput(input) {
@@ -271,7 +273,7 @@ function renderOverlayListPanel() {
         const icon = buildOverlayRoleIcon(config);
 
         const repeatLabel = document.createElement('label');
-        repeatLabel.className = 'ov-toggle-label';
+        repeatLabel.className = `ov-toggle-label ov-action${config.repeatAll ? ' is-active' : ''}`;
 
         const repeatInput = document.createElement('input');
         repeatInput.className = 'ov-repeat-all-toggle';
@@ -302,8 +304,8 @@ function renderOverlayListPanel() {
         btnClear.textContent = 'Clear';
 
         titleRow.appendChild(icon);
-        titleRow.appendChild(repeatLabel);
         titleRow.appendChild(anchorsSpan);
+        titleRow.appendChild(repeatLabel);
         titleRow.appendChild(btnClear);
 
         card.appendChild(titleRow);
