@@ -185,6 +185,13 @@ function updateOverlayAnchorsCount(role, count) {
     if (el) el.textContent = String(count);
 }
 
+function syncOverlayIconColorInput(input) {
+    if (!input) return;
+    const trigger = input.closest?.('.ov-color-trigger');
+    if (!trigger) return;
+    trigger.style.setProperty('--ov-role-color', normalizeColorToRgb(input.value));
+}
+
 function onOverlayPanelEvent(e) {
     const target = e.target;
     const clearButton = target.closest?.('.ov-clear-anchors');
@@ -195,9 +202,9 @@ function onOverlayPanelEvent(e) {
         return true;
     }
 
-    if (target.classList?.contains('ov-color-input') && e.type === 'change') {
+    if (target.classList?.contains('ov-color-input') && (e.type === 'input' || e.type === 'change')) {
         if (!setOverlayColor(target.getAttribute('data-role'), target.value)) return false;
-        renderOverlayListPanel();
+        syncOverlayIconColorInput(target);
         return true;
     }
 

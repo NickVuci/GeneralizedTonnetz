@@ -329,6 +329,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!e.target.classList.contains('ov-color-input')) return;
         handleOverlayPanelInteraction(e);
     }, true);
+    overlayListContainer?.addEventListener('input', function (e) {
+        if (!e.target.classList.contains('ov-color-input')) return;
+        handleOverlayPanelInteraction(e);
+    }, true);
     canvas.addEventListener('click', onCanvasClick);
 
     let touchStartX = 0;
