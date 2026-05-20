@@ -39,7 +39,7 @@ function createTonnetzPersistenceController(options) {
     } = options;
 
     const STATE_KEY = 'tonnetz-state';
-    const STATE_VERSION = 6;
+    const STATE_VERSION = 7;
 
     function isOldDefaultOverlayRoleState(state) {
         if (!state || state.version >= 3 || !Array.isArray(state.overlays) || state.overlays.length < 2) return false;
@@ -146,6 +146,20 @@ function createTonnetzPersistenceController(options) {
         };
     }
 
+    function migrateOverlayRepeatAll(state) {
+        if (state?.overlayRepeatAll) {
+            return {
+                up: !!state.overlayRepeatAll.up,
+                down: !!state.overlayRepeatAll.down
+            };
+        }
+
+        return {
+            up: false,
+            down: false
+        };
+    }
+
     function serializeState() {
         const edo = coerceEdoValue(edoInput.value);
         const axes = deriveDirectionalAxes({
@@ -181,13 +195,14 @@ function createTonnetzPersistenceController(options) {
             scaleDotSize: scaleDotSizeInput?.value || '6',
             overlayAnchors: getOverlayAnchorsSnapshot(),
             overlayColors: getOverlayColorsSnapshot(),
+            overlayRepeatAll: getOverlayRepeatAllSnapshot(),
             sidebarCollapsed: overlaySidebar?.classList.contains('desktop-collapsed') || false,
             controlsCollapsed: controlsContent?.classList.contains('desktop-collapsed') || false
         };
     }
 
     function deserializeState(state) {
-        if (!state || (state.version !== STATE_VERSION && state.version !== 5 && state.version !== 4 && state.version !== 3 && state.version !== 2 && state.version !== 1)) return false;
+        if (!state || (state.version !== STATE_VERSION && state.version !== 6 && state.version !== 5 && state.version !== 4 && state.version !== 3 && state.version !== 2 && state.version !== 1)) return false;
 
         try {
             const shouldMigrateDefaultAxes = shouldMigrateDefaultAxesToTuning(state);
@@ -234,6 +249,7 @@ function createTonnetzPersistenceController(options) {
 
             setOverlayAnchors(migrateOverlayAnchors(state));
             setOverlayColors(migrateOverlayColors(state));
+            setOverlayRepeatAll(migrateOverlayRepeatAll(state));
 
             if (window.innerWidth <= 768) {
                 setControlsDesktopCollapsedState(true);
@@ -412,6 +428,7 @@ function createTonnetzPersistenceController(options) {
             }
             setOverlayAnchors({ up: [], down: [] });
             setOverlayColors({ up: 'rgb(255 0 0)', down: 'rgb(0 0 255)' });
+            setOverlayRepeatAll({ up: false, down: false });
             renderOverlayListPanel();
             getDrawTonnetz()?.();
         }

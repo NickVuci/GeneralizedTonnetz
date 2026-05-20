@@ -63,6 +63,7 @@ const sandbox = vm.createContext({
 
 loadIntoSandbox('helpers.js', sandbox);
 loadIntoSandbox('geometry.js', sandbox);
+loadIntoSandbox('drawing.js', sandbox);
 
 // ── helpers.js tests ────────────────────────────────────────────────────────────
 
@@ -187,7 +188,11 @@ suite('fixed overlay roles', () => {
   assertEq(vm.runInContext('getOverlayAnchorsSnapshot().down.length', overlaySandbox), 2, 'down role stores anchors');
   assertEq(vm.runInContext('getOverlayColorsSnapshot().up', overlaySandbox), 'rgb(255 0 0)', 'up role starts with default color');
   assertEq(vm.runInContext('getOverlayColorsSnapshot().down', overlaySandbox), 'rgb(0 0 255)', 'down role starts with default color');
+  assertEq(vm.runInContext('getOverlayRepeatAllSnapshot().up', overlaySandbox), false, 'up role starts with repeat-all disabled');
+  assertEq(vm.runInContext('getOverlayRepeatAllSnapshot().down', overlaySandbox), false, 'down role starts with repeat-all disabled');
   assertEq(vm.runInContext("setOverlayColor('up', '#00FF00'); getOverlayColorsSnapshot().up", overlaySandbox), 'rgb(0 255 0)', 'overlay color updates from hex input');
+  assertEq(vm.runInContext("toggleOverlayRepeatAll('up')", overlaySandbox), true, 'repeat-all toggle flips on');
+  assertEq(vm.runInContext('getOverlayRepeatAllSnapshot().up', overlaySandbox), true, 'repeat-all snapshot reflects toggled state');
 
   vm.runInContext('renderOverlayListPanel()', overlaySandbox);
   assertEq(overlayList.children.length, 2, 'fixed overlay UI renders exactly two rows');
@@ -198,8 +203,11 @@ suite('fixed overlay roles', () => {
   assertEq(overlayList.children[0].children[0].children[0].children[0].children[0].attributes.points, '12,5 20,19 4,19', 'up row triangle points upward');
   assertEq(overlayList.children[1].children[0].children[0].children[0].children[0].attributes.points, '4,5 20,5 12,19', 'down row triangle points downward');
   assertEq(overlayList.children[0].children[0].children[0].children[1].value, '#00FF00', 'up row color input reflects updated color');
+  assertEq(overlayList.children[0].children[0].children[1].children[0].checked, true, 'up row repeat-all toggle reflects updated state');
+  assertEq(overlayList.children[0].children[0].children[1].children[1].textContent, 'Repeat', 'up row repeat toggle uses compact label');
   assertEq(overlayList.children[0].children[0].children[2].children[0].textContent, '1', 'up row shows anchor count');
   assertEq(overlayList.children[1].children[0].children[2].children[0].textContent, '2', 'down row shows anchor count');
+  assertEq(vm.runInContext('getFixedOverlayDescriptors(7, 3, 12)[0].repeatAll', overlaySandbox), true, 'overlay descriptors include repeat-all state');
 });
 
 suite('fixed overlay persistence migration', () => {
@@ -399,6 +407,8 @@ suite('fixed overlay persistence migration', () => {
   assertEq(vm.runInContext('getOverlayAnchorsSnapshot().down.length', migrationSandbox), 0, 'old saved default starts with empty down anchors');
   assertEq(vm.runInContext('getOverlayColorsSnapshot().up', migrationSandbox), 'rgb(255 0 0)', 'old saved default restores up color');
   assertEq(vm.runInContext('getOverlayColorsSnapshot().down', migrationSandbox), 'rgb(0 0 255)', 'old saved default restores down color');
+  assertEq(vm.runInContext('getOverlayRepeatAllSnapshot().up', migrationSandbox), false, 'old saved default restores up repeat-all as disabled');
+  assertEq(vm.runInContext('getOverlayRepeatAllSnapshot().down', migrationSandbox), false, 'old saved default restores down repeat-all as disabled');
 
   const staleVersion3State = {
     ...oldDefaultState,
@@ -459,7 +469,7 @@ suite('fixed overlay persistence migration', () => {
 
   const currentState = {
     ...baseLegacyState,
-    version: 5,
+    version: 6,
     overlayAnchors: {
       up: [{ q: 7, r: 8 }],
       down: [{ q: 9, r: 10 }]
@@ -467,6 +477,10 @@ suite('fixed overlay persistence migration', () => {
     overlayColors: {
       up: 'rgb(9 8 7)',
       down: '#010203'
+    },
+    overlayRepeatAll: {
+      up: true,
+      down: false
     }
   };
   storage.set('tonnetz-state', JSON.stringify(currentState));
@@ -475,6 +489,8 @@ suite('fixed overlay persistence migration', () => {
   assertEq(vm.runInContext('getOverlayAnchorsSnapshot().down[0].q', migrationSandbox), 9, 'current down anchors restore from overlayAnchors');
   assertEq(vm.runInContext('getOverlayColorsSnapshot().up', migrationSandbox), 'rgb(9 8 7)', 'current up color restores from overlayColors');
   assertEq(vm.runInContext('getOverlayColorsSnapshot().down', migrationSandbox), 'rgb(1 2 3)', 'current down color normalizes from hex overlay color');
+  assertEq(vm.runInContext('getOverlayRepeatAllSnapshot().up', migrationSandbox), true, 'current up repeat-all restores from overlayRepeatAll');
+  assertEq(vm.runInContext('getOverlayRepeatAllSnapshot().down', migrationSandbox), false, 'current down repeat-all restores from overlayRepeatAll');
 
   vm.runInContext(`
     setOverlayAnchors({
@@ -485,14 +501,20 @@ suite('fixed overlay persistence migration', () => {
       up: '#102030',
       down: 'rgb(40 50 60)'
     });
+    setOverlayRepeatAll({
+      up: true,
+      down: true
+    });
     createPersistenceControllerForTest().saveStateToStorage();
   `, migrationSandbox);
   const savedState = JSON.parse(storage.get('tonnetz-state'));
-  assertEq(savedState.version, 6, 'new persistence state uses fixed overlay version');
+  assertEq(savedState.version, 7, 'new persistence state uses fixed overlay version');
   assertEq(savedState.overlayAnchors.up[0].q, 12, 'new state saves up anchors');
   assertEq(savedState.overlayAnchors.down[0].q, 14, 'new state saves down anchors');
   assertEq(savedState.overlayColors.up, 'rgb(16 32 48)', 'new state saves up overlay color');
   assertEq(savedState.overlayColors.down, 'rgb(40 50 60)', 'new state saves down overlay color');
+  assertEq(savedState.overlayRepeatAll.up, true, 'new state saves up repeat-all setting');
+  assertEq(savedState.overlayRepeatAll.down, true, 'new state saves down repeat-all setting');
   assert(!Object.prototype.hasOwnProperty.call(savedState, 'overlays'), 'new state no longer saves arbitrary overlays');
 });
 
@@ -665,6 +687,34 @@ suite('findPeriodVectors larger EDO regression', () => {
   assertEq(normalize(1 * p1.u + 1 * p1.v, 33), 0, 'p1 is zero-congruent in 33-EDO');
   assertEq(normalize(1 * p2.u + 1 * p2.v, 33), 0, 'p2 is zero-congruent in 33-EDO');
   assert(p1.u * p2.v - p1.v * p2.u !== 0, 'period vectors stay non-collinear in 33-EDO');
+});
+
+suite('expandRepeatedOverlayAnchors', () => {
+  const width = 800;
+  const height = 800;
+  const size = 40;
+  const edo = 12;
+  const intervalX = 7;
+  const intervalZ = 3;
+  const steps = [0, 4, 7];
+  const seed = { q: 6, r: 6 };
+
+  const single = sandbox.expandRepeatedOverlayAnchors(width, height, size, edo, intervalX, intervalZ, steps, [seed], false);
+  assertEq(single.length, 1, 'repeat-all disabled preserves seed anchors only');
+  assertEq(single[0].q, seed.q, 'repeat-all disabled preserves seed q');
+  assertEq(single[0].r, seed.r, 'repeat-all disabled preserves seed r');
+
+  const repeated = sandbox.expandRepeatedOverlayAnchors(width, height, size, edo, intervalX, intervalZ, steps, [seed], true);
+  assert(repeated.length > 1, 'repeat-all expands to more than one visible equivalent anchor');
+  assert(repeated.some(function (anchor) {
+    return anchor.q === seed.q && anchor.r === seed.r;
+  }), 'repeat-all includes the original seed anchor');
+
+  const { p1, p2 } = sandbox.findPeriodVectors(intervalX, intervalZ, edo);
+  assert(repeated.some(function (anchor) {
+    return (anchor.q === seed.q + p1.u && anchor.r === seed.r + p1.v)
+      || (anchor.q === seed.q + p2.u && anchor.r === seed.r + p2.v);
+  }), 'repeat-all includes at least one period-translated equivalent anchor');
 });
 
 suite('findNearestOffsets', () => {

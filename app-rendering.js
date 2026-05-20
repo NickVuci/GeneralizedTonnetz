@@ -186,7 +186,8 @@ function createTonnetzRenderingController(options) {
                         overlay.steps,
                         overlay.color,
                         overlay.opacity,
-                        overlay.anchors
+                        overlay.anchors,
+                        overlay.repeatAll
                     );
                 }
             }

@@ -5,13 +5,15 @@ const DEFAULT_OVERLAY_ROLE_CONFIG = {
         label: 'Up',
         direction: 'up',
         color: 'rgb(255 0 0)',
-        opacity: 0.35
+        opacity: 0.35,
+        repeatAll: false
     },
     down: {
         label: 'Down',
         direction: 'down',
         color: 'rgb(0 0 255)',
-        opacity: 0.35
+        opacity: 0.35,
+        repeatAll: false
     }
 };
 
@@ -79,11 +81,24 @@ function getOverlayColorsSnapshot() {
     }, {});
 }
 
+function getOverlayRepeatAllSnapshot() {
+    return OVERLAY_ROLE_ORDER.reduce(function (repeatAllState, role) {
+        repeatAllState[role] = !!getOverlayConfig(role)?.repeatAll;
+        return repeatAllState;
+    }, {});
+}
+
 function setOverlayColors(nextColors) {
-    overlayRoleConfig = createDefaultOverlayRoleConfig();
     for (const role of OVERLAY_ROLE_ORDER) {
-        if (!nextColors || !Object.prototype.hasOwnProperty.call(nextColors, role)) continue;
-        overlayRoleConfig[role].color = normalizeColorToRgb(nextColors[role]);
+        overlayRoleConfig[role].color = nextColors && Object.prototype.hasOwnProperty.call(nextColors, role)
+            ? normalizeColorToRgb(nextColors[role])
+            : DEFAULT_OVERLAY_ROLE_CONFIG[role].color;
+    }
+}
+
+function setOverlayRepeatAll(nextRepeatAll) {
+    for (const role of OVERLAY_ROLE_ORDER) {
+        overlayRoleConfig[role].repeatAll = !!nextRepeatAll?.[role];
     }
 }
 
@@ -92,6 +107,20 @@ function setOverlayColor(role, color) {
     if (!normalizedRole) return false;
     overlayRoleConfig[normalizedRole].color = normalizeColorToRgb(color);
     return true;
+}
+
+function toggleOverlayRepeatAll(role) {
+    const normalizedRole = normalizeOverlayRole(role);
+    if (!normalizedRole) return false;
+    overlayRoleConfig[normalizedRole].repeatAll = !overlayRoleConfig[normalizedRole].repeatAll;
+    return overlayRoleConfig[normalizedRole].repeatAll;
+}
+
+function setOverlayRepeatAllForRole(role, repeatAll) {
+    const normalizedRole = normalizeOverlayRole(role);
+    if (!normalizedRole) return false;
+    overlayRoleConfig[normalizedRole].repeatAll = !!repeatAll;
+    return overlayRoleConfig[normalizedRole].repeatAll;
 }
 
 function getOverlayStepsForRole(role, intervalX, intervalZ, edo) {
@@ -113,6 +142,7 @@ function getFixedOverlayDescriptors(intervalX, intervalZ, edo) {
             direction: config.direction,
             color: config.color,
             opacity: config.opacity,
+            repeatAll: !!config.repeatAll,
             steps: getOverlayStepsForRole(role, intervalX, intervalZ, edo),
             anchors: getOverlayAnchors(role)
         };
@@ -185,6 +215,13 @@ function updateOverlayAnchorsCount(role, count) {
     if (el) el.textContent = String(count);
 }
 
+function updateOverlayRepeatAllControl(role, repeatAll) {
+    const normalizedRole = normalizeOverlayRole(role);
+    if (!normalizedRole) return;
+    const input = overlayListContainer?.querySelector(`.overlay-card[data-role="${normalizedRole}"] .ov-repeat-all-toggle`);
+    if (input) input.checked = !!repeatAll;
+}
+
 function syncOverlayIconColorInput(input) {
     if (!input) return;
     const trigger = input.closest?.('.ov-color-trigger');
@@ -204,6 +241,12 @@ function onOverlayPanelEvent(e) {
     if (target.classList?.contains('ov-color-input') && (e.type === 'input' || e.type === 'change')) {
         if (!setOverlayColor(target.getAttribute('data-role'), target.value)) return false;
         syncOverlayIconColorInput(target);
+        return true;
+    }
+
+    if (target.classList?.contains('ov-repeat-all-toggle') && e.type === 'change') {
+        const repeatAll = setOverlayRepeatAllForRole(target.getAttribute('data-role'), target.checked);
+        updateOverlayRepeatAllControl(target.getAttribute('data-role'), repeatAll);
         return true;
     }
 
@@ -227,9 +270,23 @@ function renderOverlayListPanel() {
 
         const icon = buildOverlayRoleIcon(config);
 
-        const title = document.createElement('span');
-        title.className = 'ov-title';
-        title.textContent = config.label;
+        const repeatLabel = document.createElement('label');
+        repeatLabel.className = 'ov-toggle-label';
+
+        const repeatInput = document.createElement('input');
+        repeatInput.className = 'ov-repeat-all-toggle';
+        repeatInput.type = 'checkbox';
+        repeatInput.checked = !!config.repeatAll;
+        repeatInput.setAttribute('data-role', role);
+        repeatInput.setAttribute('aria-label', `${config.label} overlay repeat`);
+
+        const repeatText = document.createElement('span');
+        repeatText.className = 'ov-toggle-text';
+        repeatText.textContent = 'Repeat';
+        repeatText.title = 'Show this overlay on every matching chord on the lattice.';
+
+        repeatLabel.appendChild(repeatInput);
+        repeatLabel.appendChild(repeatText);
 
         const anchorsSpan = document.createElement('span');
         anchorsSpan.className = 'ov-anchors';
@@ -245,7 +302,7 @@ function renderOverlayListPanel() {
         btnClear.textContent = 'Clear';
 
         titleRow.appendChild(icon);
-        titleRow.appendChild(title);
+        titleRow.appendChild(repeatLabel);
         titleRow.appendChild(anchorsSpan);
         titleRow.appendChild(btnClear);
 

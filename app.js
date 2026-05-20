@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function () {
         handleOverlayPanelInteraction(e);
     }, true);
     overlayListContainer?.addEventListener('change', function (e) {
-        if (!e.target.classList.contains('ov-color-input')) return;
+        if (!e.target.classList.contains('ov-color-input') && !e.target.classList.contains('ov-repeat-all-toggle')) return;
         handleOverlayPanelInteraction(e);
     }, true);
     overlayListContainer?.addEventListener('input', function (e) {

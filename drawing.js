@@ -63,14 +63,91 @@ function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, in
     ctx.fillText(label.toString(), labelX, labelY);
 }
 
-function drawChordOverlay(ctx, width, height, size, edo, intervalX, intervalZ, steps, colorHex, opacity, anchors) {
-    if (!anchors || !anchors.length) return;
+function getOverlayTriangleOffsets(steps, intervalX, intervalZ, edo) {
+    if (!steps || steps.length < 3) return null;
+    const triOffsets = steps.slice(0, 3).map(function (step) {
+        return solveStepToUV(((step % edo) + edo) % edo, intervalX, intervalZ, edo);
+    });
+    return triOffsets.some(offset => !offset) ? null : triOffsets;
+}
+
+function isOverlayTriangleVisible(aq, ar, size, triOffsets, width, height) {
+    const triNodes = triOffsets.map(function ({ u, v }) {
+        return qrToPixel(aq + u, ar + v, size);
+    });
+    const xs = triNodes.map(function (point) { return point.x; });
+    const ys = triNodes.map(function (point) { return point.y; });
+    const minX = Math.min.apply(null, xs);
+    const maxX = Math.max.apply(null, xs);
+    const minY = Math.min.apply(null, ys);
+    const maxY = Math.max.apply(null, ys);
+    return maxX >= 0 && maxY >= 0 && minX <= width && minY <= height;
+}
+
+function isEquivalentAnchorTranslation(deltaQ, deltaR, p1, p2) {
+    const det = (p1.u * p2.v) - (p1.v * p2.u);
+    if (det === 0) return false;
+    const n1Numerator = (deltaQ * p2.v) - (deltaR * p2.u);
+    const n2Numerator = (p1.u * deltaR) - (p1.v * deltaQ);
+    return n1Numerator % det === 0 && n2Numerator % det === 0;
+}
+
+function expandRepeatedOverlayAnchors(width, height, size, edo, intervalX, intervalZ, steps, anchors, repeatAll) {
+    if (!anchors || !anchors.length) return [];
+    if (!repeatAll) return anchors.slice();
+
+    const triOffsets = getOverlayTriangleOffsets(steps, intervalX, intervalZ, edo);
+    if (!triOffsets) return anchors.slice();
+
+    const { p1, p2 } = findPeriodVectors(intervalX, intervalZ, edo);
+    const corners = [
+        approximateQR(0, 0, size),
+        approximateQR(width, 0, size),
+        approximateQR(0, height, size),
+        approximateQR(width, height, size)
+    ];
+    const uPad = triOffsets.reduce(function (maxOffset, offset) {
+        return Math.max(maxOffset, Math.abs(offset.u));
+    }, 0) + Math.abs(p1.u) + Math.abs(p2.u) + 2;
+    const vPad = triOffsets.reduce(function (maxOffset, offset) {
+        return Math.max(maxOffset, Math.abs(offset.v));
+    }, 0) + Math.abs(p1.v) + Math.abs(p2.v) + 2;
+    const qValues = corners.map(function (corner) { return corner.q; });
+    const rValues = corners.map(function (corner) { return corner.r; });
+    const qMin = Math.min.apply(null, qValues) - uPad;
+    const qMax = Math.max.apply(null, qValues) + uPad;
+    const rMin = Math.min.apply(null, rValues) - vPad;
+    const rMax = Math.max.apply(null, rValues) + vPad;
+    const expanded = [];
+    const seen = new Set();
+
+    for (const anchor of anchors) {
+        for (let q = qMin; q <= qMax; q++) {
+            for (let r = rMin; r <= rMax; r++) {
+                const deltaQ = q - anchor.q;
+                const deltaR = r - anchor.r;
+                if (!isEquivalentAnchorTranslation(deltaQ, deltaR, p1, p2)) continue;
+                if (!isOverlayTriangleVisible(q, r, size, triOffsets, width, height)) continue;
+                const key = `${q},${r}`;
+                if (seen.has(key)) continue;
+                seen.add(key);
+                expanded.push({ q, r });
+            }
+        }
+    }
+
+    return expanded;
+}
+
+function drawChordOverlay(ctx, width, height, size, edo, intervalX, intervalZ, steps, colorHex, opacity, anchors, repeatAll) {
+    const anchorsToDraw = expandRepeatedOverlayAnchors(width, height, size, edo, intervalX, intervalZ, steps, anchors, repeatAll);
+    if (!anchorsToDraw.length) return;
     ctx.save();
     ctx.globalAlpha = opacity;
     ctx.strokeStyle = colorHex;
     ctx.lineWidth = Math.max(1, size / 14);
 
-    for (const anchor of anchors) {
+    for (const anchor of anchorsToDraw) {
         drawChordShapeAtAnchor(ctx, anchor.q, anchor.r, size, edo, intervalX, intervalZ, steps);
     }
 
@@ -81,9 +158,8 @@ function drawChordShapeAtAnchor(ctx, aq, ar, size, edo, intervalX, intervalZ, st
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    if (!steps || steps.length < 3) return;
-    const triOffsets = steps.slice(0, 3).map(step => solveStepToUV(((step % edo) + edo) % edo, intervalX, intervalZ, edo));
-    if (triOffsets.some(offset => !offset)) return;
+    const triOffsets = getOverlayTriangleOffsets(steps, intervalX, intervalZ, edo);
+    if (!triOffsets) return;
 
     const triNodes = triOffsets.map(function ({ u, v }) {
         return qrToPixel(aq + u, ar + v, size);

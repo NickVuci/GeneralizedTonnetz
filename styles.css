@@ -761,9 +761,10 @@ input[type="color"]::-webkit-color-swatch {
 
 .fixed-overlay-card .ov-header {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto auto 1fr auto;
   gap: 10px;
   width: 100%;
+  align-items: center;
 }
 
 .ov-role-icon {
@@ -806,14 +807,6 @@ input[type="color"]::-webkit-color-swatch {
   cursor: pointer;
 }
 
-.ov-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
 .ov-anchors {
   font-size: 12px;
   color: var(--text-secondary);
@@ -822,6 +815,27 @@ input[type="color"]::-webkit-color-swatch {
 
 .ov-anchors-row {
   justify-content: space-between;
+}
+
+.ov-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.ov-repeat-all-toggle {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.ov-toggle-text {
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
 .ov-action {
