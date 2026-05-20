@@ -251,7 +251,12 @@ function createTonnetzRenderingController(options) {
         if (!anchorQR) return;
 
         const { q, r } = anchorQR;
-        toggleOverlayAnchor(role, q, r);
+        toggleOverlayAnchor(role, q, r, {
+            repeatAll: !!getOverlayConfig(role)?.repeatAll,
+            intervalX,
+            intervalZ,
+            edo
+        });
 
         drawTonnetz();
     }

@@ -197,13 +197,40 @@ function clearOverlayAnchors(role) {
     updateOverlayAnchorsCount(normalizedRole, 0);
 }
 
-function toggleOverlayAnchor(role, q, r) {
+function isOverlayEquivalentAnchorTranslation(deltaQ, deltaR, intervalX, intervalZ, edo) {
+    const { p1, p2 } = findPeriodVectors(intervalX, intervalZ, edo);
+    const det = (p1.u * p2.v) - (p1.v * p2.u);
+    if (det === 0) return false;
+    const n1Numerator = (deltaQ * p2.v) - (deltaR * p2.u);
+    const n2Numerator = (p1.u * deltaR) - (p1.v * deltaQ);
+    return n1Numerator % det === 0 && n2Numerator % det === 0;
+}
+
+function toggleOverlayAnchor(role, q, r, options) {
     const anchors = getOverlayAnchors(role);
-    const existingIndex = anchors.findIndex(function (anchor) {
-        return anchor.q === q && anchor.r === r;
-    });
-    if (existingIndex >= 0) anchors.splice(existingIndex, 1);
-    else anchors.push({ q, r });
+    const repeatAll = !!options?.repeatAll;
+    const intervalX = options?.intervalX;
+    const intervalZ = options?.intervalZ;
+    const edo = options?.edo;
+
+    const matchingIndices = anchors.reduce(function (indices, anchor, index) {
+        const matchesExact = anchor.q === q && anchor.r === r;
+        const matchesRepeat = repeatAll
+            && Number.isFinite(intervalX)
+            && Number.isFinite(intervalZ)
+            && Number.isFinite(edo)
+            && isOverlayEquivalentAnchorTranslation(q - anchor.q, r - anchor.r, intervalX, intervalZ, edo);
+        if (matchesExact || matchesRepeat) indices.push(index);
+        return indices;
+    }, []);
+
+    if (matchingIndices.length) {
+        for (let index = matchingIndices.length - 1; index >= 0; index--) {
+            anchors.splice(matchingIndices[index], 1);
+        }
+    } else {
+        anchors.push({ q, r });
+    }
     updateOverlayAnchorsCount(role, anchors.length);
     return anchors.length;
 }

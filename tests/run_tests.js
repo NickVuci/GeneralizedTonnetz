@@ -176,6 +176,7 @@ suite('fixed overlay roles', () => {
     }
   });
   loadIntoSandbox('helpers.js', overlaySandbox);
+  loadIntoSandbox('geometry.js', overlaySandbox);
   loadIntoSandbox('overlays.js', overlaySandbox);
 
   assertEq(vm.runInContext("getOverlayStepsForRole('up', 7, 3, 12).join(',')", overlaySandbox), '0,4,7', 'up role uses upward triangle steps');
@@ -193,6 +194,15 @@ suite('fixed overlay roles', () => {
   assertEq(vm.runInContext("setOverlayColor('up', '#00FF00'); getOverlayColorsSnapshot().up", overlaySandbox), 'rgb(0 255 0)', 'overlay color updates from hex input');
   assertEq(vm.runInContext("toggleOverlayRepeatAll('up')", overlaySandbox), true, 'repeat-all toggle flips on');
   assertEq(vm.runInContext('getOverlayRepeatAllSnapshot().up', overlaySandbox), true, 'repeat-all snapshot reflects toggled state');
+  vm.runInContext("setOverlayAnchors({ up: [{ q: 6, r: 6 }], down: [] })", overlaySandbox);
+  const repeatPeriods = vm.runInContext('findPeriodVectors(7, 3, 12)', overlaySandbox);
+  assertEq(
+    vm.runInContext(`toggleOverlayAnchor('up', ${6 + repeatPeriods.p1.u}, ${6 + repeatPeriods.p1.v}, { repeatAll: true, intervalX: 7, intervalZ: 3, edo: 12 })`, overlaySandbox),
+    0,
+    'clicking a repeated instance removes the repeated overlay seed'
+  );
+  assertEq(vm.runInContext('getOverlayAnchorsSnapshot().up.length', overlaySandbox), 0, 'repeated overlay removal clears matching seed anchors');
+  vm.runInContext("setOverlayAnchors({ up: [{ q: 1, r: 2 }], down: [{ q: 3, r: 4 }, { q: 5, r: 6 }] })", overlaySandbox);
 
   vm.runInContext('renderOverlayListPanel()', overlaySandbox);
   assertEq(overlayList.children.length, 2, 'fixed overlay UI renders exactly two rows');
