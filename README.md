@@ -1,22 +1,18 @@
 # Generalized Tonnetz
 
-Interactive Tonnetz lattice visualizer for arbitrary EDOs with configurable directional axes, overlays for chords/shapes, and high‑resolution export.
+Interactive Tonnetz lattice visualizer for arbitrary EDOs with configurable directional axes, fixed up/down chord overlays, and high‑resolution export.
 
 ## Features
 
 - Any EDO (Equal Divisions of the Octave), default 12
 - Directional lattice axes →, ↗, and ↘ auto-tune from a 5-limit major/minor preset when EDO changes, with manual editing still supported
 - Crisp lattice rendering with labels and optional highlight for note 0
-- Chord overlays
-  - Steps editor (first three steps form a triangle when applicable)
-  - Color and opacity controls
-  - Up/Down mapping: assign which overlay activates when clicking up vs. down triangles
-  - Repeat toggle: tile each placed overlay anchor periodically across the lattice
-  - Click to add/remove anchors
+- Fixed chord overlays
+  - Up overlay: `[0, ↗, →]` in red
+  - Down overlay: `[0, ↘, →]` in blue
+  - Click to add/remove anchors on matching triangle orientations
 - Smart click hit‑testing so neighbors don’t accidentally toggle the same triangle
-- Default overlays auto‑sync to the directional axes (Up: `[0, ↗, →]`, Down: `[0, ↘, →]`)
-  - Their Steps inputs update automatically when directional axes or EDO change
-  - Manual edits disable auto‑sync for that overlay
+- Overlay steps are computed from the current directional axes whenever EDO or axes change
 - Export to PNG and PDF
 - Controls panel starts collapsed by default
 
@@ -46,7 +42,7 @@ python -m http.server 8000
 - `helpers.js` – Small utilities (color helpers, parsing, etc.)
 - `geometry.js` – Lattice math: coordinate transforms, hit‑testing, period vectors
 - `drawing.js` – Rendering the grid and overlay geometry
-- `overlays.js` – Overlay state, panel UI, up/down mapping, repeat flag
+- `overlays.js` – Fixed Up/Down overlay state and panel UI
 - `app-rendering.js` – Canvas sizing, drawing, and click-to-anchor rendering behavior
 - `app-persistence.js` – State restore/save and export actions
 - `app-navigation.js` – Adaptive navigation and mobile sheet behavior
@@ -70,32 +66,19 @@ More panel:
 Copy Link uses the browser clipboard API when available and falls back to a manual copy prompt otherwise.
 
 Chord overlays panel:
-- Add Overlay
-- For each overlay:
-  - Visible – toggle drawing
-  - Active – which overlay responds to clicks (used as fallback)
-  - ↑ / ↓ – map this overlay to up/down triangle clicks
-  - Repeat – periodically tile placed anchors over the lattice
-  - Steps – comma‑separated integers (e.g., `0,4,7`)
-  - Color – overlay stroke color
-  - Opacity – overlay opacity (0–1)
-  - Anchors – number of placed anchors; Clear Anchors, Delete
+- Up row – fixed red overlay for up-facing triangles
+- Down row – fixed blue overlay for down-facing triangles
+- Anchors – number of placed anchors; Clear removes all anchors for that row
 
 ## Click behavior
 
-- Clicking a triangle chooses the overlay via the up/down mapping; if none is set, the active overlay is used.
-- If the overlay’s first 3 steps form a triangle, clicks are only accepted when you actually click within that triangle’s area.
-- Toggling anchors:
-  - Without Repeat: click toggles the single anchor at that triangle apex.
-  - With Repeat: anchors are periodically tiled via the lattice’s two period vectors; clicking any tile toggles the entire equivalence class (all repeated copies) on/off.
+- Clicking an up-facing triangle toggles the Up overlay anchor; clicking a down-facing triangle toggles the Down overlay anchor.
+- Clicks are only accepted when they land inside the corresponding overlay triangle.
 
-## Default overlays and auto‑sync
+## Fixed Overlays
 
-- On first load, two overlays are created:
-  - Up overlay: `[0, ↗, →]` in red
-  - Down overlay: `[0, ↘, →]` in blue
-- They auto‑update with directional axis/EDO changes and the Steps inputs refresh automatically.
-- If you edit an overlay’s Steps, its auto‑sync is disabled so your edits persist.
+- Up uses `[0, ↗, →]` and Down uses `[0, ↘, →]`.
+- Overlay steps update from the current axes; only Up/Down anchor positions are saved.
 
 ## Export
 
@@ -106,7 +89,7 @@ Chord overlays panel:
 
 - If the canvas size is large, a preview scale is used internally for responsiveness while maintaining crisp output.
 - Increase Triangle Size for presentations or high‑DPI export.
-- Use different overlay colors and opacities to layer analyses.
+- Use the fixed Up/Down overlays to layer major/minor triangle analyses.
 
 ## Development notes
 

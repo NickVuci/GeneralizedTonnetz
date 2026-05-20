@@ -141,12 +141,6 @@ function createTonnetzRenderingController(options) {
         const scaleDotColor = hexToRgbString(scaleDotColorInput?.value || '#000000');
         const scaleDotSize = clamp(parseFloat(scaleDotSizeInput?.value), 1, 50, 6);
 
-        try {
-            synchronizeDefaultOverlaySteps(intervalX, intervalZ, edo);
-        } catch (e) {
-            console.error('Error synchronizing default overlays', e);
-        }
-
         const { width: canvasWidth, height: canvasHeight, scale } = getCanvasDimensions();
 
         function renderToContext(targetCtx, width, height) {
@@ -178,10 +172,9 @@ function createTonnetzRenderingController(options) {
                 }
             }
 
-            if (overlays.length) {
-                for (const overlay of overlays) {
-                    if (!overlay.visible) continue;
-                    const anchors = buildAnchorsForOverlay(overlay, width, height, size, edo, intervalX, intervalZ);
+            const overlayDescriptors = getFixedOverlayDescriptors(intervalX, intervalZ, edo);
+            for (const overlay of overlayDescriptors) {
+                if (overlay.anchors.length) {
                     drawChordOverlay(
                         targetCtx,
                         width,
@@ -193,8 +186,7 @@ function createTonnetzRenderingController(options) {
                         overlay.steps,
                         overlay.color,
                         overlay.opacity,
-                        anchors,
-                        overlay.nonTriangleMode
+                        overlay.anchors
                     );
                 }
             }
@@ -224,75 +216,11 @@ function createTonnetzRenderingController(options) {
     }
 
     function onIntervalParamsChange() {
-        const { edo, intervalX, intervalZ } = getCurrentIntervalParams();
         if (typeof findNearestOffsets !== 'undefined' && findNearestOffsets._cache) {
             findNearestOffsets._cache.clear();
         }
-        try {
-            synchronizeDefaultOverlaySteps(intervalX, intervalZ, edo);
-        } catch (e) {
-            console.error('Error synchronizing default overlays (onIntervalParamsChange)', e);
-        }
         renderOverlayListPanel();
         drawTonnetz();
-    }
-
-    function findEquivalentAnchorIndex(anchors, q, r, p1, p2) {
-        const determinant = p1.u * p2.v - p1.v * p2.u;
-        if (!determinant) return -1;
-        const isInteger = function (value) {
-            return Math.abs(value - Math.round(value)) < 1e-6;
-        };
-
-        for (let index = 0; index < anchors.length; index++) {
-            const anchor = anchors[index];
-            const deltaQ = q - anchor.q;
-            const deltaR = r - anchor.r;
-            const n1 = (p2.v * deltaQ - p2.u * deltaR) / determinant;
-            const n2 = (-p1.v * deltaQ + p1.u * deltaR) / determinant;
-            if (isInteger(n1) && isInteger(n2)) return index;
-        }
-        return -1;
-    }
-
-    function buildAnchorsForOverlay(overlay, width, height, size, edo, intervalX, intervalZ) {
-        const anchors = Array.isArray(overlay.anchors) ? overlay.anchors.slice() : [];
-        if (!overlay.repeatAll || anchors.length === 0) return anchors;
-
-        const { p1, p2 } = findPeriodVectors(intervalX, intervalZ, edo);
-        const margin = size * 2;
-        const diagonal = Math.hypot(width, height);
-
-        const base = anchors[0];
-        const basePixel = qrToPixel(base.q, base.r, size);
-        const p1Pixel = qrToPixel(base.q + p1.u, base.r + p1.v, size);
-        const p2Pixel = qrToPixel(base.q + p2.u, base.r + p2.v, size);
-        const length1 = Math.max(1, Math.hypot(p1Pixel.x - basePixel.x, p1Pixel.y - basePixel.y));
-        const length2 = Math.max(1, Math.hypot(p2Pixel.x - basePixel.x, p2Pixel.y - basePixel.y));
-        const range1 = Math.min(40, Math.ceil(diagonal / length1) + 2);
-        const range2 = Math.min(40, Math.ceil(diagonal / length2) + 2);
-
-        const seen = new Set(anchors.map(function (anchor) {
-            return `${anchor.q},${anchor.r}`;
-        }));
-        const originals = anchors.slice();
-
-        for (const anchor of originals) {
-            for (let n1 = -range1; n1 <= range1; n1++) {
-                for (let n2 = -range2; n2 <= range2; n2++) {
-                    const q = anchor.q + n1 * p1.u + n2 * p2.u;
-                    const r = anchor.r + n1 * p1.v + n2 * p2.v;
-                    const key = `${q},${r}`;
-                    if (seen.has(key)) continue;
-                    const point = qrToPixel(q, r, size);
-                    if (point.x < -margin || point.x > width + margin || point.y < -margin || point.y > height + margin) continue;
-                    seen.add(key);
-                    anchors.push({ q, r });
-                }
-            }
-        }
-
-        return anchors;
     }
 
     function onCanvasClick(evt) {
@@ -311,48 +239,18 @@ function createTonnetzRenderingController(options) {
         const apexPixel = qrToPixel(approx.q, approx.r, size);
         const orientation = py >= apexPixel.y ? 'up' : 'down';
 
-        if (!overlays.length) {
-            addOverlay();
-            addOverlay();
-            renderOverlayListPanel();
-        }
-        if (activeOverlayId == null) activeOverlayId = overlays[0].id;
-
-        let targetOverlayId = orientation === 'up'
-            ? (typeof upOverlayId === 'number' ? upOverlayId : null)
-            : (typeof downOverlayId === 'number' ? downOverlayId : null);
-        if (targetOverlayId == null) targetOverlayId = activeOverlayId;
-
-        const overlay = overlays.find(function (item) {
-            return item.id === targetOverlayId;
-        }) || overlays.find(function (item) {
-            return item.id === activeOverlayId;
-        }) || overlays[0];
-
+        const role = orientation === 'up' ? 'up' : 'down';
+        const steps = getOverlayStepsForRole(role, intervalX, intervalZ, edo);
         let anchorQR = null;
-        if (overlay && overlay.steps && overlay.steps.length >= 3) {
-            try {
-                anchorQR = anchorFromClick(px, py, size, edo, intervalX, intervalZ, overlay.steps);
-            } catch (e) {
-                console.error('Error resolving anchor from click', e);
-            }
-            if (!anchorQR) return;
+        try {
+            anchorQR = anchorFromClick(px, py, size, edo, intervalX, intervalZ, steps);
+        } catch (e) {
+            console.error('Error resolving anchor from click', e);
         }
-        if (!anchorQR) anchorQR = approx;
+        if (!anchorQR) return;
 
         const { q, r } = anchorQR;
-        if (overlay) {
-            let index = overlay.anchors.findIndex(function (anchor) {
-                return anchor.q === q && anchor.r === r;
-            });
-            if (index < 0 && overlay.repeatAll) {
-                const { p1, p2 } = findPeriodVectors(intervalX, intervalZ, edo);
-                index = findEquivalentAnchorIndex(overlay.anchors, q, r, p1, p2);
-            }
-            if (index >= 0) overlay.anchors.splice(index, 1);
-            else overlay.anchors.push({ q, r });
-            updateOverlayAnchorsCount(overlay.id, overlay.anchors.length);
-        }
+        toggleOverlayAnchor(role, q, r);
 
         drawTonnetz();
     }

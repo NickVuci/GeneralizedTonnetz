@@ -82,18 +82,6 @@ function directionalAxesToIntervals(values, edo) {
     };
 }
 
-function parseChordSteps(text) {
-    if (!text) return [0];
-    try {
-        return text
-            .split(/[\,\s]+/)
-            .filter(Boolean)
-            .map(s => sanitizeInt(s.trim(), 0));
-    } catch {
-        return [0];
-    }
-}
-
 function hexToRgbString(hex, alpha) {
     const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     if (!m) return alpha == null ? `rgb(0 0 0)` : `rgb(0 0 0 / ${alpha})`;

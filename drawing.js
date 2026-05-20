@@ -63,7 +63,7 @@ function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, in
     ctx.fillText(label.toString(), labelX, labelY);
 }
 
-function drawChordOverlay(ctx, width, height, size, edo, intervalX, intervalZ, steps, colorHex, opacity, anchors, nonTriangleMode) {
+function drawChordOverlay(ctx, width, height, size, edo, intervalX, intervalZ, steps, colorHex, opacity, anchors) {
     if (!anchors || !anchors.length) return;
     ctx.save();
     ctx.globalAlpha = opacity;
@@ -71,90 +71,37 @@ function drawChordOverlay(ctx, width, height, size, edo, intervalX, intervalZ, s
     ctx.lineWidth = Math.max(1, size / 14);
 
     for (const anchor of anchors) {
-        drawChordShapeAtAnchor(ctx, anchor.q, anchor.r, size, edo, intervalX, intervalZ, steps, nonTriangleMode);
+        drawChordShapeAtAnchor(ctx, anchor.q, anchor.r, size, edo, intervalX, intervalZ, steps);
     }
 
     ctx.restore();
 }
 
-function drawChordShapeAtAnchor(ctx, aq, ar, size, edo, intervalX, intervalZ, steps, nonTriangleMode) {
+function drawChordShapeAtAnchor(ctx, aq, ar, size, edo, intervalX, intervalZ, steps) {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    // Compute period vectors once per call (shared across all branches)
-    const anchorPx = qrToPixel(aq, ar, size);
-    const { p1, p2 } = findPeriodVectors(intervalX, intervalZ, edo);
+    if (!steps || steps.length < 3) return;
+    const triOffsets = steps.slice(0, 3).map(step => solveStepToUV(((step % edo) + edo) % edo, intervalX, intervalZ, edo));
+    if (triOffsets.some(offset => !offset)) return;
 
-    // Non-triangle mode: draw 4 arms for all non-zero steps
-    if (nonTriangleMode) {
-        for (const step of steps) {
-            if (step === 0) continue; // skip root
-            drawFourArmsForStep(ctx, aq, ar, size, edo, intervalX, intervalZ, step, anchorPx, p1, p2);
-        }
-        return;
-    }
+    const triNodes = triOffsets.map(function ({ u, v }) {
+        return qrToPixel(aq + u, ar + v, size);
+    });
 
-    // Standard triangle mode (original logic)
-    if (steps.length >= 3) {
-        const triSteps = steps.slice(0, 3);
-        const triOffsets = triSteps.map(step => ({
-            step,
-            offset: solveStepToUV(((step % edo) + edo) % edo, intervalX, intervalZ, edo)
-        }));
-        const triNodes = [];
-        for (const item of triOffsets) {
-            if (!item.offset) continue;
-            const { u, v } = item.offset;
-            const { x, y } = qrToPixel(aq + u, ar + v, size);
-            triNodes.push({ x, y });
-        }
-        if (triNodes.length >= 3) {
-            // Inset the triangle slightly so edges don't overlap parallel lattice lines
-            const INSET = 0.92; // 92% of original size; adjust if needed
-            const cx = (triNodes[0].x + triNodes[1].x + triNodes[2].x) / 3;
-            const cy = (triNodes[0].y + triNodes[1].y + triNodes[2].y) / 3;
-            const inset = triNodes.map(p => ({
-                x: cx + (p.x - cx) * INSET,
-                y: cy + (p.y - cy) * INSET
-            }));
-            ctx.beginPath();
-            ctx.moveTo(inset[0].x, inset[0].y);
-            for (let i = 1; i < inset.length; i++) ctx.lineTo(inset[i].x, inset[i].y);
-            ctx.closePath();
-            ctx.stroke();
-        } else {
-            // Degenerate or incomplete triangle: skip triangular stroke to avoid
-            // out-of-bounds accesses. Fall back to drawing the individual arms
-            // for the available steps to give the user visual feedback.
-            for (const item of triOffsets) {
-                if (!item.offset) continue;
-                drawFourArmsForStep(ctx, aq, ar, size, edo, intervalX, intervalZ, item.step, anchorPx, p1, p2);
-            }
-        }
-
-        if (steps.length > 3) {
-            for (let i = 3; i < steps.length; i++) {
-                const step = steps[i];
-                drawFourArmsForStep(ctx, aq, ar, size, edo, intervalX, intervalZ, step, anchorPx, p1, p2);
-            }
-        }
-        return;
-    }
-
-    for (const step of steps) {
-        drawFourArmsForStep(ctx, aq, ar, size, edo, intervalX, intervalZ, step, anchorPx, p1, p2);
-    }
-}
-
-function drawFourArmsForStep(ctx, aq, ar, size, edo, intervalX, intervalZ, step, anchorPx, p1, p2) {
-    const offsets = findNearestOffsets(((step % edo) + edo) % edo, intervalX, intervalZ, edo, aq, ar, size, anchorPx, 4);
-    for (const off of offsets) {
-        const { x, y } = qrToPixel(aq + off.u, ar + off.v, size);
-        ctx.beginPath();
-        ctx.moveTo(anchorPx.x, anchorPx.y);
-        ctx.lineTo(x, y);
-        ctx.stroke();
-    }
+    const INSET = 0.92;
+    const cx = (triNodes[0].x + triNodes[1].x + triNodes[2].x) / 3;
+    const cy = (triNodes[0].y + triNodes[1].y + triNodes[2].y) / 3;
+    const inset = triNodes.map(p => ({
+        x: cx + (p.x - cx) * INSET,
+        y: cy + (p.y - cy) * INSET
+    }));
+    ctx.beginPath();
+    ctx.moveTo(inset[0].x, inset[0].y);
+    ctx.lineTo(inset[1].x, inset[1].y);
+    ctx.lineTo(inset[2].x, inset[2].y);
+    ctx.closePath();
+    ctx.stroke();
 }
 
 // Final-pass renderer: draw dots at lattice apexes for in-scale degrees, above overlays

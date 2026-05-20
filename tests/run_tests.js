@@ -119,17 +119,30 @@ suite('directional axis helpers', () => {
   assertEq(tuned1.downRight, 0, '1-EDO tuned down-right normalizes to zero');
 });
 
-suite('default overlay triangle roles', () => {
+suite('fixed overlay roles', () => {
   function createElementStub(tagName) {
     return {
       tagName,
       children: [],
+      attributes: {},
+      classList: {
+        add() {},
+        remove() {},
+        toggle() {},
+        contains() { return false; }
+      },
       appendChild(child) {
         this.children.push(child);
         return child;
       },
       setAttribute(name, value) {
-        this[name] = String(value);
+        this.attributes[name] = String(value);
+      },
+      getAttribute(name) {
+        return this.attributes[name];
+      },
+      querySelector() {
+        return null;
       }
     };
   }
@@ -155,27 +168,26 @@ suite('default overlay triangle roles', () => {
   loadIntoSandbox('helpers.js', overlaySandbox);
   loadIntoSandbox('overlays.js', overlaySandbox);
 
-  vm.runInContext("addOverlay({ color: 'rgb(255 0 0)' }); addOverlay({ color: 'rgb(0 0 255)' });", overlaySandbox);
+  assertEq(vm.runInContext("getOverlayStepsForRole('up', 7, 3, 12).join(',')", overlaySandbox), '0,4,7', 'up role uses upward triangle steps');
+  assertEq(vm.runInContext("getOverlayStepsForRole('down', 7, 3, 12).join(',')", overlaySandbox), '0,3,7', 'down role uses downward triangle steps');
+  assertEq(vm.runInContext("getOverlayStepsForRole('up', 9, 4, 12).join(',')", overlaySandbox), '0,5,9', 'up role recomputes from changed axes');
+  assertEq(vm.runInContext("getOverlayStepsForRole('down', 9, 4, 12).join(',')", overlaySandbox), '0,4,9', 'down role recomputes from changed axes');
 
-  assertEq(vm.runInContext('upOverlayId', overlaySandbox), 1, 'first default overlay is mapped to up-triangle clicks');
-  assertEq(vm.runInContext('downOverlayId', overlaySandbox), 2, 'second default overlay is mapped to down-triangle clicks');
-  assertEq(vm.runInContext('overlays[0].color', overlaySandbox), 'rgb(255 0 0)', 'first default overlay stays red');
-  assertEq(vm.runInContext('overlays[1].color', overlaySandbox), 'rgb(0 0 255)', 'second default overlay stays blue');
-  assertEq(vm.runInContext('overlays[0].steps.join(",")', overlaySandbox), '0,4,7', 'first default overlay uses upward steps');
-  assertEq(vm.runInContext('overlays[1].steps.join(",")', overlaySandbox), '0,3,7', 'second default overlay uses downward steps');
-
-  vm.runInContext('synchronizeDefaultOverlaySteps(9, 4, 12)', overlaySandbox);
-  assertEq(vm.runInContext('overlays[0].steps.join(",")', overlaySandbox), '0,5,9', 'first auto-sync overlay remains upward after axis changes');
-  assertEq(vm.runInContext('overlays[1].steps.join(",")', overlaySandbox), '0,4,9', 'second auto-sync overlay remains downward after axis changes');
+  vm.runInContext("setOverlayAnchors({ up: [{ q: 1, r: 2 }], down: [{ q: 3, r: 4 }, { q: 5, r: 6 }] })", overlaySandbox);
+  assertEq(vm.runInContext('getOverlayAnchorsSnapshot().up.length', overlaySandbox), 1, 'up role stores anchors');
+  assertEq(vm.runInContext('getOverlayAnchorsSnapshot().down.length', overlaySandbox), 2, 'down role stores anchors');
 
   vm.runInContext('renderOverlayListPanel()', overlaySandbox);
-  assertEq(overlayList.children[0].children[1].children[1].checked, true, 'first overlay up radio is checked by default');
-  assertEq(overlayList.children[0].children[1].children[3].checked, false, 'first overlay down radio is unchecked by default');
-  assertEq(overlayList.children[1].children[1].children[1].checked, false, 'second overlay up radio is unchecked by default');
-  assertEq(overlayList.children[1].children[1].children[3].checked, true, 'second overlay down radio is checked by default');
+  assertEq(overlayList.children.length, 2, 'fixed overlay UI renders exactly two rows');
+  assertEq(overlayList.children[0].getAttribute('data-role'), 'up', 'first fixed row is up');
+  assertEq(overlayList.children[1].getAttribute('data-role'), 'down', 'second fixed row is down');
+  assertEq(overlayList.children[0].children[0].children[0].textContent, '↑', 'up row displays up arrow');
+  assertEq(overlayList.children[1].children[0].children[0].textContent, '↓', 'down row displays down arrow');
+  assertEq(overlayList.children[0].children[0].children[2].children[0].textContent, '1', 'up row shows anchor count');
+  assertEq(overlayList.children[1].children[0].children[2].children[0].textContent, '2', 'down row shows anchor count');
 });
 
-suite('default overlay role migration', () => {
+suite('fixed overlay persistence migration', () => {
   function createElementStub(tagName) {
     return {
       tagName,
@@ -186,12 +198,19 @@ suite('default overlay role migration', () => {
         toggle() {},
         contains() { return false; }
       },
+      attributes: {},
       appendChild(child) {
         this.children.push(child);
         return child;
       },
       setAttribute(name, value) {
-        this[name] = String(value);
+        this.attributes[name] = String(value);
+      },
+      getAttribute(name) {
+        return this.attributes[name];
+      },
+      querySelector() {
+        return null;
       }
     };
   }
@@ -218,13 +237,12 @@ suite('default overlay role migration', () => {
     axisUpRight: createInputStub('3'),
     axisDownRight: createInputStub('4')
   };
-  const oldDefaultState = {
-    version: 2,
+  const baseLegacyState = {
     edo: 12,
     axisRight: 7,
-    axisUpRight: 3,
-    axisDownRight: 4,
-    axisEditOrder: ['right', 'downRight'],
+    axisUpRight: 4,
+    axisDownRight: 3,
+    axisEditOrder: ['right', 'upRight'],
     canvasSize: 'A4',
     orientation: 'portrait',
     canvasWidth: 1000,
@@ -237,15 +255,22 @@ suite('default overlay role migration', () => {
     labelColor: '#000000',
     highlightZero: false,
     highlightZeroColor: '#FFFF00',
+    sidebarCollapsed: false,
+    controlsCollapsed: false
+  };
+  const oldDefaultState = {
+    ...baseLegacyState,
+    version: 2,
+    axisUpRight: 3,
+    axisDownRight: 4,
+    axisEditOrder: ['right', 'downRight'],
     overlays: [
       { steps: [0, 4, 7], color: 'rgb(255 0 0)', opacity: 0.35, anchors: [], repeatAll: false, nonTriangleMode: false, visible: true, autoSync: true },
       { steps: [0, 3, 7], color: 'rgb(0 0 255)', opacity: 0.35, anchors: [], repeatAll: false, nonTriangleMode: false, visible: true, autoSync: true }
     ],
     activeOverlayIdx: 1,
     upOverlayIdx: 1,
-    downOverlayIdx: 0,
-    sidebarCollapsed: false,
-    controlsCollapsed: false
+    downOverlayIdx: 0
   };
   const storage = new Map([['tonnetz-state', JSON.stringify(oldDefaultState)]]);
   const migrationSandbox = vm.createContext({
@@ -289,8 +314,8 @@ suite('default overlay role migration', () => {
         }
       };
     };
-    function runPersistenceRestore() {
-      const controller = createTonnetzPersistenceController({
+    function createPersistenceControllerForTest() {
+      return createTonnetzPersistenceController({
         canvas: stub(),
         controlsBackdrop: stub(),
         controlsContent: stub(),
@@ -335,20 +360,20 @@ suite('default overlay role migration', () => {
         setControlsDesktopCollapsedState: function () {},
         setSidebarDesktopCollapsedState: function () {}
       });
+    }
+    function runPersistenceRestore() {
+      const controller = createPersistenceControllerForTest();
       controller.initializePersistence();
+      return controller;
     }
     runPersistenceRestore();
   `, migrationSandbox);
 
-  assertEq(vm.runInContext('upOverlayId', migrationSandbox), 1, 'old saved default maps first overlay to up on restore');
-  assertEq(vm.runInContext('downOverlayId', migrationSandbox), 2, 'old saved default maps second overlay to down on restore');
   assertEq(elementMap.axisRight.value, 7, 'old saved default migrates right axis to tuned fifth');
   assertEq(elementMap.axisUpRight.value, 4, 'old saved default migrates up-right axis to tuned major third');
   assertEq(elementMap.axisDownRight.value, 3, 'old saved default migrates down-right axis to derived minor third');
-  assertEq(vm.runInContext('overlays[0].steps.join(",")', migrationSandbox), '0,4,7', 'old saved first default is re-synced to upward steps');
-  assertEq(vm.runInContext('overlays[1].steps.join(",")', migrationSandbox), '0,3,7', 'old saved second default is re-synced to downward steps');
-  assertEq(overlayList.children[0].children[1].children[1].checked, true, 'restored first overlay up radio is checked');
-  assertEq(overlayList.children[1].children[1].children[3].checked, true, 'restored second overlay down radio is checked');
+  assertEq(vm.runInContext('getOverlayAnchorsSnapshot().up.length', migrationSandbox), 0, 'old saved default starts with empty up anchors');
+  assertEq(vm.runInContext('getOverlayAnchorsSnapshot().down.length', migrationSandbox), 0, 'old saved default starts with empty down anchors');
 
   const staleVersion3State = {
     ...oldDefaultState,
@@ -369,34 +394,67 @@ suite('default overlay role migration', () => {
   elementMap.axisUpRight.value = '4';
   elementMap.axisDownRight.value = '4';
   overlayList.children = [];
-  vm.runInContext(`
-    overlays.length = 0;
-    overlayIdCounter = 1;
-    activeOverlayId = null;
-    upOverlayId = null;
-    downOverlayId = null;
-    runPersistenceRestore();
-  `, migrationSandbox);
+  vm.runInContext('setOverlayAnchors({ up: [], down: [] }); runPersistenceRestore();', migrationSandbox);
 
   assertEq(elementMap.axisRight.value, 7, 'stale v3 default migrates right axis to tuned fifth');
   assertEq(elementMap.axisUpRight.value, 4, 'stale v3 default keeps tuned up-right major third');
   assertEq(elementMap.axisDownRight.value, 3, 'stale v3 default migrates down-right to derived minor third');
-  assertEq(vm.runInContext('overlays[0].steps.join(",")', migrationSandbox), '0,4,7', 'stale v3 first default overlay uses tuned upward steps');
-  assertEq(vm.runInContext('overlays[1].steps.join(",")', migrationSandbox), '0,3,7', 'stale v3 second default overlay uses tuned downward steps');
-});
 
-suite('parseChordSteps', () => {
-  const pcs = sandbox.parseChordSteps;
-  assert(Array.isArray(pcs('0,4,7')), 'returns array');
-  assertEq(pcs('0,4,7').join(','), '0,4,7', 'comma-separated');
-  assertEq(pcs('0 4 7').join(','), '0,4,7', 'space-separated');
-  assertEq(pcs('0, 4, 7').join(','), '0,4,7', 'comma-space separated');
-  assertEq(pcs('0,\n4\t7').join(','), '0,4,7', 'mixed whitespace separated');
-  assertEq(pcs('-1,14').join(','), '-1,14', 'preserves signed and out-of-range integers for later normalization');
-  assertEq(pcs('').join(','), '0', 'empty string returns [0]');
-  assertEq(pcs(null).join(','), '0', 'null returns [0]');
-  assertEq(pcs(undefined).join(','), '0', 'undefined returns [0]');
-  assertEq(pcs('3').join(','), '3', 'single value');
+  const mappedLegacyState = {
+    ...baseLegacyState,
+    version: 4,
+    overlays: [
+      { color: 'rgb(12 12 12)', anchors: [{ q: 10, r: 11 }] },
+      { color: 'rgb(34 34 34)', anchors: [{ q: 20, r: 21 }] }
+    ],
+    upOverlayIdx: 1,
+    downOverlayIdx: 0
+  };
+  storage.set('tonnetz-state', JSON.stringify(mappedLegacyState));
+  vm.runInContext('setOverlayAnchors({ up: [], down: [] }); runPersistenceRestore();', migrationSandbox);
+  assertEq(vm.runInContext('getOverlayAnchorsSnapshot().up[0].q', migrationSandbox), 20, 'mapped legacy up anchors migrate from upOverlayIdx');
+  assertEq(vm.runInContext('getOverlayAnchorsSnapshot().down[0].q', migrationSandbox), 10, 'mapped legacy down anchors migrate from downOverlayIdx');
+
+  const fallbackLegacyState = {
+    ...baseLegacyState,
+    version: 4,
+    overlays: [
+      { anchors: [{ q: 1, r: 2 }] },
+      { anchors: [{ q: 3, r: 4 }] }
+    ],
+    upOverlayIdx: -1,
+    downOverlayIdx: -1
+  };
+  storage.set('tonnetz-state', JSON.stringify(fallbackLegacyState));
+  vm.runInContext('setOverlayAnchors({ up: [], down: [] }); runPersistenceRestore();', migrationSandbox);
+  assertEq(vm.runInContext('getOverlayAnchorsSnapshot().up[0].q', migrationSandbox), 1, 'unmapped legacy up anchors fall back to first overlay');
+  assertEq(vm.runInContext('getOverlayAnchorsSnapshot().down[0].q', migrationSandbox), 3, 'unmapped legacy down anchors fall back to second overlay');
+
+  const currentState = {
+    ...baseLegacyState,
+    version: 5,
+    overlayAnchors: {
+      up: [{ q: 7, r: 8 }],
+      down: [{ q: 9, r: 10 }]
+    }
+  };
+  storage.set('tonnetz-state', JSON.stringify(currentState));
+  vm.runInContext('setOverlayAnchors({ up: [], down: [] }); runPersistenceRestore();', migrationSandbox);
+  assertEq(vm.runInContext('getOverlayAnchorsSnapshot().up[0].q', migrationSandbox), 7, 'current up anchors restore from overlayAnchors');
+  assertEq(vm.runInContext('getOverlayAnchorsSnapshot().down[0].q', migrationSandbox), 9, 'current down anchors restore from overlayAnchors');
+
+  vm.runInContext(`
+    setOverlayAnchors({
+      up: [{ q: 12, r: 13 }],
+      down: [{ q: 14, r: 15 }]
+    });
+    createPersistenceControllerForTest().saveStateToStorage();
+  `, migrationSandbox);
+  const savedState = JSON.parse(storage.get('tonnetz-state'));
+  assertEq(savedState.version, 5, 'new persistence state uses fixed overlay version');
+  assertEq(savedState.overlayAnchors.up[0].q, 12, 'new state saves up anchors');
+  assertEq(savedState.overlayAnchors.down[0].q, 14, 'new state saves down anchors');
+  assert(!Object.prototype.hasOwnProperty.call(savedState, 'overlays'), 'new state no longer saves arbitrary overlays');
 });
 
 suite('hexToRgbString', () => {
@@ -635,6 +693,120 @@ suite('anchorFromClick', () => {
   assertEq(sandbox.anchorFromClick(0, 0, size, 12, 7, 4, null), null, 'returns null for null steps');
 });
 
+suite('fixed overlay click routing', () => {
+  function createCtxStub() {
+    return {
+      save() {},
+      restore() {},
+      fillRect() {},
+      clearRect() {},
+      drawImage() {},
+      beginPath() {},
+      moveTo() {},
+      lineTo() {},
+      closePath() {},
+      stroke() {},
+      fill() {},
+      arc() {},
+      fillText() {}
+    };
+  }
+
+  const overlayList = { innerHTML: '', querySelector() { return null; }, appendChild() {} };
+  const clickSandbox = vm.createContext({
+    console, Math, Set, Map, Number, Array, String, parseInt, parseFloat,
+    RegExp, Object, Boolean, Error, clearTimeout, setTimeout, JSON,
+    document: {
+      documentElement: {},
+      body: {},
+      getElementById(id) {
+        return id === 'overlayList' ? overlayList : null;
+      },
+      createElement(tag) {
+        if (tag === 'canvas') {
+          return { width: 0, height: 0, getContext() { return createCtxStub(); } };
+        }
+        return {};
+      }
+    },
+    getComputedStyle() {
+      return {
+        display: 'grid',
+        fontFamily: 'Arial, sans-serif',
+        getPropertyValue() { return ''; }
+      };
+    }
+  });
+  loadIntoSandbox('helpers.js', clickSandbox);
+  loadIntoSandbox('geometry.js', clickSandbox);
+  loadIntoSandbox('drawing.js', clickSandbox);
+  loadIntoSandbox('overlays.js', clickSandbox);
+  loadIntoSandbox('app-rendering.js', clickSandbox);
+
+  vm.runInContext(`
+    const canvas = {
+      width: 600,
+      height: 600,
+      getBoundingClientRect: function () {
+        return { left: 0, top: 0, width: 600, height: 600 };
+      }
+    };
+    const controller = createTonnetzRenderingController({
+      canvas,
+      ctx: (${createCtxStub.toString()})(),
+      canvasSizeSelect: { value: 'Custom' },
+      orientationSelect: { value: 'portrait', disabled: false },
+      customSizeGroup: { style: { display: 'grid' } },
+      canvasWidthInput: { value: '600' },
+      canvasHeightInput: { value: '600' },
+      colorXInput: { value: '#FFFF00' },
+      colorYInput: { value: '#FF0000' },
+      colorZInput: { value: '#0000FF' },
+      backgroundColorInput: { value: '#FFFFFF' },
+      labelColorInput: { value: '#000000' },
+      highlightZeroColorInput: { value: '#FFFF00' },
+      highlightZeroInput: { checked: false },
+      triangleSizeInput: { value: '40' },
+      edoInput: { value: '12' },
+      axisRightInput: { value: '7' },
+      axisUpRightInput: { value: '4' },
+      axisDownRightInput: { value: '3' },
+      scaleDegreesInput: { value: '' },
+      scaleSizeInput: { value: '1.5' },
+      scaleDotsInput: { checked: false },
+      scaleDotColorInput: { value: '#000000' },
+      scaleDotSizeInput: { value: '6' }
+    });
+
+    function findClickForRole(role) {
+      const size = 40;
+      const edo = 12;
+      const ix = 7;
+      const iz = 3;
+      const steps = getOverlayStepsForRole(role, ix, iz, edo);
+      for (let y = -40; y <= 120; y += 2) {
+        for (let x = -80; x <= 120; x += 2) {
+          const approx = pixelToQR(x, y, size);
+          const apex = qrToPixel(approx.q, approx.r, size);
+          const orientation = y >= apex.y ? 'up' : 'down';
+          if (orientation !== role) continue;
+          const anchor = anchorFromClick(x, y, size, edo, ix, iz, steps);
+          if (anchor) return { x, y };
+        }
+      }
+      return null;
+    }
+
+    const upClick = findClickForRole('up');
+    const downClick = findClickForRole('down');
+    if (upClick) controller.onCanvasClick({ clientX: upClick.x, clientY: upClick.y });
+    if (downClick) controller.onCanvasClick({ clientX: downClick.x, clientY: downClick.y });
+  `, clickSandbox);
+
+  assertEq(vm.runInContext('getOverlayAnchorsSnapshot().up.length', clickSandbox), 1, 'up-facing click toggles up role anchor');
+  assertEq(vm.runInContext('getOverlayAnchorsSnapshot().down.length', clickSandbox), 1, 'down-facing click toggles down role anchor');
+});
+
 suite('app bootstrap consolidation', () => {
   const appSource = fs.readFileSync('app.js', 'utf8');
   assertEq(countMatches(appSource, /debouncedDraw = debounce\(drawTonnetz, 120\)/g), 1, 'debounced draw initialization happens in one place');
@@ -656,10 +828,11 @@ suite('default overlay docs', () => {
   const readme = fs.readFileSync('README.md', 'utf8');
   assert(readme.includes('auto-tune from a 5-limit major/minor preset'), 'feature summary documents 5-limit axis auto-tuning');
   assert(readme.includes('→ approximates `3/2`, ↗ approximates `5/4`, and ↘ derives from those by default'), 'controls docs describe default axis tuning ratios');
-  assert(readme.includes('Up: `[0, ↗, →]`, Down: `[0, ↘, →]`'), 'feature summary documents the new default overlay order');
-  assert(readme.includes('Up overlay: `[0, ↗, →]` in red'), 'default overlay section documents red upward overlay first');
-  assert(readme.includes('Down overlay: `[0, ↘, →]` in blue'), 'default overlay section documents blue downward overlay second');
-  assert(!readme.includes('Down: `[0, ↘, →]`, Up: `[0, ↗, →]`'), 'README no longer documents old default order');
+  assert(readme.includes('Up overlay: `[0, ↗, →]` in red'), 'feature summary documents fixed red upward overlay');
+  assert(readme.includes('Down overlay: `[0, ↘, →]` in blue'), 'feature summary documents fixed blue downward overlay');
+  assert(readme.includes('Overlay steps update from the current axes; only Up/Down anchor positions are saved.'), 'fixed overlay section documents saved anchor-only state');
+  assert(!readme.includes('Add Overlay'), 'README no longer documents arbitrary overlay creation');
+  assert(!readme.includes('Non-'), 'README no longer documents non-triangle overlay controls');
 });
 
 suite('app module split', () => {

@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const scaleDotsInput = document.getElementById('scaleDots');
     const scaleDotColorInput = document.getElementById('scaleDotColor');
     const scaleDotSizeInput = document.getElementById('scaleDotSize');
-    const addOverlayBtn = document.getElementById('addOverlayBtn');
     const overlayListContainer = document.getElementById('overlayList');
     const saveImageButton = document.getElementById('saveImageButton');
     const savePdfButton = document.getElementById('savePdfButton');
@@ -320,12 +319,6 @@ document.addEventListener('DOMContentLoaded', function () {
     scaleDotsInput?.addEventListener('change', queueDraw);
     scaleDotColorInput?.addEventListener('input', queueDraw);
     scaleDotSizeInput?.addEventListener('input', queueDraw);
-    addOverlayBtn?.addEventListener('click', function () {
-        addOverlay();
-        renderOverlayListPanel();
-        queueDraw();
-    });
-    overlayListContainer?.addEventListener('input', handleOverlayPanelInteraction, true);
     overlayListContainer?.addEventListener('click', function (e) {
         if (!e.target.closest('button')) return;
         handleOverlayPanelInteraction(e);

@@ -39,7 +39,7 @@ function createTonnetzPersistenceController(options) {
     } = options;
 
     const STATE_KEY = 'tonnetz-state';
-    const STATE_VERSION = 4;
+    const STATE_VERSION = 5;
 
     function isOldDefaultOverlayRoleState(state) {
         if (!state || state.version >= 3 || !Array.isArray(state.overlays) || state.overlays.length < 2) return false;
@@ -97,6 +97,34 @@ function createTonnetzPersistenceController(options) {
             || currentAxes.downRight !== tunedAxes.downRight;
     }
 
+    function getLegacyOverlayForRole(state, role) {
+        const savedOverlays = Array.isArray(state?.overlays) ? state.overlays : [];
+        if (!savedOverlays.length) return null;
+        if (isOldDefaultOverlayRoleState(state)) {
+            return role === 'up' ? savedOverlays[0] : savedOverlays[1];
+        }
+
+        const mappedIndex = role === 'up' ? state?.upOverlayIdx : state?.downOverlayIdx;
+        if (Number.isInteger(mappedIndex) && mappedIndex >= 0 && mappedIndex < savedOverlays.length) {
+            return savedOverlays[mappedIndex];
+        }
+        return role === 'up' ? savedOverlays[0] : savedOverlays[1];
+    }
+
+    function migrateOverlayAnchors(state) {
+        if (state?.overlayAnchors) {
+            return {
+                up: normalizeAnchorList(state.overlayAnchors.up),
+                down: normalizeAnchorList(state.overlayAnchors.down)
+            };
+        }
+
+        return {
+            up: normalizeAnchorList(getLegacyOverlayForRole(state, 'up')?.anchors),
+            down: normalizeAnchorList(getLegacyOverlayForRole(state, 'down')?.anchors)
+        };
+    }
+
     function serializeState() {
         const edo = coerceEdoValue(edoInput.value);
         const axes = deriveDirectionalAxes({
@@ -130,37 +158,16 @@ function createTonnetzPersistenceController(options) {
             scaleDots: !!scaleDotsInput?.checked,
             scaleDotColor: scaleDotColorInput?.value || '#000000',
             scaleDotSize: scaleDotSizeInput?.value || '6',
-            overlays: overlays.map(function (overlay) {
-                return {
-                    steps: overlay.steps,
-                    color: overlay.color,
-                    opacity: overlay.opacity,
-                    anchors: overlay.anchors,
-                    repeatAll: overlay.repeatAll,
-                    nonTriangleMode: overlay.nonTriangleMode,
-                    visible: overlay.visible,
-                    autoSync: overlay.autoSync
-                };
-            }),
-            activeOverlayIdx: overlays.findIndex(function (overlay) {
-                return overlay.id === activeOverlayId;
-            }),
-            upOverlayIdx: overlays.findIndex(function (overlay) {
-                return overlay.id === upOverlayId;
-            }),
-            downOverlayIdx: overlays.findIndex(function (overlay) {
-                return overlay.id === downOverlayId;
-            }),
+            overlayAnchors: getOverlayAnchorsSnapshot(),
             sidebarCollapsed: overlaySidebar?.classList.contains('desktop-collapsed') || false,
             controlsCollapsed: controlsContent?.classList.contains('desktop-collapsed') || false
         };
     }
 
     function deserializeState(state) {
-        if (!state || (state.version !== STATE_VERSION && state.version !== 3 && state.version !== 2 && state.version !== 1)) return false;
+        if (!state || (state.version !== STATE_VERSION && state.version !== 4 && state.version !== 3 && state.version !== 2 && state.version !== 1)) return false;
 
         try {
-            const shouldMigrateDefaultOverlayRoles = isOldDefaultOverlayRoleState(state);
             const shouldMigrateDefaultAxes = shouldMigrateDefaultAxesToTuning(state);
 
             edoInput.value = state.edo;
@@ -203,51 +210,7 @@ function createTonnetzPersistenceController(options) {
             if (scaleDotColorInput) scaleDotColorInput.value = state.scaleDotColor || '#000000';
             if (scaleDotSizeInput) scaleDotSizeInput.value = state.scaleDotSize || '6';
 
-            overlays.length = 0;
-            overlayIdCounter = 1;
-            activeOverlayId = null;
-            upOverlayId = null;
-            downOverlayId = null;
-            if (Array.isArray(state.overlays) && state.overlays.length > 0) {
-                for (const savedOverlay of state.overlays) {
-                    overlays.push({
-                        id: overlayIdCounter++,
-                        visible: savedOverlay.visible !== false,
-                        steps: savedOverlay.steps || [0, 4, 7],
-                        color: savedOverlay.color || 'rgb(255 0 0)',
-                        opacity: Number.isFinite(savedOverlay.opacity) ? savedOverlay.opacity : 0.35,
-                        anchors: Array.isArray(savedOverlay.anchors) ? savedOverlay.anchors : [],
-                        repeatAll: !!savedOverlay.repeatAll,
-                        nonTriangleMode: !!savedOverlay.nonTriangleMode,
-                        autoSync: !!savedOverlay.autoSync
-                    });
-                }
-
-                if (state.activeOverlayIdx >= 0 && state.activeOverlayIdx < overlays.length) {
-                    activeOverlayId = overlays[state.activeOverlayIdx].id;
-                } else {
-                    activeOverlayId = overlays[0].id;
-                }
-                if (state.upOverlayIdx >= 0 && state.upOverlayIdx < overlays.length) {
-                    upOverlayId = overlays[state.upOverlayIdx].id;
-                }
-                if (state.downOverlayIdx >= 0 && state.downOverlayIdx < overlays.length) {
-                    downOverlayId = overlays[state.downOverlayIdx].id;
-                }
-                if (shouldMigrateDefaultOverlayRoles && overlays.length >= 2) {
-                    upOverlayId = overlays[0].id;
-                    downOverlayId = overlays[1].id;
-                }
-                if ((shouldMigrateDefaultOverlayRoles || shouldMigrateDefaultAxes) && overlays.length >= 2) {
-                    const edo = coerceEdoValue(edoInput.value);
-                    const axes = directionalAxesToIntervals({
-                        right: axisRightInput?.value,
-                        upRight: axisUpRightInput?.value,
-                        downRight: axisDownRightInput?.value
-                    }, edo);
-                    synchronizeDefaultOverlaySteps(axes.intervalX, axes.intervalZ, edo);
-                }
-            }
+            setOverlayAnchors(migrateOverlayAnchors(state));
 
             if (window.innerWidth <= 768) {
                 setControlsDesktopCollapsedState(true);
@@ -424,14 +387,7 @@ function createTonnetzPersistenceController(options) {
             } catch (e) {
                 console.error('Error seeding color inputs', e);
             }
-            try {
-                if (!overlays || overlays.length === 0) {
-                    addOverlay({ color: 'rgb(255 0 0)' });
-                    addOverlay({ color: 'rgb(0 0 255)' });
-                }
-            } catch (e) {
-                console.error('Error ensuring default overlays', e);
-            }
+            setOverlayAnchors({ up: [], down: [] });
             renderOverlayListPanel();
             getDrawTonnetz()?.();
         }
