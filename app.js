@@ -199,8 +199,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function handleOverlayPanelInteraction(e) {
-        onOverlayPanelEvent(e);
-        queueDraw();
+        if (onOverlayPanelEvent(e)) queueDraw();
     }
 
     const persistenceController = createTonnetzPersistenceController({
@@ -295,7 +294,10 @@ document.addEventListener('DOMContentLoaded', function () {
     labelColorInput.addEventListener('input', queueDraw);
     highlightZeroColorInput.addEventListener('input', queueDraw);
     highlightZeroInput.addEventListener('input', queueDraw);
-    triangleSizeInput.addEventListener('change', queueDraw);
+    triangleSizeInput.addEventListener('change', function () {
+        renderOverlayListPanel();
+        queueDraw();
+    });
     edoInput.addEventListener('change', function () {
         applyDirectionalAxesTuning();
         onIntervalParamsChange();
@@ -321,6 +323,10 @@ document.addEventListener('DOMContentLoaded', function () {
     scaleDotSizeInput?.addEventListener('input', queueDraw);
     overlayListContainer?.addEventListener('click', function (e) {
         if (!e.target.closest('button')) return;
+        handleOverlayPanelInteraction(e);
+    }, true);
+    overlayListContainer?.addEventListener('change', function (e) {
+        if (!e.target.classList.contains('ov-color-input')) return;
         handleOverlayPanelInteraction(e);
     }, true);
     canvas.addEventListener('click', onCanvasClick);

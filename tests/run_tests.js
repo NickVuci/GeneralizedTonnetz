@@ -125,6 +125,11 @@ suite('fixed overlay roles', () => {
       tagName,
       children: [],
       attributes: {},
+      style: {
+        setProperty(name, value) {
+          this[name] = String(value);
+        }
+      },
       classList: {
         add() {},
         remove() {},
@@ -155,6 +160,7 @@ suite('fixed overlay roles', () => {
       getElementById(id) {
         if (id === 'overlayList') return overlayList;
         const values = {
+          triangleSize: '40',
           edo: '12',
           axisRight: '7',
           axisUpRight: '4',
@@ -162,7 +168,10 @@ suite('fixed overlay roles', () => {
         };
         return Object.prototype.hasOwnProperty.call(values, id) ? { value: values[id] } : null;
       },
-      createElement: createElementStub
+      createElement: createElementStub,
+      createElementNS(namespace, tagName) {
+        return createElementStub(tagName);
+      }
     }
   });
   loadIntoSandbox('helpers.js', overlaySandbox);
@@ -176,13 +185,19 @@ suite('fixed overlay roles', () => {
   vm.runInContext("setOverlayAnchors({ up: [{ q: 1, r: 2 }], down: [{ q: 3, r: 4 }, { q: 5, r: 6 }] })", overlaySandbox);
   assertEq(vm.runInContext('getOverlayAnchorsSnapshot().up.length', overlaySandbox), 1, 'up role stores anchors');
   assertEq(vm.runInContext('getOverlayAnchorsSnapshot().down.length', overlaySandbox), 2, 'down role stores anchors');
+  assertEq(vm.runInContext('getOverlayColorsSnapshot().up', overlaySandbox), 'rgb(255 0 0)', 'up role starts with default color');
+  assertEq(vm.runInContext('getOverlayColorsSnapshot().down', overlaySandbox), 'rgb(0 0 255)', 'down role starts with default color');
+  assertEq(vm.runInContext("setOverlayColor('up', '#00FF00'); getOverlayColorsSnapshot().up", overlaySandbox), 'rgb(0 255 0)', 'overlay color updates from hex input');
 
   vm.runInContext('renderOverlayListPanel()', overlaySandbox);
   assertEq(overlayList.children.length, 2, 'fixed overlay UI renders exactly two rows');
   assertEq(overlayList.children[0].getAttribute('data-role'), 'up', 'first fixed row is up');
   assertEq(overlayList.children[1].getAttribute('data-role'), 'down', 'second fixed row is down');
-  assertEq(overlayList.children[0].children[0].children[0].textContent, '↑', 'up row displays up arrow');
-  assertEq(overlayList.children[1].children[0].children[0].textContent, '↓', 'down row displays down arrow');
+  assertEq(overlayList.children[0].children[0].children[0].className, 'ov-role-icon ov-role-icon-up ov-color-trigger', 'up row renders clickable up triangle icon');
+  assertEq(overlayList.children[1].children[0].children[0].className, 'ov-role-icon ov-role-icon-down ov-color-trigger', 'down row renders clickable down triangle icon');
+  assertEq(overlayList.children[0].children[0].children[0].children[0].children[0].attributes.points, '12,5 20,19 4,19', 'up row triangle points upward');
+  assertEq(overlayList.children[1].children[0].children[0].children[0].children[0].attributes.points, '4,5 20,5 12,19', 'down row triangle points downward');
+  assertEq(overlayList.children[0].children[0].children[0].children[1].value, '#00FF00', 'up row color input reflects updated color');
   assertEq(overlayList.children[0].children[0].children[2].children[0].textContent, '1', 'up row shows anchor count');
   assertEq(overlayList.children[1].children[0].children[2].children[0].textContent, '2', 'down row shows anchor count');
 });
@@ -192,6 +207,11 @@ suite('fixed overlay persistence migration', () => {
     return {
       tagName,
       children: [],
+      style: {
+        setProperty(name, value) {
+          this[name] = String(value);
+        }
+      },
       classList: {
         add() {},
         remove() {},
@@ -289,6 +309,9 @@ suite('fixed overlay persistence migration', () => {
         return elementMap[id] || null;
       },
       createElement: createElementStub,
+      createElementNS(namespace, tagName) {
+        return createElementStub(tagName);
+      },
       body: {
         appendChild() {},
         removeChild() {}
@@ -374,6 +397,8 @@ suite('fixed overlay persistence migration', () => {
   assertEq(elementMap.axisDownRight.value, 3, 'old saved default migrates down-right axis to derived minor third');
   assertEq(vm.runInContext('getOverlayAnchorsSnapshot().up.length', migrationSandbox), 0, 'old saved default starts with empty up anchors');
   assertEq(vm.runInContext('getOverlayAnchorsSnapshot().down.length', migrationSandbox), 0, 'old saved default starts with empty down anchors');
+  assertEq(vm.runInContext('getOverlayColorsSnapshot().up', migrationSandbox), 'rgb(255 0 0)', 'old saved default restores up color');
+  assertEq(vm.runInContext('getOverlayColorsSnapshot().down', migrationSandbox), 'rgb(0 0 255)', 'old saved default restores down color');
 
   const staleVersion3State = {
     ...oldDefaultState,
@@ -414,6 +439,8 @@ suite('fixed overlay persistence migration', () => {
   vm.runInContext('setOverlayAnchors({ up: [], down: [] }); runPersistenceRestore();', migrationSandbox);
   assertEq(vm.runInContext('getOverlayAnchorsSnapshot().up[0].q', migrationSandbox), 20, 'mapped legacy up anchors migrate from upOverlayIdx');
   assertEq(vm.runInContext('getOverlayAnchorsSnapshot().down[0].q', migrationSandbox), 10, 'mapped legacy down anchors migrate from downOverlayIdx');
+  assertEq(vm.runInContext('getOverlayColorsSnapshot().up', migrationSandbox), 'rgb(34 34 34)', 'mapped legacy up color migrates from upOverlayIdx');
+  assertEq(vm.runInContext('getOverlayColorsSnapshot().down', migrationSandbox), 'rgb(12 12 12)', 'mapped legacy down color migrates from downOverlayIdx');
 
   const fallbackLegacyState = {
     ...baseLegacyState,
@@ -436,24 +463,36 @@ suite('fixed overlay persistence migration', () => {
     overlayAnchors: {
       up: [{ q: 7, r: 8 }],
       down: [{ q: 9, r: 10 }]
+    },
+    overlayColors: {
+      up: 'rgb(9 8 7)',
+      down: '#010203'
     }
   };
   storage.set('tonnetz-state', JSON.stringify(currentState));
   vm.runInContext('setOverlayAnchors({ up: [], down: [] }); runPersistenceRestore();', migrationSandbox);
   assertEq(vm.runInContext('getOverlayAnchorsSnapshot().up[0].q', migrationSandbox), 7, 'current up anchors restore from overlayAnchors');
   assertEq(vm.runInContext('getOverlayAnchorsSnapshot().down[0].q', migrationSandbox), 9, 'current down anchors restore from overlayAnchors');
+  assertEq(vm.runInContext('getOverlayColorsSnapshot().up', migrationSandbox), 'rgb(9 8 7)', 'current up color restores from overlayColors');
+  assertEq(vm.runInContext('getOverlayColorsSnapshot().down', migrationSandbox), 'rgb(1 2 3)', 'current down color normalizes from hex overlay color');
 
   vm.runInContext(`
     setOverlayAnchors({
       up: [{ q: 12, r: 13 }],
       down: [{ q: 14, r: 15 }]
     });
+    setOverlayColors({
+      up: '#102030',
+      down: 'rgb(40 50 60)'
+    });
     createPersistenceControllerForTest().saveStateToStorage();
   `, migrationSandbox);
   const savedState = JSON.parse(storage.get('tonnetz-state'));
-  assertEq(savedState.version, 5, 'new persistence state uses fixed overlay version');
+  assertEq(savedState.version, 6, 'new persistence state uses fixed overlay version');
   assertEq(savedState.overlayAnchors.up[0].q, 12, 'new state saves up anchors');
   assertEq(savedState.overlayAnchors.down[0].q, 14, 'new state saves down anchors');
+  assertEq(savedState.overlayColors.up, 'rgb(16 32 48)', 'new state saves up overlay color');
+  assertEq(savedState.overlayColors.down, 'rgb(40 50 60)', 'new state saves down overlay color');
   assert(!Object.prototype.hasOwnProperty.call(savedState, 'overlays'), 'new state no longer saves arbitrary overlays');
 });
 

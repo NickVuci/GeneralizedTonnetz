@@ -39,7 +39,7 @@ function createTonnetzPersistenceController(options) {
     } = options;
 
     const STATE_KEY = 'tonnetz-state';
-    const STATE_VERSION = 5;
+    const STATE_VERSION = 6;
 
     function isOldDefaultOverlayRoleState(state) {
         if (!state || state.version >= 3 || !Array.isArray(state.overlays) || state.overlays.length < 2) return false;
@@ -125,6 +125,27 @@ function createTonnetzPersistenceController(options) {
         };
     }
 
+    function migrateOverlayColors(state) {
+        if (state?.overlayColors) {
+            return {
+                up: normalizeColorToRgb(state.overlayColors.up || 'rgb(255 0 0)'),
+                down: normalizeColorToRgb(state.overlayColors.down || 'rgb(0 0 255)')
+            };
+        }
+
+        if (Array.isArray(state?.overlays) && state.overlays.length >= 2) {
+            return {
+                up: normalizeColorToRgb(getLegacyOverlayForRole(state, 'up')?.color || 'rgb(255 0 0)'),
+                down: normalizeColorToRgb(getLegacyOverlayForRole(state, 'down')?.color || 'rgb(0 0 255)')
+            };
+        }
+
+        return {
+            up: 'rgb(255 0 0)',
+            down: 'rgb(0 0 255)'
+        };
+    }
+
     function serializeState() {
         const edo = coerceEdoValue(edoInput.value);
         const axes = deriveDirectionalAxes({
@@ -159,13 +180,14 @@ function createTonnetzPersistenceController(options) {
             scaleDotColor: scaleDotColorInput?.value || '#000000',
             scaleDotSize: scaleDotSizeInput?.value || '6',
             overlayAnchors: getOverlayAnchorsSnapshot(),
+            overlayColors: getOverlayColorsSnapshot(),
             sidebarCollapsed: overlaySidebar?.classList.contains('desktop-collapsed') || false,
             controlsCollapsed: controlsContent?.classList.contains('desktop-collapsed') || false
         };
     }
 
     function deserializeState(state) {
-        if (!state || (state.version !== STATE_VERSION && state.version !== 4 && state.version !== 3 && state.version !== 2 && state.version !== 1)) return false;
+        if (!state || (state.version !== STATE_VERSION && state.version !== 5 && state.version !== 4 && state.version !== 3 && state.version !== 2 && state.version !== 1)) return false;
 
         try {
             const shouldMigrateDefaultAxes = shouldMigrateDefaultAxesToTuning(state);
@@ -211,6 +233,7 @@ function createTonnetzPersistenceController(options) {
             if (scaleDotSizeInput) scaleDotSizeInput.value = state.scaleDotSize || '6';
 
             setOverlayAnchors(migrateOverlayAnchors(state));
+            setOverlayColors(migrateOverlayColors(state));
 
             if (window.innerWidth <= 768) {
                 setControlsDesktopCollapsedState(true);
@@ -388,6 +411,7 @@ function createTonnetzPersistenceController(options) {
                 console.error('Error seeding color inputs', e);
             }
             setOverlayAnchors({ up: [], down: [] });
+            setOverlayColors({ up: 'rgb(255 0 0)', down: 'rgb(0 0 255)' });
             renderOverlayListPanel();
             getDrawTonnetz()?.();
         }

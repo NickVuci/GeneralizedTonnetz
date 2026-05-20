@@ -1,19 +1,21 @@
 // Fixed Up/Down overlay state and panel management.
 const OVERLAY_ROLE_ORDER = ['up', 'down'];
-const OVERLAY_ROLE_CONFIG = {
+const DEFAULT_OVERLAY_ROLE_CONFIG = {
     up: {
         label: 'Up',
-        arrow: '↑',
+        direction: 'up',
         color: 'rgb(255 0 0)',
         opacity: 0.35
     },
     down: {
         label: 'Down',
-        arrow: '↓',
+        direction: 'down',
         color: 'rgb(0 0 255)',
         opacity: 0.35
     }
 };
+
+let overlayRoleConfig = createDefaultOverlayRoleConfig();
 
 let overlayAnchors = {
     up: [],
@@ -21,6 +23,14 @@ let overlayAnchors = {
 };
 
 const overlayListContainer = document.getElementById('overlayList');
+const overlayTriangleSizeInput = document.getElementById('triangleSize');
+
+function createDefaultOverlayRoleConfig() {
+    return OVERLAY_ROLE_ORDER.reduce(function (config, role) {
+        config[role] = { ...DEFAULT_OVERLAY_ROLE_CONFIG[role] };
+        return config;
+    }, {});
+}
 
 function normalizeOverlayRole(role) {
     return OVERLAY_ROLE_ORDER.includes(role) ? role : null;
@@ -43,6 +53,11 @@ function getOverlayAnchors(role) {
     return normalizedRole ? overlayAnchors[normalizedRole] : [];
 }
 
+function getOverlayConfig(role) {
+    const normalizedRole = normalizeOverlayRole(role);
+    return normalizedRole ? overlayRoleConfig[normalizedRole] : null;
+}
+
 function getOverlayAnchorsSnapshot() {
     return {
         up: normalizeAnchorList(overlayAnchors.up),
@@ -57,6 +72,28 @@ function setOverlayAnchors(nextAnchors) {
     };
 }
 
+function getOverlayColorsSnapshot() {
+    return OVERLAY_ROLE_ORDER.reduce(function (colors, role) {
+        colors[role] = getOverlayConfig(role)?.color || DEFAULT_OVERLAY_ROLE_CONFIG[role].color;
+        return colors;
+    }, {});
+}
+
+function setOverlayColors(nextColors) {
+    overlayRoleConfig = createDefaultOverlayRoleConfig();
+    for (const role of OVERLAY_ROLE_ORDER) {
+        if (!nextColors || !Object.prototype.hasOwnProperty.call(nextColors, role)) continue;
+        overlayRoleConfig[role].color = normalizeColorToRgb(nextColors[role]);
+    }
+}
+
+function setOverlayColor(role, color) {
+    const normalizedRole = normalizeOverlayRole(role);
+    if (!normalizedRole) return false;
+    overlayRoleConfig[normalizedRole].color = normalizeColorToRgb(color);
+    return true;
+}
+
 function getOverlayStepsForRole(role, intervalX, intervalZ, edo) {
     const modulus = coerceEdoValue(edo);
     const ix = normalizeAxisDirectionValue(intervalX, modulus);
@@ -69,17 +106,58 @@ function getOverlayStepsForRole(role, intervalX, intervalZ, edo) {
 
 function getFixedOverlayDescriptors(intervalX, intervalZ, edo) {
     return OVERLAY_ROLE_ORDER.map(function (role) {
-        const config = OVERLAY_ROLE_CONFIG[role];
+        const config = getOverlayConfig(role);
         return {
             role,
             label: config.label,
-            arrow: config.arrow,
+            direction: config.direction,
             color: config.color,
             opacity: config.opacity,
             steps: getOverlayStepsForRole(role, intervalX, intervalZ, edo),
             anchors: getOverlayAnchors(role)
         };
     });
+}
+
+function getOverlayIconStrokeWidth() {
+    const size = parseInt(overlayTriangleSizeInput?.value, 10) || 40;
+    return Math.max(1, size / 14);
+}
+
+function buildOverlayRoleIcon(config) {
+    const icon = document.createElement('label');
+    icon.className = `ov-role-icon ov-role-icon-${config.direction} ov-color-trigger`;
+    icon.style.setProperty('--ov-role-color', config.color);
+    icon.style.setProperty('--ov-role-stroke-width', String(getOverlayIconStrokeWidth()));
+    icon.setAttribute('data-role', config.role);
+    icon.title = `${config.label} overlay color`;
+
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('focusable', 'false');
+    svg.setAttribute('aria-hidden', 'true');
+
+    const triangle = document.createElementNS(svgNS, 'polygon');
+    triangle.setAttribute(
+        'points',
+        config.direction === 'down'
+            ? '4,5 20,5 12,19'
+            : '12,5 20,19 4,19'
+    );
+
+    svg.appendChild(triangle);
+    icon.appendChild(svg);
+
+    const colorInput = document.createElement('input');
+    colorInput.className = 'ov-color-input';
+    colorInput.type = 'color';
+    colorInput.value = rgbStringToHex(config.color);
+    colorInput.setAttribute('data-role', config.role);
+    colorInput.setAttribute('aria-label', `${config.label} overlay color`);
+    icon.appendChild(colorInput);
+
+    return icon;
 }
 
 function clearOverlayAnchors(role) {
@@ -109,17 +187,31 @@ function updateOverlayAnchorsCount(role, count) {
 
 function onOverlayPanelEvent(e) {
     const target = e.target;
-    if (!target.classList.contains('ov-clear-anchors')) return;
-    e.preventDefault();
-    clearOverlayAnchors(target.getAttribute('data-role'));
-    renderOverlayListPanel();
+    const clearButton = target.closest?.('.ov-clear-anchors');
+    if (clearButton) {
+        e.preventDefault();
+        clearOverlayAnchors(clearButton.getAttribute('data-role'));
+        renderOverlayListPanel();
+        return true;
+    }
+
+    if (target.classList?.contains('ov-color-input') && e.type === 'change') {
+        if (!setOverlayColor(target.getAttribute('data-role'), target.value)) return false;
+        renderOverlayListPanel();
+        return true;
+    }
+
+    return false;
 }
 
 function renderOverlayListPanel() {
     if (!overlayListContainer) return;
     overlayListContainer.innerHTML = '';
     for (const role of OVERLAY_ROLE_ORDER) {
-        const config = OVERLAY_ROLE_CONFIG[role];
+        const config = {
+            role,
+            ...getOverlayConfig(role)
+        };
         const card = document.createElement('div');
         card.className = 'overlay-card fixed-overlay-card';
         card.setAttribute('data-role', role);
@@ -127,9 +219,7 @@ function renderOverlayListPanel() {
         const titleRow = document.createElement('div');
         titleRow.className = 'ov-row ov-header';
 
-        const arrow = document.createElement('span');
-        arrow.className = `ov-role-arrow ov-role-arrow-${role}`;
-        arrow.textContent = config.arrow;
+        const icon = buildOverlayRoleIcon(config);
 
         const title = document.createElement('span');
         title.className = 'ov-title';
@@ -148,7 +238,7 @@ function renderOverlayListPanel() {
         btnClear.setAttribute('data-role', role);
         btnClear.textContent = 'Clear';
 
-        titleRow.appendChild(arrow);
+        titleRow.appendChild(icon);
         titleRow.appendChild(title);
         titleRow.appendChild(anchorsSpan);
         titleRow.appendChild(btnClear);
