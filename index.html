@@ -72,16 +72,25 @@
                     <input type="number" id="edo" value="12" min="1" max="72">
                 </div>
                 <div class="param-group axis-direction axis-direction-right">
-                    <label for="axisRight">&rarr;</label>
-                    <input type="number" id="axisRight" value="7" min="0" max="11">
+                    <label class="axis-color-trigger" for="colorX" title="Right axis color">
+                        <span aria-hidden="true">&rarr;</span>
+                        <input class="axis-arrow-color-input" type="color" id="colorX" aria-label="Right axis color">
+                    </label>
+                    <input type="number" id="axisRight" value="7" min="0" max="11" aria-label="Right axis value">
                 </div>
                 <div class="param-group axis-direction">
-                    <label for="axisUpRight">&nearr;</label>
-                    <input type="number" id="axisUpRight" value="4" min="0" max="11">
+                    <label class="axis-color-trigger" for="colorY" title="Up-right axis color">
+                        <span aria-hidden="true">&nearr;</span>
+                        <input class="axis-arrow-color-input" type="color" id="colorY" aria-label="Up-right axis color">
+                    </label>
+                    <input type="number" id="axisUpRight" value="4" min="0" max="11" aria-label="Up-right axis value">
                 </div>
                 <div class="param-group axis-direction">
-                    <label for="axisDownRight">&searr;</label>
-                    <input type="number" id="axisDownRight" value="3" min="0" max="11">
+                    <label class="axis-color-trigger" for="colorZ" title="Down-right axis color">
+                        <span aria-hidden="true">&searr;</span>
+                        <input class="axis-arrow-color-input" type="color" id="colorZ" aria-label="Down-right axis color">
+                    </label>
+                    <input type="number" id="axisDownRight" value="3" min="0" max="11" aria-label="Down-right axis value">
                 </div>
             </div>
         </div>
@@ -116,21 +125,6 @@
 
         <div class="control-card">
             <h3 class="card-title">Color</h3>
-            <div class="control-group axis-colors">
-                <div class="color-pair">
-                    <label for="colorX">X</label>
-                    <input type="color" id="colorX">
-                </div>
-                <div class="color-pair">
-                    <label for="colorY">Y</label>
-                    <input type="color" id="colorY">
-                </div>
-                <div class="color-pair">
-                    <label for="colorZ">Z</label>
-                    <input type="color" id="colorZ">
-                </div>
-            </div>
-            <div class="separator"></div>
             <div class="control-group axis-colors axis-colors-secondary">
                 <div class="color-pair">
                     <label for="backgroundColor">Background</label>

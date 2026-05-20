@@ -198,6 +198,18 @@ document.addEventListener('DOMContentLoaded', function () {
         else drawTonnetz();
     }
 
+    function syncAxisArrowColor(input) {
+        const trigger = input?.closest?.('.axis-color-trigger');
+        if (!trigger) return;
+        trigger.style.setProperty('--axis-arrow-color', input.value || '');
+    }
+
+    function syncAxisArrowColors() {
+        syncAxisArrowColor(colorXInput);
+        syncAxisArrowColor(colorYInput);
+        syncAxisArrowColor(colorZInput);
+    }
+
     function handleOverlayPanelInteraction(e) {
         if (onOverlayPanelEvent(e)) queueDraw();
     }
@@ -287,9 +299,18 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     canvasSizeSelect.addEventListener('change', handleCanvasSizeChange);
-    colorXInput.addEventListener('input', queueDraw);
-    colorYInput.addEventListener('input', queueDraw);
-    colorZInput.addEventListener('input', queueDraw);
+    colorXInput.addEventListener('input', function () {
+        syncAxisArrowColor(colorXInput);
+        queueDraw();
+    });
+    colorYInput.addEventListener('input', function () {
+        syncAxisArrowColor(colorYInput);
+        queueDraw();
+    });
+    colorZInput.addEventListener('input', function () {
+        syncAxisArrowColor(colorZInput);
+        queueDraw();
+    });
     backgroundColorInput.addEventListener('input', queueDraw);
     labelColorInput.addEventListener('input', queueDraw);
     highlightZeroColorInput.addEventListener('input', queueDraw);
@@ -362,4 +383,5 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeTheme();
     syncDirectionalAxes();
     initializePersistence();
+    syncAxisArrowColors();
 });

@@ -919,6 +919,12 @@ suite('directional axis controls markup', () => {
   assert(html.includes('id="axisRight" value="7"'), 'right axis defaults to 12-EDO fifth');
   assert(html.includes('id="axisUpRight" value="4"'), 'up-right axis defaults to 12-EDO major third');
   assert(html.includes('id="axisDownRight" value="3"'), 'down-right axis defaults to derived minor third');
+  assert(html.includes('class="axis-arrow-color-input" type="color" id="colorX"'), 'right axis arrow owns X color picker');
+  assert(html.includes('class="axis-arrow-color-input" type="color" id="colorY"'), 'up-right axis arrow owns Y color picker');
+  assert(html.includes('class="axis-arrow-color-input" type="color" id="colorZ"'), 'down-right axis arrow owns Z color picker');
+  assert(!html.includes('<label for="colorX">X</label>'), 'old X color row label is removed');
+  assert(!html.includes('<label for="colorY">Y</label>'), 'old Y color row label is removed');
+  assert(!html.includes('<label for="colorZ">Z</label>'), 'old Z color row label is removed');
   assert(!html.includes('id="intervalX"'), 'old interval X input is removed');
   assert(!html.includes('id="intervalZ"'), 'old interval Z input is removed');
 });

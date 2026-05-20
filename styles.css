@@ -246,6 +246,33 @@ input[type="radio"] {
   font-size: 24px;
 }
 
+.settings-lattice .param-group.axis-direction .axis-color-trigger {
+  --axis-arrow-color: var(--primary);
+  color: var(--axis-arrow-color);
+  cursor: pointer;
+  position: relative;
+  width: 34px;
+  justify-self: center;
+}
+
+.settings-lattice .param-group.axis-direction .axis-color-trigger:hover,
+.settings-lattice .param-group.axis-direction .axis-color-trigger:focus-within {
+  color: var(--axis-arrow-color);
+  filter: brightness(1.18);
+}
+
+.settings-lattice .param-group.axis-direction .axis-color-trigger input[type="color"].axis-arrow-color-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
 .param-group input[type="number"]:hover,
 .param-group input[type="number"]:focus {
     background-color: var(--surface-hover);
