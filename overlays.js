@@ -198,7 +198,6 @@ function onOverlayPanelEvent(e) {
     if (clearButton) {
         e.preventDefault();
         clearOverlayAnchors(clearButton.getAttribute('data-role'));
-        renderOverlayListPanel();
         return true;
     }
 
