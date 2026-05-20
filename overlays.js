@@ -317,13 +317,9 @@ function renderOverlayListPanel() {
         repeatLabel.appendChild(repeatInput);
         repeatLabel.appendChild(repeatText);
 
-        const anchorsSpan = document.createElement('span');
-        anchorsSpan.className = 'ov-anchors';
-        anchorsSpan.textContent = 'Anchors: ';
-        const anchorsStrong = document.createElement('strong');
-        anchorsStrong.className = 'ov-anchors-count';
-        anchorsStrong.textContent = String(getOverlayAnchors(role).length);
-        anchorsSpan.appendChild(anchorsStrong);
+        const spacer = document.createElement('span');
+        spacer.className = 'ov-spacer';
+        spacer.setAttribute('aria-hidden', 'true');
 
         const btnClear = document.createElement('button');
         btnClear.className = 'ov-clear-anchors ov-action';
@@ -331,7 +327,7 @@ function renderOverlayListPanel() {
         btnClear.textContent = 'Clear';
 
         titleRow.appendChild(icon);
-        titleRow.appendChild(anchorsSpan);
+        titleRow.appendChild(spacer);
         titleRow.appendChild(repeatLabel);
         titleRow.appendChild(btnClear);
 
