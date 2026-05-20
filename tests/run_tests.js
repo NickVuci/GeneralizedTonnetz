@@ -289,60 +289,100 @@ suite('default overlay role migration', () => {
         }
       };
     };
-    const controller = createTonnetzPersistenceController({
-      canvas: stub(),
-      controlsBackdrop: stub(),
-      controlsContent: stub(),
-      overlaySidebar: stub(),
-      canvasSizeSelect: stub('A4'),
-      orientationSelect: stub('portrait'),
-      canvasWidthInput: stub('1000'),
-      canvasHeightInput: stub('1000'),
-      triangleSizeInput: stub('75'),
-      colorXInput: stub('#FFFF00'),
-      colorYInput: stub('#FF0000'),
-      colorZInput: stub('#0000FF'),
-      backgroundColorInput: stub('#FFFFFF'),
-      labelColorInput: stub('#000000'),
-      highlightZeroInput: stub(),
-      highlightZeroColorInput: stub('#FFFF00'),
-      scaleDegreesInput: stub(''),
-      scaleSizeInput: stub('1.5'),
-      scaleDotsInput: stub(),
-      scaleDotColorInput: stub('#000000'),
-      scaleDotSizeInput: stub('6'),
-      edoInput: document.getElementById('edo'),
-      axisRightInput: document.getElementById('axisRight'),
-      axisUpRightInput: document.getElementById('axisUpRight'),
-      axisDownRightInput: document.getElementById('axisDownRight'),
-      syncDirectionalAxes: function () {},
-      getAxisEditOrder: function () { return ['right', 'downRight']; },
-      setAxisEditOrder: function () {},
-      copyLinkBtn: null,
-      resetBtn: null,
-      DEFAULT_COLORS: {
-        x: 'rgb(255 255 0)',
-        y: 'rgb(255 0 0)',
-        z: 'rgb(0 0 255)',
-        bg: 'rgb(255 255 255)',
-        label: 'rgb(0 0 0)',
-        highlightZero: 'rgb(255 255 0)'
-      },
-      handleCanvasSizeChange: function () {},
-      getDrawTonnetz: function () { return function () {}; },
-      getLastOffscreenCanvas: function () { return null; },
-      setControlsDesktopCollapsedState: function () {},
-      setSidebarDesktopCollapsedState: function () {}
-    });
-    controller.initializePersistence();
+    function runPersistenceRestore() {
+      const controller = createTonnetzPersistenceController({
+        canvas: stub(),
+        controlsBackdrop: stub(),
+        controlsContent: stub(),
+        overlaySidebar: stub(),
+        canvasSizeSelect: stub('A4'),
+        orientationSelect: stub('portrait'),
+        canvasWidthInput: stub('1000'),
+        canvasHeightInput: stub('1000'),
+        triangleSizeInput: stub('75'),
+        colorXInput: stub('#FFFF00'),
+        colorYInput: stub('#FF0000'),
+        colorZInput: stub('#0000FF'),
+        backgroundColorInput: stub('#FFFFFF'),
+        labelColorInput: stub('#000000'),
+        highlightZeroInput: stub(),
+        highlightZeroColorInput: stub('#FFFF00'),
+        scaleDegreesInput: stub(''),
+        scaleSizeInput: stub('1.5'),
+        scaleDotsInput: stub(),
+        scaleDotColorInput: stub('#000000'),
+        scaleDotSizeInput: stub('6'),
+        edoInput: document.getElementById('edo'),
+        axisRightInput: document.getElementById('axisRight'),
+        axisUpRightInput: document.getElementById('axisUpRight'),
+        axisDownRightInput: document.getElementById('axisDownRight'),
+        syncDirectionalAxes: function () {},
+        getAxisEditOrder: function () { return ['right', 'downRight']; },
+        setAxisEditOrder: function () {},
+        copyLinkBtn: null,
+        resetBtn: null,
+        DEFAULT_COLORS: {
+          x: 'rgb(255 255 0)',
+          y: 'rgb(255 0 0)',
+          z: 'rgb(0 0 255)',
+          bg: 'rgb(255 255 255)',
+          label: 'rgb(0 0 0)',
+          highlightZero: 'rgb(255 255 0)'
+        },
+        handleCanvasSizeChange: function () {},
+        getDrawTonnetz: function () { return function () {}; },
+        getLastOffscreenCanvas: function () { return null; },
+        setControlsDesktopCollapsedState: function () {},
+        setSidebarDesktopCollapsedState: function () {}
+      });
+      controller.initializePersistence();
+    }
+    runPersistenceRestore();
   `, migrationSandbox);
 
   assertEq(vm.runInContext('upOverlayId', migrationSandbox), 1, 'old saved default maps first overlay to up on restore');
   assertEq(vm.runInContext('downOverlayId', migrationSandbox), 2, 'old saved default maps second overlay to down on restore');
-  assertEq(vm.runInContext('overlays[0].steps.join(",")', migrationSandbox), '0,3,7', 'old saved first default is re-synced to upward steps');
-  assertEq(vm.runInContext('overlays[1].steps.join(",")', migrationSandbox), '0,4,7', 'old saved second default is re-synced to downward steps');
+  assertEq(elementMap.axisRight.value, 7, 'old saved default migrates right axis to tuned fifth');
+  assertEq(elementMap.axisUpRight.value, 4, 'old saved default migrates up-right axis to tuned major third');
+  assertEq(elementMap.axisDownRight.value, 3, 'old saved default migrates down-right axis to derived minor third');
+  assertEq(vm.runInContext('overlays[0].steps.join(",")', migrationSandbox), '0,4,7', 'old saved first default is re-synced to upward steps');
+  assertEq(vm.runInContext('overlays[1].steps.join(",")', migrationSandbox), '0,3,7', 'old saved second default is re-synced to downward steps');
   assertEq(overlayList.children[0].children[1].children[1].checked, true, 'restored first overlay up radio is checked');
   assertEq(overlayList.children[1].children[1].children[3].checked, true, 'restored second overlay down radio is checked');
+
+  const staleVersion3State = {
+    ...oldDefaultState,
+    version: 3,
+    axisRight: 8,
+    axisUpRight: 4,
+    axisDownRight: 4,
+    axisEditOrder: ['upRight', 'downRight'],
+    upOverlayIdx: 0,
+    downOverlayIdx: 1,
+    overlays: [
+      { steps: [0, 4, 8], color: 'rgb(255 0 0)', opacity: 0.35, anchors: [], repeatAll: false, nonTriangleMode: false, visible: true, autoSync: true },
+      { steps: [0, 4, 8], color: 'rgb(0 0 255)', opacity: 0.35, anchors: [], repeatAll: false, nonTriangleMode: false, visible: true, autoSync: true }
+    ]
+  };
+  storage.set('tonnetz-state', JSON.stringify(staleVersion3State));
+  elementMap.axisRight.value = '8';
+  elementMap.axisUpRight.value = '4';
+  elementMap.axisDownRight.value = '4';
+  overlayList.children = [];
+  vm.runInContext(`
+    overlays.length = 0;
+    overlayIdCounter = 1;
+    activeOverlayId = null;
+    upOverlayId = null;
+    downOverlayId = null;
+    runPersistenceRestore();
+  `, migrationSandbox);
+
+  assertEq(elementMap.axisRight.value, 7, 'stale v3 default migrates right axis to tuned fifth');
+  assertEq(elementMap.axisUpRight.value, 4, 'stale v3 default keeps tuned up-right major third');
+  assertEq(elementMap.axisDownRight.value, 3, 'stale v3 default migrates down-right to derived minor third');
+  assertEq(vm.runInContext('overlays[0].steps.join(",")', migrationSandbox), '0,4,7', 'stale v3 first default overlay uses tuned upward steps');
+  assertEq(vm.runInContext('overlays[1].steps.join(",")', migrationSandbox), '0,3,7', 'stale v3 second default overlay uses tuned downward steps');
 });
 
 suite('parseChordSteps', () => {

@@ -39,7 +39,7 @@ function createTonnetzPersistenceController(options) {
     } = options;
 
     const STATE_KEY = 'tonnetz-state';
-    const STATE_VERSION = 3;
+    const STATE_VERSION = 4;
 
     function isOldDefaultOverlayRoleState(state) {
         if (!state || state.version >= 3 || !Array.isArray(state.overlays) || state.overlays.length < 2) return false;
@@ -57,6 +57,46 @@ function createTonnetzPersistenceController(options) {
             && secondColor === 'rgb(0 0 255)';
     }
 
+    function hasPlacedAnchors(overlay) {
+        return Array.isArray(overlay?.anchors) && overlay.anchors.length > 0;
+    }
+
+    function isUntouchedDefaultOverlayPair(state) {
+        if (!state || state.version >= STATE_VERSION || !Array.isArray(state.overlays) || state.overlays.length < 2) return false;
+
+        const first = state.overlays[0];
+        const second = state.overlays[1];
+        const firstColor = normalizeColorToRgb(first?.color || '');
+        const secondColor = normalizeColorToRgb(second?.color || '');
+
+        return first?.autoSync === true
+            && second?.autoSync === true
+            && firstColor === 'rgb(255 0 0)'
+            && secondColor === 'rgb(0 0 255)'
+            && !hasPlacedAnchors(first)
+            && !hasPlacedAnchors(second)
+            && !first?.repeatAll
+            && !second?.repeatAll
+            && !first?.nonTriangleMode
+            && !second?.nonTriangleMode;
+    }
+
+    function shouldMigrateDefaultAxesToTuning(state) {
+        if (!isUntouchedDefaultOverlayPair(state)) return false;
+
+        const edo = coerceEdoValue(state.edo);
+        const currentAxes = deriveDirectionalAxes({
+            right: state.axisRight ?? state.intervalX,
+            upRight: state.axisUpRight,
+            downRight: state.axisDownRight ?? state.intervalZ
+        }, edo, null);
+        const tunedAxes = getDirectionalAxesForTuning(edo);
+
+        return currentAxes.right !== tunedAxes.right
+            || currentAxes.upRight !== tunedAxes.upRight
+            || currentAxes.downRight !== tunedAxes.downRight;
+    }
+
     function serializeState() {
         const edo = coerceEdoValue(edoInput.value);
         const axes = deriveDirectionalAxes({
@@ -70,7 +110,7 @@ function createTonnetzPersistenceController(options) {
             axisRight: axes.right,
             axisUpRight: axes.upRight,
             axisDownRight: axes.downRight,
-            axisEditOrder: typeof getAxisEditOrder === 'function' ? getAxisEditOrder() : ['right', 'downRight'],
+            axisEditOrder: typeof getAxisEditOrder === 'function' ? getAxisEditOrder() : ['right', 'upRight'],
             intervalX: axes.right,
             intervalZ: axes.downRight,
             canvasSize: canvasSizeSelect.value,
@@ -117,13 +157,20 @@ function createTonnetzPersistenceController(options) {
     }
 
     function deserializeState(state) {
-        if (!state || (state.version !== STATE_VERSION && state.version !== 2 && state.version !== 1)) return false;
+        if (!state || (state.version !== STATE_VERSION && state.version !== 3 && state.version !== 2 && state.version !== 1)) return false;
 
         try {
             const shouldMigrateDefaultOverlayRoles = isOldDefaultOverlayRoleState(state);
+            const shouldMigrateDefaultAxes = shouldMigrateDefaultAxesToTuning(state);
 
             edoInput.value = state.edo;
-            if (state.version === 1) {
+            if (shouldMigrateDefaultAxes) {
+                const tunedAxes = getDirectionalAxesForTuning(state.edo);
+                if (typeof setAxisEditOrder === 'function') setAxisEditOrder(['right', 'upRight']);
+                if (axisRightInput) axisRightInput.value = tunedAxes.right;
+                if (axisUpRightInput) axisUpRightInput.value = tunedAxes.upRight;
+                if (axisDownRightInput) axisDownRightInput.value = tunedAxes.downRight;
+            } else if (state.version === 1) {
                 const edo = coerceEdoValue(state.edo);
                 const legacyRight = clampAxisDirectionValue(state.intervalX, edo, 7);
                 const legacyDownRight = clampAxisDirectionValue(state.intervalZ, edo, 4);
@@ -190,6 +237,8 @@ function createTonnetzPersistenceController(options) {
                 if (shouldMigrateDefaultOverlayRoles && overlays.length >= 2) {
                     upOverlayId = overlays[0].id;
                     downOverlayId = overlays[1].id;
+                }
+                if ((shouldMigrateDefaultOverlayRoles || shouldMigrateDefaultAxes) && overlays.length >= 2) {
                     const edo = coerceEdoValue(edoInput.value);
                     const axes = directionalAxesToIntervals({
                         right: axisRightInput?.value,
