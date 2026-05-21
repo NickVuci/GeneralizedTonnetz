@@ -1,4 +1,6 @@
 .github/
 docs/
-tests/
 .codex/
+tests/artifacts/
+tests/.cache/
+tests/tmp/

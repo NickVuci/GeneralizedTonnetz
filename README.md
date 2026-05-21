@@ -31,8 +31,8 @@ python -m http.server 8000
 
 ## Testing
 
-- Run the current unit/regression suite with `node tests/run_tests.js`.
-- The main test command now includes a headless browser smoke pass for the responsive panel interactions and backdrop behavior when a local Edge/Chrome executable is available.
+- Run the current unit/regression suite with `npm test` or `node tests/run_tests.js`.
+- The main test command includes a dependency-free headless browser smoke pass for responsive panel interactions and backdrop behavior when a local Edge, Chrome, or Chromium executable is available.
 - If no supported local browser executable is found, the browser smoke pass reports a skip and the rest of the suite still runs.
 
 ## Repository structure
