@@ -34,7 +34,7 @@
   --controls-offset: 118px;
   --mobile-nav-height: 56px;
   --desktop-nav-width: 92px;
-  --desktop-panel-width: min(360px, calc(100vw - var(--desktop-nav-width) - 32px));
+  --desktop-panel-width: min(292px, calc(100vw - var(--desktop-nav-width) - 32px));
   --mobile-sheet-radius: 16px;
   --mobile-sheet-shadow: 0 -4px 32px rgba(0, 0, 0, 0.65);
   --mobile-sheet-z: 165;
@@ -45,7 +45,7 @@
   --spacing-md: 16px;
   --spacing-lg: 24px;
   
-  --sidebar-width: 320px;
+  --sidebar-width: 288px;
 }
 
 body[data-theme="light"] {
@@ -525,24 +525,73 @@ label {
     text-align: right;
 }
 
-/* Color controls */
-.axis-colors {
-  justify-content: space-between;
-  gap: 8px;
-  background: var(--surface-muted);
-  padding: 8px;
-  border-radius: var(--radius);
+.size-shape-card,
+.scale-card {
+  gap: 0;
 }
 
-.color-pair {
-  display: flex;
+.field-panel {
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.size-shape-card .control-group,
+.size-shape-card .control-group.control-group-2col,
+.scale-card .control-group {
+  display: grid;
+  grid-template-columns: minmax(88px, max-content) minmax(0, 1fr);
   align-items: center;
-  gap: 6px;
+  gap: 8px 12px;
+  margin: 0;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
 }
 
-.color-pair label {
-  font-size: 11px;
-  font-weight: 700;
+.size-shape-card .control-group:last-child,
+.scale-card .control-group:last-child {
+  border-bottom: 0;
+}
+
+.size-shape-card label,
+.size-shape-card .control-group.control-group-2col label,
+.scale-card label {
+  min-width: 0;
+  text-align: left;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.size-shape-card input[type="number"],
+.size-shape-card select,
+.scale-card input[type="number"],
+.scale-card input[type="color"],
+.scale-card textarea {
+  height: 38px;
+  border-color: transparent;
+  background-color: var(--surface-hover);
+  font-size: 14px;
+}
+
+.size-shape-card input[type="number"]:hover,
+.size-shape-card select:hover,
+.scale-card input[type="number"]:hover,
+.scale-card input[type="color"]:hover,
+.scale-card textarea:hover {
+  border-color: var(--border-active);
+}
+
+.scale-card textarea {
+  min-height: 76px;
+  padding: 10px 12px;
+  line-height: 1.35;
+}
+
+.scale-card .checkbox-row input[type="checkbox"] {
+  justify-self: end;
 }
 
 .separator {
@@ -552,27 +601,47 @@ label {
   width: 100%;
 }
 
-.axis-colors .color-pair {
+.lattice-color-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.lattice-color-row .color-pair {
+  min-width: 0;
+  display: flex;
   flex: 1;
   flex-direction: column;
-  align-items: center;
-  gap: 4px;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
 }
 
-.axis-colors .color-pair input[type="color"] {
-  height: 36px;
+.lattice-color-row .color-pair:hover,
+.lattice-color-row .color-pair:focus-within {
+  background: transparent;
+}
+
+.lattice-color-row .color-pair input[type="color"] {
+  height: 34px;
   width: 100%;
+  min-width: 0;
+  border-color: var(--input-border);
+  background: var(--surface);
 }
 
-.axis-colors .color-pair label {
+.lattice-color-row .color-pair label {
   font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
   color: var(--text-muted);
-}
-
-.axis-colors-secondary .color-pair label {
-  font-size: 11px;
   letter-spacing: 0.4px;
+  line-height: 1.15;
+  margin: 0;
 }
 
 .note-zero-label {
@@ -584,14 +653,11 @@ label {
 }
 
 .note-zero-label label {
-  font-size: 11px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  letter-spacing: 0.4px;
   margin: 0;
 }
 
 .note-zero-label input[type="checkbox"] {
+  flex: 0 0 auto;
   margin: 0;
 }
 
@@ -1029,16 +1095,20 @@ html.suppress-layout-transitions .action-btns {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
-  padding: 0 var(--spacing-md) var(--spacing-md);
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
 }
 
 .control-card {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.02);
   min-width: 0;
   max-width: none;
   width: 100%;
   flex: none;
-  padding: var(--spacing-md);
+  padding: 10px;
 }
 
 .control-group.control-group-2col {
@@ -1180,7 +1250,7 @@ html.suppress-layout-transitions .action-btns {
     bottom: 16px;
     left: var(--desktop-nav-width);
     width: var(--desktop-panel-width);
-    max-width: 420px;
+    max-width: 320px;
     z-index: var(--mobile-sheet-z);
     border-radius: 0 var(--mobile-sheet-radius) var(--mobile-sheet-radius) 0;
     box-shadow: 12px 0 32px rgba(0, 0, 0, 0.45);
@@ -1199,11 +1269,13 @@ html.suppress-layout-transitions .action-btns {
     display: flex;
     max-height: none;
     border-bottom: none;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
     flex-direction: column;
     flex-wrap: nowrap;
     gap: 0;
     align-items: stretch;
-    padding: 12px 0 0;
+    padding: 0;
     opacity: 0;
     pointer-events: none;
     visibility: hidden;
@@ -1212,8 +1284,7 @@ html.suppress-layout-transitions .action-btns {
   .controls-content.mobile-open,
   .scale-content.mobile-open {
     transform: translateX(var(--sheet-drag-offset));
-    padding-top: 12px;
-    padding-bottom: 0;
+    padding: 0;
     max-height: none;
     opacity: 1;
     pointer-events: auto;
@@ -1285,8 +1356,9 @@ html.suppress-layout-transitions .action-btns {
     --sheet-drag-offset: 0px;
     position: fixed;
     bottom: var(--mobile-nav-height);
-    left: 0;
-    right: 0;
+    left: 50%;
+    right: auto;
+    width: min(calc(100% - 40px), 340px);
     z-index: var(--mobile-sheet-z);
     border-radius: var(--mobile-sheet-radius) var(--mobile-sheet-radius) 0 0;
     box-shadow: var(--mobile-sheet-shadow);
@@ -1298,7 +1370,7 @@ html.suppress-layout-transitions .action-btns {
   .overlay-sidebar,
   .action-btns {
     overflow: hidden;
-    transform: translateY(calc(110% + var(--sheet-drag-offset)));
+    transform: translate(-50%, calc(110% + var(--sheet-drag-offset)));
   }
 
   /* ---- Bottom navigation bar ---- */
@@ -1418,6 +1490,7 @@ html.suppress-layout-transitions .action-btns {
     overflow-x: hidden;
     border-bottom: none;
     border-top: 1px solid var(--border);
+    background: var(--surface);
     /* Single-column card layout */
     flex-direction: column;
     flex-wrap: nowrap;
@@ -1430,7 +1503,7 @@ html.suppress-layout-transitions .action-btns {
   }
   .controls-content.mobile-open,
   .scale-content.mobile-open {
-    transform: translateY(var(--sheet-drag-offset));
+    transform: translate(-50%, var(--sheet-drag-offset));
     max-height: 72vh;
     padding-top: 24px;
     padding-bottom: 0;
@@ -1439,7 +1512,7 @@ html.suppress-layout-transitions .action-btns {
     visibility: visible;
   }
   .overlay-sidebar.mobile-open {
-    transform: translateY(var(--sheet-drag-offset));
+    transform: translate(-50%, var(--sheet-drag-offset));
   }
 
   .settings-lattice {
@@ -1458,9 +1531,9 @@ html.suppress-layout-transitions .action-btns {
   }
   .overlay-sidebar,
   .overlay-sidebar.desktop-collapsed {
-    width: 100%;
-    max-width: 100%;
-    min-width: 100%;
+    width: min(calc(100% - 40px), 340px);
+    max-width: 340px;
+    min-width: 0;
     resize: none;
   }
 
@@ -1474,14 +1547,14 @@ html.suppress-layout-transitions .action-btns {
     border-top: 1px solid var(--border);
     padding: 12px var(--spacing-md) var(--spacing-md);
     gap: 8px;
-    min-width: 100%;
-    transform: translateY(calc(110% + var(--sheet-drag-offset)));
+    min-width: 0;
+    transform: translate(-50%, calc(110% + var(--sheet-drag-offset)));
     opacity: 0;
     pointer-events: none;
     visibility: hidden;
   }
   .action-btns.mobile-open {
-    transform: translateY(var(--sheet-drag-offset));
+    transform: translate(-50%, var(--sheet-drag-offset));
     opacity: 1;
     pointer-events: auto;
     visibility: visible;

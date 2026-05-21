@@ -65,7 +65,6 @@
         </div>
         <div class="controls-scroll-body">
         <div class="control-card">
-            <h3 class="card-title">Lattice</h3>
             <div class="settings-lattice">
                 <div class="param-group">
                     <label for="edo">EDO</label>
@@ -93,39 +92,7 @@
                     <input type="number" id="axisDownRight" value="3" min="0" max="11" aria-label="Down-right axis value">
                 </div>
             </div>
-        </div>
-        <div class="control-card">
-            <h3 class="card-title">Size & Shape</h3>
-            <div class="control-group control-group-2col">
-                <label for="canvasSize">Canvas Size</label>
-                <select id="canvasSize">
-                    <option value="A4">A4</option>
-                    <option value="A3">A3</option>
-                    <option value="Letter">Letter</option>
-                    <option value="Legal">Legal</option>
-                    <option value="Custom" selected>Custom</option>
-                </select>
-                <label for="orientation">Orientation</label>
-                <select id="orientation">
-                    <option value="portrait">Vertical</option>
-                    <option value="landscape">Horizontal</option>
-                </select>
-            </div>
-            <div class="control-group control-group-2col" id="customSizeGroup">
-                <label for="canvasWidth">Width (px)</label>
-                <input type="number" id="canvasWidth" value="1000" min="100" max="2000">
-                <label for="canvasHeight">Height (px)</label>
-                <input type="number" id="canvasHeight" value="1000" min="100" max="2000">
-            </div>
-            <div class="control-group">
-                <label for="triangleSize">Triangle Size</label>
-                <input type="number" id="triangleSize" value="75" min="10" max="200">
-            </div>
-        </div>
-
-        <div class="control-card">
-            <h3 class="card-title">Color</h3>
-            <div class="control-group axis-colors axis-colors-secondary">
+            <div class="lattice-color-row">
                 <div class="color-pair">
                     <label for="backgroundColor">Background</label>
                     <input type="color" id="backgroundColor">
@@ -143,6 +110,35 @@
                 </div>
             </div>
         </div>
+        <div class="control-card size-shape-card">
+            <div class="field-panel">
+                <div class="control-group control-group-2col">
+                    <label for="canvasSize">Canvas Size</label>
+                    <select id="canvasSize">
+                        <option value="A4">A4</option>
+                        <option value="A3">A3</option>
+                        <option value="Letter">Letter</option>
+                        <option value="Legal">Legal</option>
+                        <option value="Custom" selected>Custom</option>
+                    </select>
+                    <label for="orientation">Orientation</label>
+                    <select id="orientation">
+                        <option value="portrait">Vertical</option>
+                        <option value="landscape">Horizontal</option>
+                    </select>
+                </div>
+                <div class="control-group control-group-2col" id="customSizeGroup">
+                    <label for="canvasWidth">Width (px)</label>
+                    <input type="number" id="canvasWidth" value="1000" min="100" max="2000">
+                    <label for="canvasHeight">Height (px)</label>
+                    <input type="number" id="canvasHeight" value="1000" min="100" max="2000">
+                </div>
+                <div class="control-group">
+                    <label for="triangleSize">Triangle Size</label>
+                    <input type="number" id="triangleSize" value="75" min="10" max="200">
+                </div>
+            </div>
+        </div>
 
         </div><!-- /.controls-scroll-body -->
     </div>
@@ -152,27 +148,28 @@
             <span class="mobile-sheet-handle-bar"></span>
         </div>
         <div class="controls-scroll-body">
-            <div class="control-card">
-                <h3 class="card-title">Scale Highlight</h3>
-                <div class="control-group">
-                    <label for="scaleDegrees">Scale degrees</label>
-                    <textarea id="scaleDegrees" rows="2" placeholder="e.g. 0,2,4,5,7,9,11"></textarea>
-                </div>
-                <div class="control-group">
-                    <label for="scaleSize">Scale label size</label>
-                    <input type="number" id="scaleSize" value="1.5" min="0.5" max="4" step="0.1">
-                </div>
-                <div class="control-group">
-                    <label for="scaleDots">Show dots</label>
-                    <input type="checkbox" id="scaleDots" checked>
-                </div>
-                <div class="control-group">
-                    <label for="scaleDotColor">Dot color</label>
-                    <input type="color" id="scaleDotColor" value="#000000">
-                </div>
-                <div class="control-group">
-                    <label for="scaleDotSize">Dot size (px)</label>
-                    <input type="number" id="scaleDotSize" value="6" min="1" max="50" step="1">
+            <div class="control-card scale-card">
+                <div class="field-panel">
+                    <div class="control-group">
+                        <label for="scaleDegrees">Scale degrees</label>
+                        <textarea id="scaleDegrees" rows="2" placeholder="e.g. 0,2,4,5,7,9,11"></textarea>
+                    </div>
+                    <div class="control-group">
+                        <label for="scaleSize">Label size</label>
+                        <input type="number" id="scaleSize" value="1.5" min="0.5" max="4" step="0.1">
+                    </div>
+                    <div class="control-group checkbox-row">
+                        <label for="scaleDots">Show dots</label>
+                        <input type="checkbox" id="scaleDots" checked>
+                    </div>
+                    <div class="control-group">
+                        <label for="scaleDotColor">Dot color</label>
+                        <input type="color" id="scaleDotColor" value="#000000">
+                    </div>
+                    <div class="control-group">
+                        <label for="scaleDotSize">Dot size</label>
+                        <input type="number" id="scaleDotSize" value="6" min="1" max="50" step="1">
+                    </div>
                 </div>
             </div>
         </div>
