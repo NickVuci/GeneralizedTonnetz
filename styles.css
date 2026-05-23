@@ -188,8 +188,15 @@ input[type="radio"] {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+  justify-content: center;
+}
+
+.settings-axis-row {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-top: 8px;
 }
 
 .param-group {
@@ -200,7 +207,8 @@ input[type="radio"] {
     gap: 2px;
 }
 
-.settings-lattice .param-group {
+.settings-lattice .param-group,
+.settings-axis-row .param-group {
   flex: 1 1 0;
   min-width: 0;
 }
@@ -237,7 +245,23 @@ input[type="radio"] {
 
 .settings-lattice .lattice-mode-combo {
   position: relative;
-  flex: 0 0 104px;
+  flex: 0 0 148px;
+}
+
+.settings-lattice .ji-period-group {
+  flex: 0 0 92px;
+}
+
+.settings-lattice .ji-period-input {
+  width: 84px;
+  height: 28px;
+  padding: 0 8px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+  background-color: var(--surface-hover);
+  border-color: var(--border);
 }
 
 .settings-lattice .lattice-mode-combo .lattice-mode-title {
@@ -251,13 +275,14 @@ input[type="radio"] {
 
 .settings-lattice .lattice-mode-combo .lattice-mode-title span {
   color: var(--text-muted);
+  font-size: 0;
 }
 
 .settings-lattice .lattice-mode-combo .lattice-mode-title-select {
   position: absolute;
   top: 0;
   left: 50%;
-  width: 72px;
+  width: 144px;
   height: 24px;
   padding: 0 18px 0 0;
   transform: translateX(-50%);
@@ -271,18 +296,20 @@ input[type="radio"] {
 }
 
 .settings-lattice .lattice-mode-combo[data-mode="edo"] .lattice-mode-title span::after {
-  content: "  EDO";
+  content: "Equal Division";
   color: var(--text-secondary);
+  font-size: 13px;
 }
 
 .settings-lattice .lattice-mode-combo[data-mode="ji"] .lattice-mode-title span::after {
-  content: "  JI Labels";
+  content: "Just Intonation";
   color: var(--text-secondary);
+  font-size: 13px;
 }
 
 .settings-lattice .lattice-mode-combo .mode-value-input,
 .settings-lattice .lattice-mode-combo .mode-value-select {
-  width: 92px;
+  width: 140px;
   height: 28px;
   text-align: center;
   font-weight: 700;
@@ -296,7 +323,7 @@ input[type="radio"] {
   color: var(--text);
 }
 
-.settings-lattice .ji-axis-input {
+.settings-axis-row .ji-axis-input {
   width: 64px;
   height: 24px;
   padding: 0 6px;
@@ -306,11 +333,12 @@ input[type="radio"] {
   color: var(--primary);
 }
 
-.settings-lattice .axis-direction input[type="number"] {
+.settings-axis-row .axis-direction input[type="number"] {
   width: 54px;
 }
 
-.settings-lattice .param-group label {
+.settings-lattice .param-group label,
+.settings-axis-row .param-group label {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -318,16 +346,16 @@ input[type="radio"] {
   font-size: 13px;
 }
 
-.settings-lattice .param-group.axis-direction label {
+.settings-axis-row .param-group.axis-direction label {
   font-size: 20px;
   line-height: 1;
 }
 
-.settings-lattice .param-group.axis-direction-right label {
+.settings-axis-row .param-group.axis-direction-right label {
   font-size: 24px;
 }
 
-.settings-lattice .param-group.axis-direction .axis-color-trigger {
+.settings-axis-row .param-group.axis-direction .axis-color-trigger {
   --axis-arrow-color: var(--primary);
   color: var(--axis-arrow-color);
   cursor: pointer;
@@ -336,13 +364,13 @@ input[type="radio"] {
   justify-self: center;
 }
 
-.settings-lattice .param-group.axis-direction .axis-color-trigger:hover,
-.settings-lattice .param-group.axis-direction .axis-color-trigger:focus-within {
+.settings-axis-row .param-group.axis-direction .axis-color-trigger:hover,
+.settings-axis-row .param-group.axis-direction .axis-color-trigger:focus-within {
   color: var(--axis-arrow-color);
   filter: brightness(1.18);
 }
 
-.settings-lattice .param-group.axis-direction .axis-color-trigger input[type="color"].axis-arrow-color-input {
+.settings-axis-row .param-group.axis-direction .axis-color-trigger input[type="color"].axis-arrow-color-input {
   position: absolute;
   inset: 0;
   width: 100%;

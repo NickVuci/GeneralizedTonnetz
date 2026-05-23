@@ -20,6 +20,7 @@ function createTonnetzRenderingController(options) {
         axisRightInput,
         axisUpRightInput,
         axisDownRightInput,
+        jiPeriodInput,
         jiAxisRightInput,
         jiAxisUpRightInput,
         jiAxisDownRightInput,
@@ -69,7 +70,7 @@ function createTonnetzRenderingController(options) {
             right: jiAxisRightInput?.value || DEFAULT_JI_AXES.right,
             upRight: jiAxisUpRightInput?.value || DEFAULT_JI_AXES.upRight,
             downRight: jiAxisDownRightInput?.value || DEFAULT_JI_AXES.downRight
-        }, jiLabelDisplaySelect?.value || DEFAULT_JI_LABEL_DISPLAY);
+        }, jiLabelDisplaySelect?.value || DEFAULT_JI_LABEL_DISPLAY, jiPeriodInput?.value || DEFAULT_JI_PERIOD);
     }
 
     function handleCanvasSizeChange() {

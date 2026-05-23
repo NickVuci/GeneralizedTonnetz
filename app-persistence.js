@@ -26,6 +26,7 @@ function createTonnetzPersistenceController(options) {
         axisRightInput,
         axisUpRightInput,
         axisDownRightInput,
+        jiPeriodInput,
         jiAxisRightInput,
         jiAxisUpRightInput,
         jiAxisDownRightInput,
@@ -187,6 +188,7 @@ function createTonnetzPersistenceController(options) {
             jiAxisRight: jiAxisRightInput?.value || DEFAULT_JI_AXES.right,
             jiAxisUpRight: jiAxisUpRightInput?.value || DEFAULT_JI_AXES.upRight,
             jiAxisDownRight: jiAxisDownRightInput?.value || DEFAULT_JI_AXES.downRight,
+            jiPeriod: jiPeriodInput?.value || DEFAULT_JI_PERIOD,
             jiAxisEditOrder: typeof getJiAxisEditOrder === 'function' ? getJiAxisEditOrder() : ['right', 'upRight'],
             jiLabelDisplay: normalizeJiLabelDisplay(jiLabelDisplaySelect?.value),
             intervalX: axes.right,
@@ -246,6 +248,7 @@ function createTonnetzPersistenceController(options) {
             if (typeof syncDirectionalAxes === 'function') syncDirectionalAxes();
             if (latticeModeSelect) latticeModeSelect.value = state.latticeMode === 'ji' ? 'ji' : 'edo';
             if (typeof setJiAxisEditOrder === 'function') setJiAxisEditOrder(state.jiAxisEditOrder || ['right', 'upRight']);
+            if (jiPeriodInput) jiPeriodInput.value = formatJiPeriod(normalizeJiPeriodInput(state.jiPeriod || DEFAULT_JI_PERIOD));
             if (jiAxisRightInput) jiAxisRightInput.value = state.jiAxisRight || DEFAULT_JI_AXES.right;
             if (jiAxisUpRightInput) jiAxisUpRightInput.value = state.jiAxisUpRight || DEFAULT_JI_AXES.upRight;
             if (jiAxisDownRightInput) jiAxisDownRightInput.value = state.jiAxisDownRight || DEFAULT_JI_AXES.downRight;
@@ -447,6 +450,7 @@ function createTonnetzPersistenceController(options) {
                 if (scaleDotColorInput) scaleDotColorInput.value = '#000000';
                 if (scaleDotSizeInput) scaleDotSizeInput.value = '6';
                 if (latticeModeSelect) latticeModeSelect.value = 'edo';
+                if (jiPeriodInput) jiPeriodInput.value = DEFAULT_JI_PERIOD;
                 if (jiAxisRightInput) jiAxisRightInput.value = DEFAULT_JI_AXES.right;
                 if (jiAxisUpRightInput) jiAxisUpRightInput.value = DEFAULT_JI_AXES.upRight;
                 if (jiAxisDownRightInput) jiAxisDownRightInput.value = DEFAULT_JI_AXES.downRight;

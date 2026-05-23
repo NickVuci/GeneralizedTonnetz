@@ -5,6 +5,7 @@ const DEFAULT_JI_AXES = {
     upRight: '5/4',
     downRight: '6/5'
 };
+const DEFAULT_JI_PERIOD = '2/1';
 const DEFAULT_JI_LABEL_DISPLAY = 'monzo';
 
 function gcdBigInt(a, b) {
@@ -43,9 +44,24 @@ function parseJiFraction(value) {
     return fraction;
 }
 
+function parseJiPeriod(value) {
+    const raw = String(value ?? '').trim();
+    const match = /^(\d+)\/(\d+)$/.exec(raw);
+    if (!match) return null;
+    const fraction = reduceJiFraction({ num: BigInt(match[1]), den: BigInt(match[2]) });
+    if (!fraction) return null;
+    if (fraction.num <= fraction.den) return null;
+    return fraction;
+}
+
 function formatJiFraction(fraction) {
     const reduced = reduceJiFraction(fraction);
     if (!reduced) return DEFAULT_JI_AXES.right;
+    return `${reduced.num.toString()}/${reduced.den.toString()}`;
+}
+
+function formatJiPeriod(fraction) {
+    const reduced = reduceJiFraction(fraction) || parseJiPeriod(DEFAULT_JI_PERIOD);
     return `${reduced.num.toString()}/${reduced.den.toString()}`;
 }
 
@@ -75,6 +91,10 @@ function normalizeJiFractionToOctave(fraction) {
 
 function normalizeJiAxisInput(value, fallback) {
     return parseJiFraction(value) || parseJiFraction(fallback) || parseJiFraction(DEFAULT_JI_AXES.right);
+}
+
+function normalizeJiPeriodInput(value) {
+    return parseJiPeriod(value) || parseJiPeriod(DEFAULT_JI_PERIOD);
 }
 
 function deriveJiAxes(values, derivedAxis) {
@@ -179,6 +199,30 @@ function monzoToFraction(monzo) {
     return reduceJiFraction({ num, den });
 }
 
+function compareJiFractions(a, b) {
+    const left = reduceJiFraction(a);
+    const right = reduceJiFraction(b);
+    if (!left || !right) return 0;
+    const lhs = left.num * right.den;
+    const rhs = right.num * left.den;
+    if (lhs < rhs) return -1;
+    if (lhs > rhs) return 1;
+    return 0;
+}
+
+function normalizeJiFractionByPeriod(fraction, periodValue) {
+    let normalized = reduceJiFraction(fraction);
+    const period = normalizeJiPeriodInput(periodValue);
+    if (!normalized) return { fraction: { num: 1n, den: 1n }, period };
+    while (compareJiFractions(normalized, { num: 1n, den: 1n }) < 0) {
+        normalized = multiplyJiFractions(normalized, period);
+    }
+    while (compareJiFractions(normalized, period) >= 0) {
+        normalized = divideJiFractions(normalized, period);
+    }
+    return { fraction: normalized, period };
+}
+
 function formatMonzoVector(monzo, primes) {
     const vector = (primes && primes.length ? primes : getMonzoPrimes(monzo)).map(function (prime) {
         return String(monzo?.[prime] || 0);
@@ -186,14 +230,16 @@ function formatMonzoVector(monzo, primes) {
     return `[${vector.join(' ')}>`;
 }
 
-function monzoToCents(monzo) {
+function monzoToCents(monzo, periodValue) {
     let cents = 0;
     for (const prime of Object.keys(monzo || {})) {
         cents += (monzo[prime] || 0) * 1200 * Math.log2(Number(prime));
     }
-    cents %= 1200;
-    if (cents < 0) cents += 1200;
-    if (Math.abs(cents - 1200) < 0.000001) cents = 0;
+    const period = normalizeJiPeriodInput(periodValue);
+    const periodCents = 1200 * Math.log2(Number(period.num) / Number(period.den));
+    cents %= periodCents;
+    if (cents < 0) cents += periodCents;
+    if (Math.abs(cents - periodCents) < 0.000001) cents = 0;
     return cents;
 }
 
@@ -201,28 +247,32 @@ function normalizeJiLabelDisplay(value) {
     return ['monzo', 'fraction', 'cents'].includes(value) ? value : DEFAULT_JI_LABEL_DISPLAY;
 }
 
-function createJiPitchAdapter(axisValues, labelDisplay) {
+function createJiPitchAdapter(axisValues, labelDisplay, periodValue) {
     const axes = deriveJiAxes(axisValues, null);
     const rightMonzo = fractionToMonzo(axes.right);
     const downRightMonzo = fractionToMonzo(axes.downRight);
-    const primes = getMonzoPrimes(rightMonzo, downRightMonzo, fractionToMonzo(axes.upRight));
+    const period = normalizeJiPeriodInput(periodValue);
+    const periodMonzo = fractionToMonzo(period);
+    const primes = getMonzoPrimes(rightMonzo, downRightMonzo, fractionToMonzo(axes.upRight), periodMonzo);
     const display = normalizeJiLabelDisplay(labelDisplay);
 
     return {
         getLabel(q, r) {
             const monzo = addMonzos(scaleMonzo(rightMonzo, q), scaleMonzo(downRightMonzo, r));
+            const reducedFraction = normalizeJiFractionByPeriod(monzoToFraction(monzo), period).fraction;
+            const reducedMonzo = fractionToMonzo(reducedFraction);
             let text;
             if (display === 'fraction') {
-                text = formatJiFraction(monzoToFraction(monzo));
+                text = formatJiFraction(reducedFraction);
             } else if (display === 'cents') {
-                text = `${monzoToCents(monzo).toFixed(1)}c`;
+                text = `${monzoToCents(reducedMonzo, period).toFixed(1)}c`;
             } else {
-                text = formatMonzoVector(monzo, primes);
+                text = formatMonzoVector(reducedMonzo, primes);
             }
             return {
                 text,
-                value: monzo,
-                isZero: Object.keys(monzo).length === 0,
+                value: reducedMonzo,
+                isZero: Object.keys(reducedMonzo).length === 0,
                 scaleKey: null
             };
         }

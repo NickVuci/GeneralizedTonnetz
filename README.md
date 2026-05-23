@@ -5,6 +5,7 @@ Interactive Tonnetz lattice visualizer for arbitrary EDOs with configurable dire
 ## Features
 
 - JI lattice mode with exact fraction axes, monzo labels, and fraction or octave-normalized cent label views
+- Period control for reducing JI labels, default `2/1`
 - Any EDO (Equal Divisions of the Octave), default 12
 - Directional lattice axes →, ↗, and ↘ auto-tune from a 5-limit major/minor preset when EDO changes, with manual editing still supported
 - Crisp lattice rendering with labels and optional highlight for note 0
@@ -57,6 +58,7 @@ Navigation:
 
 Settings panel:
 - Mode switches between EDO step labels and JI exact-ratio labels
+- Period sets the JI reduction interval, default `2/1`
 - JI Labels chooses monzo, fraction, or octave-normalized cents when JI mode is active
 - EDO – integer divisions of the octave; changing it auto-sets axes from 5-limit approximations
 - Directional axes → / ↗ / ↘ – steps along the three lattice directions; → approximates `3/2`, ↗ approximates `5/4`, and ↘ derives from those by default

@@ -123,6 +123,8 @@ suite('directional axis helpers', () => {
 
 suite('JI fraction helpers', () => {
   assertEq(sandbox.formatJiFraction(sandbox.parseJiFraction('3/2')), '3/2', 'parses valid octave-bounded ratio');
+  assertEq(sandbox.formatJiPeriod(sandbox.parseJiPeriod('2/1')), '2/1', 'parses octave period');
+  assertEq(sandbox.parseJiPeriod('1/1'), null, 'rejects unison period');
   assertEq(sandbox.formatJiFraction({ num: 6n, den: 4n }), '3/2', 'reduces fractions');
   assertEq(sandbox.parseJiFraction('2/3'), null, 'rejects ratios below unison');
   assertEq(sandbox.parseJiFraction('2/1'), null, 'rejects octave and larger ratios');
@@ -134,6 +136,8 @@ suite('JI fraction helpers', () => {
   assertEq(sandbox.formatJiFraction(derived.downRight), '6/5', 'derives down-right by ratio division');
   const rightDerived = sandbox.deriveJiAxes({ right: '7/6', upRight: '5/4', downRight: '6/5' }, 'right');
   assertEq(sandbox.formatJiFraction(rightDerived.right), '3/2', 'derives right by multiplying up-right and down-right');
+  assertEq(sandbox.formatJiFraction(sandbox.normalizeJiFractionByPeriod({ num: 9n, den: 4n }, '2/1').fraction), '9/8', 'period-reduces high node ratios');
+  assertEq(sandbox.formatJiFraction(sandbox.normalizeJiFractionByPeriod({ num: 2n, den: 3n }, '2/1').fraction), '4/3', 'period-reduces low node ratios');
 });
 
 suite('JI monzo and label formatting', () => {
@@ -149,6 +153,8 @@ suite('JI monzo and label formatting', () => {
 
   const fractionAdapter = sandbox.createJiPitchAdapter({ right: '3/2', upRight: '5/4', downRight: '6/5' }, 'fraction');
   assertEq(fractionAdapter.getLabel(1, -1).text, '5/4', 'fraction label formats exact node ratio');
+  assertEq(fractionAdapter.getLabel(2, 0).text, '9/8', 'fraction label period-reduces raw 9/4 node');
+  assertEq(monzoAdapter.getLabel(2, 0).text, '[-3 2 0>', 'monzo label uses period-reduced 9/8 node');
 
   const centsAdapter = sandbox.createJiPitchAdapter({ right: '3/2', upRight: '5/4', downRight: '6/5' }, 'cents');
   assertEq(centsAdapter.getLabel(1, 0).text, '702.0c', 'cents label is octave-normalized');
@@ -423,6 +429,7 @@ suite('fixed overlay persistence migration', () => {
         axisRightInput: document.getElementById('axisRight'),
         axisUpRightInput: document.getElementById('axisUpRight'),
         axisDownRightInput: document.getElementById('axisDownRight'),
+        jiPeriodInput: stub('2/1'),
         jiAxisRightInput: stub('3/2'),
         jiAxisUpRightInput: stub('5/4'),
         jiAxisDownRightInput: stub('6/5'),
@@ -572,6 +579,7 @@ suite('fixed overlay persistence migration', () => {
   assertEq(savedState.jiAxisRight, '3/2', 'new state saves right JI axis');
   assertEq(savedState.jiAxisUpRight, '5/4', 'new state saves up-right JI axis');
   assertEq(savedState.jiAxisDownRight, '6/5', 'new state saves down-right JI axis');
+  assertEq(savedState.jiPeriod, '2/1', 'new state saves default JI period');
   assertEq(savedState.jiLabelDisplay, 'monzo', 'new state saves JI label display mode');
   assertEq(savedState.overlayAnchors.up[0].q, 12, 'new state saves up anchors');
   assertEq(savedState.overlayAnchors.down[0].q, 14, 'new state saves down anchors');
@@ -586,9 +594,11 @@ suite('fixed overlay persistence migration', () => {
     const jiRight = stub('7/4');
     const jiUpRight = stub('5/4');
     const jiDownRight = stub('7/5');
+    const jiPeriod = stub('3/1');
     const jiDisplay = stub('cents');
     createPersistenceControllerForTest({
       latticeModeSelect: jiMode,
+      jiPeriodInput: jiPeriod,
       jiAxisRightInput: jiRight,
       jiAxisUpRightInput: jiUpRight,
       jiAxisDownRightInput: jiDownRight,
@@ -601,6 +611,7 @@ suite('fixed overlay persistence migration', () => {
   assertEq(savedJiState.jiAxisRight, '7/4', 'JI state saves custom right axis');
   assertEq(savedJiState.jiAxisUpRight, '5/4', 'JI state saves custom up-right axis');
   assertEq(savedJiState.jiAxisDownRight, '7/5', 'JI state saves custom down-right axis');
+  assertEq(savedJiState.jiPeriod, '3/1', 'JI state saves custom period');
   assertEq(savedJiState.jiLabelDisplay, 'cents', 'JI state saves label display');
   assertEq(savedJiState.jiAxisEditOrder.join(','), 'upRight,right', 'JI state saves edit order');
 });
@@ -947,6 +958,7 @@ suite('rendering pitch labels', () => {
       axisRightInput: { value: '7' },
       axisUpRightInput: { value: '4' },
       axisDownRightInput: { value: '3' },
+      jiPeriodInput: { value: '2/1' },
       jiAxisRightInput: { value: '3/2' },
       jiAxisUpRightInput: { value: '5/4' },
       jiAxisDownRightInput: { value: '6/5' },
@@ -1052,6 +1064,7 @@ suite('fixed overlay click routing', () => {
       axisRightInput: { value: '7' },
       axisUpRightInput: { value: '4' },
       axisDownRightInput: { value: '3' },
+      jiPeriodInput: { value: '2/1' },
       jiAxisRightInput: { value: '3/2' },
       jiAxisUpRightInput: { value: '5/4' },
       jiAxisDownRightInput: { value: '6/5' },
@@ -1102,6 +1115,13 @@ suite('directional axis controls markup', () => {
   assert(html.includes('id="axisRight"'), 'right axis input exists');
   assert(html.includes('id="axisUpRight"'), 'up-right axis input exists');
   assert(html.includes('id="axisDownRight"'), 'down-right axis input exists');
+  assert(html.includes('id="jiPeriod" value="2/1"'), 'period input defaults to 2/1');
+  assert(html.indexOf('id="jiPeriod"') < html.indexOf('id="latticeModeCombo"'), 'period input appears before mode control');
+  assert(html.includes('class="settings-axis-row"'), 'directional axes render in their own row');
+  assert(html.indexOf('class="settings-axis-row"') > html.indexOf('id="latticeModeCombo"'), 'axis row follows mode control');
+  assert(html.indexOf('class="lattice-color-row"') > html.indexOf('class="settings-axis-row"'), 'color row follows axis row');
+  assert(html.includes('<option value="edo" selected>Equal Division</option>'), 'mode menu labels EDO as Equal Division');
+  assert(html.includes('<option value="ji">Just Intonation</option>'), 'mode menu labels JI as Just Intonation');
   assert(html.includes('id="axisRight" value="7"'), 'right axis defaults to 12-EDO fifth');
   assert(html.includes('id="axisUpRight" value="4"'), 'up-right axis defaults to 12-EDO major third');
   assert(html.includes('id="axisDownRight" value="3"'), 'down-right axis defaults to derived minor third');

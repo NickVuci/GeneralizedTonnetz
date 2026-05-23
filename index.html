@@ -66,13 +66,17 @@
         <div class="controls-scroll-body">
         <div class="control-card">
             <div class="settings-lattice">
+                <div class="param-group ji-period-group">
+                    <label for="jiPeriod">Period</label>
+                    <input class="ji-period-input" type="text" id="jiPeriod" value="2/1" inputmode="numeric" pattern="[0-9]+/[0-9]+" aria-label="JI period ratio">
+                </div>
                 <div class="param-group lattice-mode-combo" id="latticeModeCombo">
                     <label class="lattice-mode-title" for="latticeMode">
                         <span>Mode</span>
                     </label>
                     <select id="latticeMode" class="lattice-mode-title-select" aria-label="Lattice mode">
-                        <option value="edo" selected>EDO</option>
-                        <option value="ji">JI</option>
+                        <option value="edo" selected>Equal Division</option>
+                        <option value="ji">Just Intonation</option>
                     </select>
                     <input class="mode-value-input" type="number" id="edo" value="12" min="1" max="72" aria-label="EDO divisions">
                     <select class="mode-value-select" id="jiLabelDisplay" aria-label="JI label display" hidden>
@@ -81,6 +85,8 @@
                         <option value="cents">Cents</option>
                     </select>
                 </div>
+            </div>
+            <div class="settings-axis-row">
                 <div class="param-group axis-direction axis-direction-right">
                     <label class="axis-color-trigger" for="colorX" title="Right axis color">
                         <span aria-hidden="true">&rarr;</span>

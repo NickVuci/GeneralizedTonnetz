@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const axisRightInput = document.getElementById('axisRight');
     const axisUpRightInput = document.getElementById('axisUpRight');
     const axisDownRightInput = document.getElementById('axisDownRight');
+    const jiPeriodInput = document.getElementById('jiPeriod');
     const jiAxisRightInput = document.getElementById('jiAxisRight');
     const jiAxisUpRightInput = document.getElementById('jiAxisUpRight');
     const jiAxisDownRightInput = document.getElementById('jiAxisDownRight');
@@ -150,6 +151,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (jiAxisDownRightInput) jiAxisDownRightInput.value = formatJiFraction(axes.downRight);
     }
 
+    function syncJiPeriod() {
+        if (jiPeriodInput) jiPeriodInput.value = formatJiPeriod(normalizeJiPeriodInput(jiPeriodInput.value));
+    }
+
     function getCurrentLatticeMode() {
         return latticeModeSelect?.value === 'ji' ? 'ji' : 'edo';
     }
@@ -264,6 +269,7 @@ document.addEventListener('DOMContentLoaded', function () {
         axisRightInput,
         axisUpRightInput,
         axisDownRightInput,
+        jiPeriodInput,
         jiAxisRightInput,
         jiAxisUpRightInput,
         jiAxisDownRightInput,
@@ -330,6 +336,7 @@ document.addEventListener('DOMContentLoaded', function () {
         axisRightInput,
         axisUpRightInput,
         axisDownRightInput,
+        jiPeriodInput,
         jiAxisRightInput,
         jiAxisUpRightInput,
         jiAxisDownRightInput,
@@ -452,6 +459,10 @@ document.addEventListener('DOMContentLoaded', function () {
         syncJiDirectionalAxes('downRight');
         queueDraw();
     });
+    jiPeriodInput?.addEventListener('change', function () {
+        syncJiPeriod();
+        queueDraw();
+    });
     jiLabelDisplaySelect?.addEventListener('change', queueDraw);
     saveImageButton.addEventListener('click', saveAsImage);
     savePdfButton.addEventListener('click', saveAsPdf);
@@ -504,6 +515,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeTheme();
     syncDirectionalAxes();
     syncJiDirectionalAxes();
+    syncJiPeriod();
     initializePersistence();
     syncAxisArrowColors();
     syncLatticeModeControls();
