@@ -63,6 +63,7 @@ const sandbox = vm.createContext({
 
 loadIntoSandbox('helpers.js', sandbox);
 loadIntoSandbox('geometry.js', sandbox);
+loadIntoSandbox('ji.js', sandbox);
 loadIntoSandbox('drawing.js', sandbox);
 
 // ── helpers.js tests ────────────────────────────────────────────────────────────
@@ -118,6 +119,39 @@ suite('directional axis helpers', () => {
   assertEq(tuned1.right, 0, '1-EDO tuned right normalizes to zero');
   assertEq(tuned1.upRight, 0, '1-EDO tuned up-right normalizes to zero');
   assertEq(tuned1.downRight, 0, '1-EDO tuned down-right normalizes to zero');
+});
+
+suite('JI fraction helpers', () => {
+  assertEq(sandbox.formatJiFraction(sandbox.parseJiFraction('3/2')), '3/2', 'parses valid octave-bounded ratio');
+  assertEq(sandbox.formatJiFraction({ num: 6n, den: 4n }), '3/2', 'reduces fractions');
+  assertEq(sandbox.parseJiFraction('2/3'), null, 'rejects ratios below unison');
+  assertEq(sandbox.parseJiFraction('2/1'), null, 'rejects octave and larger ratios');
+  assertEq(sandbox.parseJiFraction('1.5'), null, 'rejects decimal ratios');
+  assertEq(sandbox.formatJiFraction(sandbox.normalizeJiFractionToOctave({ num: 9n, den: 4n })), '9/8', 'normalizes high ratios into one octave');
+  assertEq(sandbox.formatJiFraction(sandbox.normalizeJiFractionToOctave({ num: 3n, den: 4n })), '3/2', 'normalizes low ratios into one octave');
+
+  const derived = sandbox.deriveJiAxes({ right: '3/2', upRight: '5/4', downRight: '7/6' }, 'downRight');
+  assertEq(sandbox.formatJiFraction(derived.downRight), '6/5', 'derives down-right by ratio division');
+  const rightDerived = sandbox.deriveJiAxes({ right: '7/6', upRight: '5/4', downRight: '6/5' }, 'right');
+  assertEq(sandbox.formatJiFraction(rightDerived.right), '3/2', 'derives right by multiplying up-right and down-right');
+});
+
+suite('JI monzo and label formatting', () => {
+  const monzo = sandbox.fractionToMonzo(sandbox.parseJiFraction('3/2'));
+  assertEq(monzo['2'], -1, '3/2 monzo has -1 twos');
+  assertEq(monzo['3'], 1, '3/2 monzo has +1 threes');
+
+  const monzoAdapter = sandbox.createJiPitchAdapter({ right: '3/2', upRight: '5/4', downRight: '6/5' }, 'monzo');
+  assertEq(monzoAdapter.getLabel(1, 0).text, '[-1 1 0>', 'right axis labels as 3/2 monzo');
+  assertEq(monzoAdapter.getLabel(0, 1).text, '[1 1 -1>', 'down-right axis labels as 6/5 monzo');
+  assertEq(monzoAdapter.getLabel(1, -1).text, '[-2 0 1>', 'up-right offset labels as 5/4 monzo');
+  assertEq(monzoAdapter.getLabel(0, 0).isZero, true, 'origin is a zero monzo');
+
+  const fractionAdapter = sandbox.createJiPitchAdapter({ right: '3/2', upRight: '5/4', downRight: '6/5' }, 'fraction');
+  assertEq(fractionAdapter.getLabel(1, -1).text, '5/4', 'fraction label formats exact node ratio');
+
+  const centsAdapter = sandbox.createJiPitchAdapter({ right: '3/2', upRight: '5/4', downRight: '6/5' }, 'cents');
+  assertEq(centsAdapter.getLabel(1, 0).text, '702.0c', 'cents label is octave-normalized');
 });
 
 suite('fixed overlay roles', () => {
@@ -177,6 +211,7 @@ suite('fixed overlay roles', () => {
   });
   loadIntoSandbox('helpers.js', overlaySandbox);
   loadIntoSandbox('geometry.js', overlaySandbox);
+  loadIntoSandbox('ji.js', overlaySandbox);
   loadIntoSandbox('overlays.js', overlaySandbox);
 
   assertEq(vm.runInContext("getOverlayStepsForRole('up', 7, 3, 12).join(',')", overlaySandbox), '0,4,7', 'up role uses upward triangle steps');
@@ -218,6 +253,10 @@ suite('fixed overlay roles', () => {
   assertEq(overlayList.children[0].children[0].children[2].children[0].checked, true, 'up row repeat-all toggle reflects updated state');
   assertEq(overlayList.children[0].children[0].children[2].children[1].textContent, 'Repeat', 'up row repeat toggle uses compact label');
   assertEq(vm.runInContext('getFixedOverlayDescriptors(7, 3, 12)[0].repeatAll', overlaySandbox), true, 'overlay descriptors include repeat-all state');
+  assertEq(vm.runInContext("getJiOverlayOffsetsForRole('up')[1].u", overlaySandbox), 1, 'JI up overlay uses up-right q offset');
+  assertEq(vm.runInContext("getJiOverlayOffsetsForRole('up')[1].v", overlaySandbox), -1, 'JI up overlay uses up-right r offset');
+  assertEq(vm.runInContext("getJiOverlayOffsetsForRole('down')[1].v", overlaySandbox), 1, 'JI down overlay uses down-right offset');
+  assertEq(vm.runInContext('getFixedJiOverlayDescriptors()[0].repeatAll', overlaySandbox), false, 'JI overlay descriptors disable repeat-all');
 });
 
 suite('fixed overlay persistence migration', () => {
@@ -338,6 +377,7 @@ suite('fixed overlay persistence migration', () => {
     navigator: {}
   });
   loadIntoSandbox('helpers.js', migrationSandbox);
+  loadIntoSandbox('ji.js', migrationSandbox);
   loadIntoSandbox('overlays.js', migrationSandbox);
   loadIntoSandbox('app-persistence.js', migrationSandbox);
 
@@ -355,8 +395,8 @@ suite('fixed overlay persistence migration', () => {
         }
       };
     };
-    function createPersistenceControllerForTest() {
-      return createTonnetzPersistenceController({
+    function createPersistenceControllerForTest(overrides) {
+      return createTonnetzPersistenceController(Object.assign({
         canvas: stub(),
         controlsBackdrop: stub(),
         controlsContent: stub(),
@@ -378,13 +418,22 @@ suite('fixed overlay persistence migration', () => {
         scaleDotsInput: stub(),
         scaleDotColorInput: stub('#000000'),
         scaleDotSizeInput: stub('6'),
+        latticeModeSelect: stub('edo'),
         edoInput: document.getElementById('edo'),
         axisRightInput: document.getElementById('axisRight'),
         axisUpRightInput: document.getElementById('axisUpRight'),
         axisDownRightInput: document.getElementById('axisDownRight'),
+        jiAxisRightInput: stub('3/2'),
+        jiAxisUpRightInput: stub('5/4'),
+        jiAxisDownRightInput: stub('6/5'),
+        jiLabelDisplaySelect: stub('monzo'),
         syncDirectionalAxes: function () {},
         getAxisEditOrder: function () { return ['right', 'downRight']; },
         setAxisEditOrder: function () {},
+        syncJiDirectionalAxes: function () {},
+        getJiAxisEditOrder: function () { return ['right', 'upRight']; },
+        setJiAxisEditOrder: function () {},
+        syncLatticeModeControls: function () {},
         copyLinkBtn: null,
         resetBtn: null,
         DEFAULT_COLORS: {
@@ -400,7 +449,7 @@ suite('fixed overlay persistence migration', () => {
         getLastOffscreenCanvas: function () { return null; },
         setControlsDesktopCollapsedState: function () {},
         setSidebarDesktopCollapsedState: function () {}
-      });
+      }, overrides || {}));
     }
     function runPersistenceRestore() {
       const controller = createPersistenceControllerForTest();
@@ -518,7 +567,12 @@ suite('fixed overlay persistence migration', () => {
     createPersistenceControllerForTest().saveStateToStorage();
   `, migrationSandbox);
   const savedState = JSON.parse(storage.get('tonnetz-state'));
-  assertEq(savedState.version, 7, 'new persistence state uses fixed overlay version');
+  assertEq(savedState.version, 8, 'new persistence state uses JI lattice version');
+  assertEq(savedState.latticeMode, 'edo', 'new state saves default EDO lattice mode');
+  assertEq(savedState.jiAxisRight, '3/2', 'new state saves right JI axis');
+  assertEq(savedState.jiAxisUpRight, '5/4', 'new state saves up-right JI axis');
+  assertEq(savedState.jiAxisDownRight, '6/5', 'new state saves down-right JI axis');
+  assertEq(savedState.jiLabelDisplay, 'monzo', 'new state saves JI label display mode');
   assertEq(savedState.overlayAnchors.up[0].q, 12, 'new state saves up anchors');
   assertEq(savedState.overlayAnchors.down[0].q, 14, 'new state saves down anchors');
   assertEq(savedState.overlayColors.up, 'rgb(16 32 48)', 'new state saves up overlay color');
@@ -526,6 +580,29 @@ suite('fixed overlay persistence migration', () => {
   assertEq(savedState.overlayRepeatAll.up, true, 'new state saves up repeat-all setting');
   assertEq(savedState.overlayRepeatAll.down, true, 'new state saves down repeat-all setting');
   assert(!Object.prototype.hasOwnProperty.call(savedState, 'overlays'), 'new state no longer saves arbitrary overlays');
+
+  vm.runInContext(`
+    const jiMode = stub('ji');
+    const jiRight = stub('7/4');
+    const jiUpRight = stub('5/4');
+    const jiDownRight = stub('7/5');
+    const jiDisplay = stub('cents');
+    createPersistenceControllerForTest({
+      latticeModeSelect: jiMode,
+      jiAxisRightInput: jiRight,
+      jiAxisUpRightInput: jiUpRight,
+      jiAxisDownRightInput: jiDownRight,
+      jiLabelDisplaySelect: jiDisplay,
+      getJiAxisEditOrder: function () { return ['upRight', 'right']; }
+    }).saveStateToStorage();
+  `, migrationSandbox);
+  const savedJiState = JSON.parse(storage.get('tonnetz-state'));
+  assertEq(savedJiState.latticeMode, 'ji', 'JI state saves JI lattice mode');
+  assertEq(savedJiState.jiAxisRight, '7/4', 'JI state saves custom right axis');
+  assertEq(savedJiState.jiAxisUpRight, '5/4', 'JI state saves custom up-right axis');
+  assertEq(savedJiState.jiAxisDownRight, '7/5', 'JI state saves custom down-right axis');
+  assertEq(savedJiState.jiLabelDisplay, 'cents', 'JI state saves label display');
+  assertEq(savedJiState.jiAxisEditOrder.join(','), 'upRight,right', 'JI state saves edit order');
 });
 
 suite('hexToRgbString', () => {
@@ -792,6 +869,109 @@ suite('anchorFromClick', () => {
   assertEq(sandbox.anchorFromClick(0, 0, size, 12, 7, 4, null), null, 'returns null for null steps');
 });
 
+suite('rendering pitch labels', () => {
+  function createRecordingCtx(labels) {
+    return {
+      save() {},
+      restore() {},
+      fillRect() {},
+      clearRect() {},
+      drawImage() {},
+      beginPath() {},
+      moveTo() {},
+      lineTo() {},
+      closePath() {},
+      stroke() {},
+      fill() {},
+      arc() {},
+      fillText(text) { labels.push(String(text)); }
+    };
+  }
+
+  const renderSandbox = vm.createContext({
+    console, Math, Set, Map, Number, Array, String, parseInt, parseFloat,
+    RegExp, Object, Boolean, Error, clearTimeout, setTimeout, JSON,
+    document: {
+      documentElement: {},
+      body: {},
+      getElementById(id) {
+        return id === 'overlayList' ? { innerHTML: '', appendChild() {}, querySelector() { return null; } } : null;
+      },
+      createElement(tag) {
+        if (tag === 'canvas') {
+          return { width: 0, height: 0, getContext() { return createRecordingCtx([]); } };
+        }
+        return {};
+      },
+      createElementNS() { return {}; }
+    },
+    getComputedStyle() {
+      return {
+        display: 'grid',
+        fontFamily: 'Arial, sans-serif',
+        getPropertyValue() { return ''; }
+      };
+    }
+  });
+  loadIntoSandbox('helpers.js', renderSandbox);
+  loadIntoSandbox('geometry.js', renderSandbox);
+  loadIntoSandbox('ji.js', renderSandbox);
+  loadIntoSandbox('drawing.js', renderSandbox);
+  loadIntoSandbox('overlays.js', renderSandbox);
+  loadIntoSandbox('app-rendering.js', renderSandbox);
+
+  const labels = [];
+  renderSandbox.labels = labels;
+  vm.runInContext(`
+    const canvas = { width: 160, height: 160 };
+    const labelDisplay = { value: 'monzo' };
+    const mode = { value: 'edo' };
+    const controller = createTonnetzRenderingController({
+      canvas,
+      ctx: (${createRecordingCtx.toString()})(labels),
+      canvasSizeSelect: { value: 'Custom' },
+      orientationSelect: { value: 'portrait', disabled: false },
+      customSizeGroup: { style: { display: 'grid' } },
+      canvasWidthInput: { value: '160' },
+      canvasHeightInput: { value: '160' },
+      colorXInput: { value: '#FFFF00' },
+      colorYInput: { value: '#FF0000' },
+      colorZInput: { value: '#0000FF' },
+      backgroundColorInput: { value: '#FFFFFF' },
+      labelColorInput: { value: '#000000' },
+      highlightZeroColorInput: { value: '#FFFF00' },
+      highlightZeroInput: { checked: false },
+      triangleSizeInput: { value: '40' },
+      latticeModeSelect: mode,
+      edoInput: { value: '12' },
+      axisRightInput: { value: '7' },
+      axisUpRightInput: { value: '4' },
+      axisDownRightInput: { value: '3' },
+      jiAxisRightInput: { value: '3/2' },
+      jiAxisUpRightInput: { value: '5/4' },
+      jiAxisDownRightInput: { value: '6/5' },
+      jiLabelDisplaySelect: labelDisplay,
+      scaleDegreesInput: { value: '' },
+      scaleSizeInput: { value: '1.5' },
+      scaleDotsInput: { checked: false },
+      scaleDotColorInput: { value: '#000000' },
+      scaleDotSizeInput: { value: '6' }
+    });
+    controller.drawTonnetz();
+    mode.value = 'ji';
+    controller.drawTonnetz();
+    labelDisplay.value = 'fraction';
+    controller.drawTonnetz();
+    labelDisplay.value = 'cents';
+    controller.drawTonnetz();
+  `, renderSandbox);
+
+  assert(labels.includes('7'), 'EDO rendering still labels right axis as step 7');
+  assert(labels.includes('[-1 1 0>'), 'JI monzo rendering labels right axis');
+  assert(labels.includes('3/2'), 'JI fraction rendering labels right axis');
+  assert(labels.includes('702.0c'), 'JI cents rendering labels right axis');
+});
+
 suite('fixed overlay click routing', () => {
   function createCtxStub() {
     return {
@@ -838,6 +1018,7 @@ suite('fixed overlay click routing', () => {
   });
   loadIntoSandbox('helpers.js', clickSandbox);
   loadIntoSandbox('geometry.js', clickSandbox);
+  loadIntoSandbox('ji.js', clickSandbox);
   loadIntoSandbox('drawing.js', clickSandbox);
   loadIntoSandbox('overlays.js', clickSandbox);
   loadIntoSandbox('app-rendering.js', clickSandbox);
@@ -866,10 +1047,15 @@ suite('fixed overlay click routing', () => {
       highlightZeroColorInput: { value: '#FFFF00' },
       highlightZeroInput: { checked: false },
       triangleSizeInput: { value: '40' },
+      latticeModeSelect: { value: 'edo' },
       edoInput: { value: '12' },
       axisRightInput: { value: '7' },
       axisUpRightInput: { value: '4' },
       axisDownRightInput: { value: '3' },
+      jiAxisRightInput: { value: '3/2' },
+      jiAxisUpRightInput: { value: '5/4' },
+      jiAxisDownRightInput: { value: '6/5' },
+      jiLabelDisplaySelect: { value: 'monzo' },
       scaleDegreesInput: { value: '' },
       scaleSizeInput: { value: '1.5' },
       scaleDotsInput: { checked: false },

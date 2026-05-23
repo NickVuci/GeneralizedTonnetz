@@ -189,6 +189,7 @@ input[type="radio"] {
   align-items: center;
   gap: var(--spacing-md);
   justify-content: space-between;
+  flex-wrap: wrap;
 }
 
 .param-group {
@@ -223,6 +224,86 @@ input[type="radio"] {
   border: 1px solid transparent;
   color: var(--primary);
   font-size: 15px;
+}
+
+.settings-lattice .param-group select {
+  width: 84px;
+  height: 24px;
+  padding: 0 6px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.settings-lattice .lattice-mode-combo {
+  position: relative;
+  flex: 0 0 104px;
+}
+
+.settings-lattice .lattice-mode-combo .lattice-mode-title {
+  width: 100%;
+  height: 24px;
+  font-size: 13px;
+  cursor: pointer;
+  pointer-events: none;
+  border-radius: 4px;
+}
+
+.settings-lattice .lattice-mode-combo .lattice-mode-title span {
+  color: var(--text-muted);
+}
+
+.settings-lattice .lattice-mode-combo .lattice-mode-title-select {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 72px;
+  height: 24px;
+  padding: 0 18px 0 0;
+  transform: translateX(-50%);
+  opacity: 0;
+  cursor: pointer;
+}
+
+.settings-lattice .lattice-mode-combo:focus-within .lattice-mode-title {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.settings-lattice .lattice-mode-combo[data-mode="edo"] .lattice-mode-title span::after {
+  content: "  EDO";
+  color: var(--text-secondary);
+}
+
+.settings-lattice .lattice-mode-combo[data-mode="ji"] .lattice-mode-title span::after {
+  content: "  JI Labels";
+  color: var(--text-secondary);
+}
+
+.settings-lattice .lattice-mode-combo .mode-value-input,
+.settings-lattice .lattice-mode-combo .mode-value-select {
+  width: 92px;
+  height: 28px;
+  text-align: center;
+  font-weight: 700;
+  background-color: var(--surface-hover);
+  border-color: var(--border);
+  color: var(--primary);
+}
+
+.settings-lattice .lattice-mode-combo .mode-value-select {
+  padding: 0 8px;
+  color: var(--text);
+}
+
+.settings-lattice .ji-axis-input {
+  width: 64px;
+  height: 24px;
+  padding: 0 6px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
 }
 
 .settings-lattice .axis-direction input[type="number"] {
@@ -274,10 +355,24 @@ input[type="radio"] {
 }
 
 .param-group input[type="number"]:hover,
-.param-group input[type="number"]:focus {
+.param-group input[type="number"]:focus,
+.param-group input[type="text"]:hover,
+.param-group input[type="text"]:focus,
+.param-group select:hover,
+.param-group select:focus {
     background-color: var(--surface-hover);
     border-color: var(--border);
     color: var(--text);
+}
+
+.scale-content.ji-disabled,
+.scale-card.ji-disabled {
+  opacity: 0.58;
+}
+
+.scale-content.ji-disabled input,
+.scale-content.ji-disabled textarea {
+  cursor: not-allowed;
 }
 
 /* Actions */

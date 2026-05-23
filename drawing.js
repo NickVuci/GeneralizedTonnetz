@@ -1,5 +1,5 @@
 // Drawing functions for grid and overlays
-function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, ctx, scaleSet, scaleSizeFactor, labelFontFamily) {
+function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, intervalZ, labelColor, highlightZero, highlightZeroColor, ctx, scaleSet, scaleSizeFactor, labelFontFamily, pitchAdapter) {
     const h = size * SQRT3_HALF;
     const xOffset = ((row % 2 + 2) % 2) * (size / 2);
     const x = col * size + xOffset;
@@ -40,11 +40,17 @@ function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, in
     // Label
     let label = (intervalX * q + intervalZ * r) % edo;
     if (label < 0) label += edo;
+    const labelData = pitchAdapter && typeof pitchAdapter.getLabel === 'function'
+        ? pitchAdapter.getLabel(q, r)
+        : { text: label.toString(), value: label, isZero: label === 0, scaleKey: label };
+    const labelText = String(labelData?.text ?? label);
+    const isZeroLabel = !!labelData?.isZero;
+    const scaleKey = labelData?.scaleKey ?? label;
 
     const labelX = points[0].x;
     const labelY = points[0].y - (size / 5);
 
-    if (label === 0 && highlightZero) {
+    if (isZeroLabel && highlightZero) {
         ctx.fillStyle = highlightZeroColor || 'rgb(255 255 0 / 0.3)';
         ctx.beginPath();
         ctx.arc(labelX, labelY, size / 2.5, 0, Math.PI * 2);
@@ -52,15 +58,16 @@ function drawTriangle(col, row, size, colorX, colorY, colorZ, edo, intervalX, in
     }
 
     ctx.fillStyle = labelColor;
-    const baseLabelSize = (label === 0 && highlightZero) ? (size / 3) : (size / 4);
-    const inScale = !!(scaleSet && scaleSet.has(label));
+    const baseLabelSize = (isZeroLabel && highlightZero) ? (size / 3) : (size / 4);
+    const inScale = !!(scaleSet && scaleSet.has(scaleKey));
     const factor = Number.isFinite(scaleSizeFactor) && scaleSizeFactor > 0 ? scaleSizeFactor : 1;
-    const finalSize = inScale ? baseLabelSize * factor : baseLabelSize;
+    const lengthFactor = labelText.length > 7 ? 0.58 : labelText.length > 4 ? 0.72 : 1;
+    const finalSize = (inScale ? baseLabelSize * factor : baseLabelSize) * lengthFactor;
     const resolvedLabelFontFamily = labelFontFamily || 'Arial, sans-serif';
     ctx.font = `${finalSize}px ${resolvedLabelFontFamily}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
-    ctx.fillText(label.toString(), labelX, labelY);
+    ctx.fillText(labelText, labelX, labelY, size * 1.8);
 }
 
 function getOverlayTriangleOffsets(steps, intervalX, intervalZ, edo) {
@@ -149,6 +156,42 @@ function drawChordOverlay(ctx, width, height, size, edo, intervalX, intervalZ, s
 
     for (const anchor of anchorsToDraw) {
         drawChordShapeAtAnchor(ctx, anchor.q, anchor.r, size, edo, intervalX, intervalZ, steps);
+    }
+
+    ctx.restore();
+}
+
+function drawChordOffsetOverlay(ctx, width, height, size, offsets, colorHex, opacity, anchors) {
+    if (!anchors || !anchors.length || !offsets || offsets.length < 3) return;
+    ctx.save();
+    ctx.globalAlpha = opacity;
+    ctx.strokeStyle = colorHex;
+    ctx.lineWidth = Math.max(1, size / 14);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    for (const anchor of anchors) {
+        const triNodes = offsets.slice(0, 3).map(function ({ u, v }) {
+            return qrToPixel(anchor.q + u, anchor.r + v, size);
+        });
+        const xs = triNodes.map(function (point) { return point.x; });
+        const ys = triNodes.map(function (point) { return point.y; });
+        if (Math.max.apply(null, xs) < 0 || Math.max.apply(null, ys) < 0 || Math.min.apply(null, xs) > width || Math.min.apply(null, ys) > height) {
+            continue;
+        }
+        const INSET = 0.92;
+        const cx = (triNodes[0].x + triNodes[1].x + triNodes[2].x) / 3;
+        const cy = (triNodes[0].y + triNodes[1].y + triNodes[2].y) / 3;
+        const inset = triNodes.map(p => ({
+            x: cx + (p.x - cx) * INSET,
+            y: cy + (p.y - cy) * INSET
+        }));
+        ctx.beginPath();
+        ctx.moveTo(inset[0].x, inset[0].y);
+        ctx.lineTo(inset[1].x, inset[1].y);
+        ctx.lineTo(inset[2].x, inset[2].y);
+        ctx.closePath();
+        ctx.stroke();
     }
 
     ctx.restore();

@@ -21,13 +21,22 @@ function createTonnetzPersistenceController(options) {
         scaleDotsInput,
         scaleDotColorInput,
         scaleDotSizeInput,
+        latticeModeSelect,
         edoInput,
         axisRightInput,
         axisUpRightInput,
         axisDownRightInput,
+        jiAxisRightInput,
+        jiAxisUpRightInput,
+        jiAxisDownRightInput,
+        jiLabelDisplaySelect,
         syncDirectionalAxes,
         getAxisEditOrder,
         setAxisEditOrder,
+        syncJiDirectionalAxes,
+        getJiAxisEditOrder,
+        setJiAxisEditOrder,
+        syncLatticeModeControls,
         copyLinkBtn,
         resetBtn,
         DEFAULT_COLORS,
@@ -39,7 +48,7 @@ function createTonnetzPersistenceController(options) {
     } = options;
 
     const STATE_KEY = 'tonnetz-state';
-    const STATE_VERSION = 7;
+    const STATE_VERSION = 8;
 
     function isOldDefaultOverlayRoleState(state) {
         if (!state || state.version >= 3 || !Array.isArray(state.overlays) || state.overlays.length < 2) return false;
@@ -169,11 +178,17 @@ function createTonnetzPersistenceController(options) {
         }, edo, null);
         return {
             version: STATE_VERSION,
+            latticeMode: latticeModeSelect?.value === 'ji' ? 'ji' : 'edo',
             edo,
             axisRight: axes.right,
             axisUpRight: axes.upRight,
             axisDownRight: axes.downRight,
             axisEditOrder: typeof getAxisEditOrder === 'function' ? getAxisEditOrder() : ['right', 'upRight'],
+            jiAxisRight: jiAxisRightInput?.value || DEFAULT_JI_AXES.right,
+            jiAxisUpRight: jiAxisUpRightInput?.value || DEFAULT_JI_AXES.upRight,
+            jiAxisDownRight: jiAxisDownRightInput?.value || DEFAULT_JI_AXES.downRight,
+            jiAxisEditOrder: typeof getJiAxisEditOrder === 'function' ? getJiAxisEditOrder() : ['right', 'upRight'],
+            jiLabelDisplay: normalizeJiLabelDisplay(jiLabelDisplaySelect?.value),
             intervalX: axes.right,
             intervalZ: axes.downRight,
             canvasSize: canvasSizeSelect.value,
@@ -202,7 +217,7 @@ function createTonnetzPersistenceController(options) {
     }
 
     function deserializeState(state) {
-        if (!state || (state.version !== STATE_VERSION && state.version !== 6 && state.version !== 5 && state.version !== 4 && state.version !== 3 && state.version !== 2 && state.version !== 1)) return false;
+        if (!state || (state.version !== STATE_VERSION && state.version !== 7 && state.version !== 6 && state.version !== 5 && state.version !== 4 && state.version !== 3 && state.version !== 2 && state.version !== 1)) return false;
 
         try {
             const shouldMigrateDefaultAxes = shouldMigrateDefaultAxesToTuning(state);
@@ -229,6 +244,13 @@ function createTonnetzPersistenceController(options) {
                 if (axisDownRightInput) axisDownRightInput.value = state.axisDownRight;
             }
             if (typeof syncDirectionalAxes === 'function') syncDirectionalAxes();
+            if (latticeModeSelect) latticeModeSelect.value = state.latticeMode === 'ji' ? 'ji' : 'edo';
+            if (typeof setJiAxisEditOrder === 'function') setJiAxisEditOrder(state.jiAxisEditOrder || ['right', 'upRight']);
+            if (jiAxisRightInput) jiAxisRightInput.value = state.jiAxisRight || DEFAULT_JI_AXES.right;
+            if (jiAxisUpRightInput) jiAxisUpRightInput.value = state.jiAxisUpRight || DEFAULT_JI_AXES.upRight;
+            if (jiAxisDownRightInput) jiAxisDownRightInput.value = state.jiAxisDownRight || DEFAULT_JI_AXES.downRight;
+            if (jiLabelDisplaySelect) jiLabelDisplaySelect.value = normalizeJiLabelDisplay(state.jiLabelDisplay);
+            if (typeof syncJiDirectionalAxes === 'function') syncJiDirectionalAxes();
             canvasSizeSelect.value = state.canvasSize;
             orientationSelect.value = state.orientation;
             canvasWidthInput.value = state.canvasWidth;
@@ -267,6 +289,7 @@ function createTonnetzPersistenceController(options) {
 
             handleCanvasSizeChange();
             renderOverlayListPanel();
+            if (typeof syncLatticeModeControls === 'function') syncLatticeModeControls();
             getDrawTonnetz()?.();
             return true;
         } catch (e) {
@@ -423,6 +446,13 @@ function createTonnetzPersistenceController(options) {
                 highlightZeroColorInput.value = rgbStringToHex(DEFAULT_COLORS.highlightZero);
                 if (scaleDotColorInput) scaleDotColorInput.value = '#000000';
                 if (scaleDotSizeInput) scaleDotSizeInput.value = '6';
+                if (latticeModeSelect) latticeModeSelect.value = 'edo';
+                if (jiAxisRightInput) jiAxisRightInput.value = DEFAULT_JI_AXES.right;
+                if (jiAxisUpRightInput) jiAxisUpRightInput.value = DEFAULT_JI_AXES.upRight;
+                if (jiAxisDownRightInput) jiAxisDownRightInput.value = DEFAULT_JI_AXES.downRight;
+                if (jiLabelDisplaySelect) jiLabelDisplaySelect.value = DEFAULT_JI_LABEL_DISPLAY;
+                if (typeof setJiAxisEditOrder === 'function') setJiAxisEditOrder(['right', 'upRight']);
+                if (typeof syncJiDirectionalAxes === 'function') syncJiDirectionalAxes();
             } catch (e) {
                 console.error('Error seeding color inputs', e);
             }
@@ -430,6 +460,7 @@ function createTonnetzPersistenceController(options) {
             setOverlayColors({ up: 'rgb(255 0 0)', down: 'rgb(0 0 255)' });
             setOverlayRepeatAll({ up: false, down: false });
             renderOverlayListPanel();
+            if (typeof syncLatticeModeControls === 'function') syncLatticeModeControls();
             getDrawTonnetz()?.();
         }
     }

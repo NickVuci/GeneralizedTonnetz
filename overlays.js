@@ -133,6 +133,28 @@ function getOverlayStepsForRole(role, intervalX, intervalZ, edo) {
         : [0, upRight, ix];
 }
 
+function getJiOverlayOffsetsForRole(role) {
+    return role === 'down'
+        ? [{ u: 0, v: 0 }, { u: 0, v: 1 }, { u: 1, v: 0 }]
+        : [{ u: 0, v: 0 }, { u: 1, v: -1 }, { u: 1, v: 0 }];
+}
+
+function getFixedJiOverlayDescriptors() {
+    return OVERLAY_ROLE_ORDER.map(function (role) {
+        const config = getOverlayConfig(role);
+        return {
+            role,
+            label: config.label,
+            direction: config.direction,
+            color: config.color,
+            opacity: config.opacity,
+            repeatAll: false,
+            offsets: getJiOverlayOffsetsForRole(role),
+            anchors: getOverlayAnchors(role)
+        };
+    });
+}
+
 function getFixedOverlayDescriptors(intervalX, intervalZ, edo) {
     return OVERLAY_ROLE_ORDER.map(function (role) {
         const config = getOverlayConfig(role);

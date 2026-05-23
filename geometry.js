@@ -398,3 +398,38 @@ function anchorFromClick(px, py, size, edo, ix, iz, steps) {
     if (best) return { q: best.q, r: best.r };
     return null;
 }
+
+function anchorFromClickOffsets(px, py, size, offsets) {
+    if (!offsets || offsets.length < 3) return null;
+    const triOffsets = offsets.slice(0, 3);
+    const approx = approximateQR(px, py, size);
+    const CAND_RANGE = 2;
+    let best = null;
+
+    for (let dr = -CAND_RANGE; dr <= CAND_RANGE; dr++) {
+        for (let dq = -CAND_RANGE; dq <= CAND_RANGE; dq++) {
+            const q = approx.q + dq;
+            const r = approx.r + dr;
+            const vertices = triOffsets.map(function ({ u, v }) {
+                return qrToPixel(q + u, r + v, size);
+            });
+            if (pointInTriangle(
+                px,
+                py,
+                vertices[0].x,
+                vertices[0].y,
+                vertices[1].x,
+                vertices[1].y,
+                vertices[2].x,
+                vertices[2].y
+            )) {
+                const cx = (vertices[0].x + vertices[1].x + vertices[2].x) / 3;
+                const cy = (vertices[0].y + vertices[1].y + vertices[2].y) / 3;
+                const d2 = (px - cx) * (px - cx) + (py - cy) * (py - cy);
+                if (!best || d2 < best.d2) best = { q, r, d2 };
+            }
+        }
+    }
+
+    return best ? { q: best.q, r: best.r } : null;
+}

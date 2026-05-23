@@ -15,10 +15,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const highlightZeroColorInput = document.getElementById('highlightZeroColor');
     const highlightZeroInput = document.getElementById('highlightZero');
     const triangleSizeInput = document.getElementById('triangleSize');
+    const latticeModeSelect = document.getElementById('latticeMode');
     const edoInput = document.getElementById('edo');
     const axisRightInput = document.getElementById('axisRight');
     const axisUpRightInput = document.getElementById('axisUpRight');
     const axisDownRightInput = document.getElementById('axisDownRight');
+    const jiAxisRightInput = document.getElementById('jiAxisRight');
+    const jiAxisUpRightInput = document.getElementById('jiAxisUpRight');
+    const jiAxisDownRightInput = document.getElementById('jiAxisDownRight');
+    const jiLabelDisplaySelect = document.getElementById('jiLabelDisplay');
     const scaleDegreesInput = document.getElementById('scaleDegrees');
     const scaleSizeInput = document.getElementById('scaleSize');
     const scaleDotsInput = document.getElementById('scaleDots');
@@ -43,11 +48,19 @@ document.addEventListener('DOMContentLoaded', function () {
     const THEME_STORAGE_KEY = 'tonnetz-theme';
     const AXIS_KEYS = ['right', 'upRight', 'downRight'];
     let axisEditOrder = ['right', 'upRight'];
+    let jiAxisEditOrder = ['right', 'upRight'];
 
     function getAxisInput(axisKey) {
         if (axisKey === 'right') return axisRightInput;
         if (axisKey === 'upRight') return axisUpRightInput;
         if (axisKey === 'downRight') return axisDownRightInput;
+        return null;
+    }
+
+    function getJiAxisInput(axisKey) {
+        if (axisKey === 'right') return jiAxisRightInput;
+        if (axisKey === 'upRight') return jiAxisUpRightInput;
+        if (axisKey === 'downRight') return jiAxisDownRightInput;
         return null;
     }
 
@@ -63,6 +76,18 @@ document.addEventListener('DOMContentLoaded', function () {
         return axisEditOrder.slice();
     }
 
+    function setJiAxisEditOrder(nextOrder) {
+        if (!Array.isArray(nextOrder)) return;
+        const filtered = nextOrder.filter(function (axisKey, index) {
+            return AXIS_KEYS.includes(axisKey) && nextOrder.indexOf(axisKey) === index;
+        });
+        if (filtered.length >= 2) jiAxisEditOrder = filtered.slice(-2);
+    }
+
+    function getJiAxisEditOrder() {
+        return jiAxisEditOrder.slice();
+    }
+
     function rememberEditedAxis(axisKey) {
         if (!AXIS_KEYS.includes(axisKey)) return;
         axisEditOrder = axisEditOrder.filter(function (item) {
@@ -70,6 +95,15 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         axisEditOrder.push(axisKey);
         if (axisEditOrder.length > 2) axisEditOrder = axisEditOrder.slice(-2);
+    }
+
+    function rememberEditedJiAxis(axisKey) {
+        if (!AXIS_KEYS.includes(axisKey)) return;
+        jiAxisEditOrder = jiAxisEditOrder.filter(function (item) {
+            return item !== axisKey;
+        });
+        jiAxisEditOrder.push(axisKey);
+        if (jiAxisEditOrder.length > 2) jiAxisEditOrder = jiAxisEditOrder.slice(-2);
     }
 
     function syncDirectionalAxes(editedAxis) {
@@ -97,6 +131,56 @@ document.addEventListener('DOMContentLoaded', function () {
         if (axisRightInput) axisRightInput.value = axes.right;
         if (axisUpRightInput) axisUpRightInput.value = axes.upRight;
         if (axisDownRightInput) axisDownRightInput.value = axes.downRight;
+    }
+
+    function syncJiDirectionalAxes(editedAxis) {
+        if (editedAxis) rememberEditedJiAxis(editedAxis);
+
+        const derivedAxis = AXIS_KEYS.find(function (axisKey) {
+            return !jiAxisEditOrder.includes(axisKey);
+        }) || 'downRight';
+        const axes = deriveJiAxes({
+            right: jiAxisRightInput?.value,
+            upRight: jiAxisUpRightInput?.value,
+            downRight: jiAxisDownRightInput?.value
+        }, derivedAxis);
+
+        if (jiAxisRightInput) jiAxisRightInput.value = formatJiFraction(axes.right);
+        if (jiAxisUpRightInput) jiAxisUpRightInput.value = formatJiFraction(axes.upRight);
+        if (jiAxisDownRightInput) jiAxisDownRightInput.value = formatJiFraction(axes.downRight);
+    }
+
+    function getCurrentLatticeMode() {
+        return latticeModeSelect?.value === 'ji' ? 'ji' : 'edo';
+    }
+
+    function syncLatticeModeControls() {
+        const isJi = getCurrentLatticeMode() === 'ji';
+        const modeCombo = latticeModeSelect?.closest?.('.lattice-mode-combo');
+        if (modeCombo) modeCombo.dataset.mode = isJi ? 'ji' : 'edo';
+        if (edoInput) edoInput.hidden = isJi;
+        if (jiLabelDisplaySelect) jiLabelDisplaySelect.hidden = !isJi;
+
+        for (const axisKey of AXIS_KEYS) {
+            const edoAxisInput = getAxisInput(axisKey);
+            const jiAxisInput = getJiAxisInput(axisKey);
+            if (edoAxisInput) edoAxisInput.hidden = isJi;
+            if (jiAxisInput) jiAxisInput.hidden = !isJi;
+        }
+
+        const scaleInputs = scaleContent?.querySelectorAll?.('input, textarea, select') || [];
+        scaleContent?.classList.toggle('ji-disabled', isJi);
+        scaleContent?.querySelector?.('.scale-card')?.classList.toggle('ji-disabled', isJi);
+        scaleContent?.setAttribute('aria-disabled', String(isJi));
+        scaleInputs.forEach(function (input) {
+            input.disabled = isJi;
+        });
+
+        overlaySidebar?.querySelectorAll?.('.ov-repeat-all-toggle').forEach(function (input) {
+            input.disabled = isJi;
+            const label = input.closest('.ov-toggle-label');
+            if (label) label.title = isJi ? 'Repeat is available in EDO mode' : 'Repeat matching overlays';
+        });
     }
 
     function applyDirectionalAxesTuning(presetId) {
@@ -175,10 +259,15 @@ document.addEventListener('DOMContentLoaded', function () {
         highlightZeroColorInput,
         highlightZeroInput,
         triangleSizeInput,
+        latticeModeSelect,
         edoInput,
         axisRightInput,
         axisUpRightInput,
         axisDownRightInput,
+        jiAxisRightInput,
+        jiAxisUpRightInput,
+        jiAxisDownRightInput,
+        jiLabelDisplaySelect,
         scaleDegreesInput,
         scaleSizeInput,
         scaleDotsInput,
@@ -236,13 +325,22 @@ document.addEventListener('DOMContentLoaded', function () {
         scaleDotsInput,
         scaleDotColorInput,
         scaleDotSizeInput,
+        latticeModeSelect,
         edoInput,
         axisRightInput,
         axisUpRightInput,
         axisDownRightInput,
+        jiAxisRightInput,
+        jiAxisUpRightInput,
+        jiAxisDownRightInput,
+        jiLabelDisplaySelect,
         syncDirectionalAxes,
         getAxisEditOrder,
         setAxisEditOrder,
+        syncJiDirectionalAxes,
+        getJiAxisEditOrder,
+        setJiAxisEditOrder,
+        syncLatticeModeControls,
         copyLinkBtn,
         resetBtn,
         DEFAULT_COLORS,
@@ -317,11 +415,18 @@ document.addEventListener('DOMContentLoaded', function () {
     highlightZeroInput.addEventListener('input', queueDraw);
     triangleSizeInput.addEventListener('change', function () {
         renderOverlayListPanel();
+        syncLatticeModeControls();
         queueDraw();
     });
     edoInput.addEventListener('change', function () {
         applyDirectionalAxesTuning();
         onIntervalParamsChange();
+    });
+    latticeModeSelect?.addEventListener('change', function () {
+        syncJiDirectionalAxes();
+        renderOverlayListPanel();
+        syncLatticeModeControls();
+        queueDraw();
     });
     axisRightInput?.addEventListener('change', function () {
         syncDirectionalAxes('right');
@@ -335,6 +440,19 @@ document.addEventListener('DOMContentLoaded', function () {
         syncDirectionalAxes('downRight');
         onIntervalParamsChange();
     });
+    jiAxisRightInput?.addEventListener('change', function () {
+        syncJiDirectionalAxes('right');
+        queueDraw();
+    });
+    jiAxisUpRightInput?.addEventListener('change', function () {
+        syncJiDirectionalAxes('upRight');
+        queueDraw();
+    });
+    jiAxisDownRightInput?.addEventListener('change', function () {
+        syncJiDirectionalAxes('downRight');
+        queueDraw();
+    });
+    jiLabelDisplaySelect?.addEventListener('change', queueDraw);
     saveImageButton.addEventListener('click', saveAsImage);
     savePdfButton.addEventListener('click', saveAsPdf);
     scaleDegreesInput?.addEventListener('input', queueDraw);
@@ -345,10 +463,13 @@ document.addEventListener('DOMContentLoaded', function () {
     overlayListContainer?.addEventListener('click', function (e) {
         if (!e.target.closest('button')) return;
         handleOverlayPanelInteraction(e);
+        syncLatticeModeControls();
     }, true);
     overlayListContainer?.addEventListener('change', function (e) {
         if (!e.target.classList.contains('ov-color-input') && !e.target.classList.contains('ov-repeat-all-toggle')) return;
+        if (getCurrentLatticeMode() === 'ji' && e.target.classList.contains('ov-repeat-all-toggle')) return;
         handleOverlayPanelInteraction(e);
+        syncLatticeModeControls();
     }, true);
     overlayListContainer?.addEventListener('input', function (e) {
         if (!e.target.classList.contains('ov-color-input')) return;
@@ -382,6 +503,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     initializeTheme();
     syncDirectionalAxes();
+    syncJiDirectionalAxes();
     initializePersistence();
     syncAxisArrowColors();
+    syncLatticeModeControls();
 });

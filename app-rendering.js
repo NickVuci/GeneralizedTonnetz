@@ -15,10 +15,15 @@ function createTonnetzRenderingController(options) {
         highlightZeroColorInput,
         highlightZeroInput,
         triangleSizeInput,
+        latticeModeSelect,
         edoInput,
         axisRightInput,
         axisUpRightInput,
         axisDownRightInput,
+        jiAxisRightInput,
+        jiAxisUpRightInput,
+        jiAxisDownRightInput,
+        jiLabelDisplaySelect,
         scaleDegreesInput,
         scaleSizeInput,
         scaleDotsInput,
@@ -53,6 +58,18 @@ function createTonnetzRenderingController(options) {
             intervalX: intervals.intervalX,
             intervalZ: intervals.intervalZ
         };
+    }
+
+    function getCurrentLatticeMode() {
+        return latticeModeSelect?.value === 'ji' ? 'ji' : 'edo';
+    }
+
+    function getCurrentJiPitchAdapter() {
+        return createJiPitchAdapter({
+            right: jiAxisRightInput?.value || DEFAULT_JI_AXES.right,
+            upRight: jiAxisUpRightInput?.value || DEFAULT_JI_AXES.upRight,
+            downRight: jiAxisDownRightInput?.value || DEFAULT_JI_AXES.downRight
+        }, jiLabelDisplaySelect?.value || DEFAULT_JI_LABEL_DISPLAY);
     }
 
     function handleCanvasSizeChange() {
@@ -116,12 +133,14 @@ function createTonnetzRenderingController(options) {
 
         const size = parseInt(triangleSizeInput.value, 10) || 40;
         const { edo, intervalX, intervalZ } = getCurrentIntervalParams();
+        const latticeMode = getCurrentLatticeMode();
+        const pitchAdapter = latticeMode === 'ji' ? getCurrentJiPitchAdapter() : null;
 
         let scaleSet = null;
         try {
             const raw = (scaleDegreesInput?.value ?? '').trim();
             const tokens = raw.length ? raw.split(/[\,\s]+/).filter(Boolean) : [];
-            if (tokens.length) {
+            if (latticeMode === 'edo' && tokens.length) {
                 const set = new Set();
                 for (const token of tokens) {
                     const value = parseInt(token, 10);
@@ -167,32 +186,48 @@ function createTonnetzRenderingController(options) {
                         targetCtx,
                         scaleSet,
                         scaleSizeFactor,
-                        canvasLabelFontFamily
+                        canvasLabelFontFamily,
+                        pitchAdapter
                     );
                 }
             }
 
-            const overlayDescriptors = getFixedOverlayDescriptors(intervalX, intervalZ, edo);
+            const overlayDescriptors = latticeMode === 'ji'
+                ? getFixedJiOverlayDescriptors()
+                : getFixedOverlayDescriptors(intervalX, intervalZ, edo);
             for (const overlay of overlayDescriptors) {
                 if (overlay.anchors.length) {
-                    drawChordOverlay(
-                        targetCtx,
-                        width,
-                        height,
-                        size,
-                        edo,
-                        intervalX,
-                        intervalZ,
-                        overlay.steps,
-                        overlay.color,
-                        overlay.opacity,
-                        overlay.anchors,
-                        overlay.repeatAll
-                    );
+                    if (latticeMode === 'ji') {
+                        drawChordOffsetOverlay(
+                            targetCtx,
+                            width,
+                            height,
+                            size,
+                            overlay.offsets,
+                            overlay.color,
+                            overlay.opacity,
+                            overlay.anchors
+                        );
+                    } else {
+                        drawChordOverlay(
+                            targetCtx,
+                            width,
+                            height,
+                            size,
+                            edo,
+                            intervalX,
+                            intervalZ,
+                            overlay.steps,
+                            overlay.color,
+                            overlay.opacity,
+                            overlay.anchors,
+                            overlay.repeatAll
+                        );
+                    }
                 }
             }
 
-            if (drawScaleDots && scaleSet) {
+            if (latticeMode === 'edo' && drawScaleDots && scaleSet) {
                 drawScaleDotsGrid(targetCtx, width, height, size, edo, intervalX, intervalZ, scaleSet, scaleDotColor, scaleDotSize);
             }
         }
@@ -230,6 +265,7 @@ function createTonnetzRenderingController(options) {
         let py = (evt.clientY - rect.top) * (canvas.height / rect.height);
         const size = parseInt(triangleSizeInput.value, 10) || 40;
         const { edo, intervalX, intervalZ } = getCurrentIntervalParams();
+        const latticeMode = getCurrentLatticeMode();
         const { scale } = getCanvasDimensions();
         if (scale < 1) {
             px = px / scale;
@@ -241,10 +277,12 @@ function createTonnetzRenderingController(options) {
         const orientation = py >= apexPixel.y ? 'up' : 'down';
 
         const role = orientation === 'up' ? 'up' : 'down';
-        const steps = getOverlayStepsForRole(role, intervalX, intervalZ, edo);
+        const steps = latticeMode === 'ji' ? null : getOverlayStepsForRole(role, intervalX, intervalZ, edo);
         let anchorQR = null;
         try {
-            anchorQR = anchorFromClick(px, py, size, edo, intervalX, intervalZ, steps);
+            anchorQR = latticeMode === 'ji'
+                ? anchorFromClickOffsets(px, py, size, getJiOverlayOffsetsForRole(role))
+                : anchorFromClick(px, py, size, edo, intervalX, intervalZ, steps);
         } catch (e) {
             console.error('Error resolving anchor from click', e);
         }
@@ -252,7 +290,7 @@ function createTonnetzRenderingController(options) {
 
         const { q, r } = anchorQR;
         toggleOverlayAnchor(role, q, r, {
-            repeatAll: !!getOverlayConfig(role)?.repeatAll,
+            repeatAll: latticeMode === 'edo' && !!getOverlayConfig(role)?.repeatAll,
             intervalX,
             intervalZ,
             edo
