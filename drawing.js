@@ -174,11 +174,6 @@ function drawChordOffsetOverlay(ctx, width, height, size, offsets, colorHex, opa
         const triNodes = offsets.slice(0, 3).map(function ({ u, v }) {
             return qrToPixel(anchor.q + u, anchor.r + v, size);
         });
-        const xs = triNodes.map(function (point) { return point.x; });
-        const ys = triNodes.map(function (point) { return point.y; });
-        if (Math.max.apply(null, xs) < 0 || Math.max.apply(null, ys) < 0 || Math.min.apply(null, xs) > width || Math.min.apply(null, ys) > height) {
-            continue;
-        }
         const INSET = 0.92;
         const cx = (triNodes[0].x + triNodes[1].x + triNodes[2].x) / 3;
         const cy = (triNodes[0].y + triNodes[1].y + triNodes[2].y) / 3;

@@ -882,9 +882,23 @@ suite('anchorFromClick', () => {
 
 suite('rendering pitch labels', () => {
   function createRecordingCtx(labels) {
+    let tx = 0;
+    let ty = 0;
+    const stack = [];
     return {
-      save() {},
-      restore() {},
+      save() {
+        stack.push({ tx, ty });
+      },
+      restore() {
+        const previous = stack.pop();
+        if (!previous) return;
+        tx = previous.tx;
+        ty = previous.ty;
+      },
+      translate(x, y) {
+        tx += x;
+        ty += y;
+      },
       fillRect() {},
       clearRect() {},
       drawImage() {},
@@ -895,7 +909,10 @@ suite('rendering pitch labels', () => {
       stroke() {},
       fill() {},
       arc() {},
-      fillText(text) { labels.push(String(text)); }
+      fillText(text, x, y) {
+        labels.push(String(text));
+        labels.positions.push({ text: String(text), x: x + tx, y: y + ty });
+      }
     };
   }
 
@@ -932,6 +949,7 @@ suite('rendering pitch labels', () => {
   loadIntoSandbox('app-rendering.js', renderSandbox);
 
   const labels = [];
+  labels.positions = [];
   renderSandbox.labels = labels;
   vm.runInContext(`
     const canvas = { width: 160, height: 160 };
@@ -982,6 +1000,9 @@ suite('rendering pitch labels', () => {
   assert(labels.includes('[-1 1 0>'), 'JI monzo rendering labels right axis');
   assert(labels.includes('3/2'), 'JI fraction rendering labels right axis');
   assert(labels.includes('702.0c'), 'JI cents rendering labels right axis');
+  assert(labels.positions.some(function (item) {
+    return item.text === '[0 0 0>' && Math.abs(item.x - 80) < 0.001 && Math.abs(item.y - 72) < 0.001;
+  }), 'JI origin label renders at the center of the visible lattice');
 });
 
 suite('fixed overlay click routing', () => {
@@ -1103,6 +1124,107 @@ suite('fixed overlay click routing', () => {
 
   assertEq(vm.runInContext('getOverlayAnchorsSnapshot().up.length', clickSandbox), 1, 'up-facing click toggles up role anchor');
   assertEq(vm.runInContext('getOverlayAnchorsSnapshot().down.length', clickSandbox), 1, 'down-facing click toggles down role anchor');
+});
+
+suite('centered JI overlay click routing', () => {
+  function createCtxStub() {
+    return {
+      save() {},
+      restore() {},
+      translate() {},
+      fillRect() {},
+      clearRect() {},
+      drawImage() {},
+      beginPath() {},
+      moveTo() {},
+      lineTo() {},
+      closePath() {},
+      stroke() {},
+      fill() {},
+      arc() {},
+      fillText() {}
+    };
+  }
+
+  const overlayList = { innerHTML: '', querySelector() { return null; }, appendChild() {} };
+  const clickSandbox = vm.createContext({
+    console, Math, Set, Map, Number, Array, String, parseInt, parseFloat,
+    RegExp, Object, Boolean, Error, clearTimeout, setTimeout, JSON,
+    document: {
+      documentElement: {},
+      body: {},
+      getElementById(id) {
+        return id === 'overlayList' ? overlayList : null;
+      },
+      createElement(tag) {
+        if (tag === 'canvas') {
+          return { width: 0, height: 0, getContext() { return createCtxStub(); } };
+        }
+        return {};
+      }
+    },
+    getComputedStyle() {
+      return {
+        display: 'grid',
+        fontFamily: 'Arial, sans-serif',
+        getPropertyValue() { return ''; }
+      };
+    }
+  });
+  loadIntoSandbox('helpers.js', clickSandbox);
+  loadIntoSandbox('geometry.js', clickSandbox);
+  loadIntoSandbox('ji.js', clickSandbox);
+  loadIntoSandbox('drawing.js', clickSandbox);
+  loadIntoSandbox('overlays.js', clickSandbox);
+  loadIntoSandbox('app-rendering.js', clickSandbox);
+
+  vm.runInContext(`
+    const canvas = {
+      width: 600,
+      height: 600,
+      getBoundingClientRect: function () {
+        return { left: 0, top: 0, width: 600, height: 600 };
+      }
+    };
+    const controller = createTonnetzRenderingController({
+      canvas,
+      ctx: (${createCtxStub.toString()})(),
+      canvasSizeSelect: { value: 'Custom' },
+      orientationSelect: { value: 'portrait', disabled: false },
+      customSizeGroup: { style: { display: 'grid' } },
+      canvasWidthInput: { value: '600' },
+      canvasHeightInput: { value: '600' },
+      colorXInput: { value: '#FFFF00' },
+      colorYInput: { value: '#FF0000' },
+      colorZInput: { value: '#0000FF' },
+      backgroundColorInput: { value: '#FFFFFF' },
+      labelColorInput: { value: '#000000' },
+      highlightZeroColorInput: { value: '#FFFF00' },
+      highlightZeroInput: { checked: false },
+      triangleSizeInput: { value: '40' },
+      latticeModeSelect: { value: 'ji' },
+      edoInput: { value: '12' },
+      axisRightInput: { value: '7' },
+      axisUpRightInput: { value: '4' },
+      axisDownRightInput: { value: '3' },
+      jiPeriodInput: { value: '2/1' },
+      jiAxisRightInput: { value: '3/2' },
+      jiAxisUpRightInput: { value: '5/4' },
+      jiAxisDownRightInput: { value: '6/5' },
+      jiLabelDisplaySelect: { value: 'monzo' },
+      scaleDegreesInput: { value: '' },
+      scaleSizeInput: { value: '1.5' },
+      scaleDotsInput: { checked: false },
+      scaleDotColorInput: { value: '#000000' },
+      scaleDotSizeInput: { value: '6' }
+    });
+
+    controller.onCanvasClick({ clientX: 330, clientY: 291 });
+    controller.onCanvasClick({ clientX: 330, clientY: 309 });
+  `, clickSandbox);
+
+  assertEq(vm.runInContext('getOverlayAnchorsSnapshot().up.length', clickSandbox), 1, 'centered JI click toggles up overlay on one triangle side');
+  assertEq(vm.runInContext('getOverlayAnchorsSnapshot().down.length', clickSandbox), 1, 'centered JI click toggles down overlay on the other triangle side');
 });
 
 suite('app bootstrap consolidation', () => {

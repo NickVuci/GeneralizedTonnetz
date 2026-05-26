@@ -431,5 +431,5 @@ function anchorFromClickOffsets(px, py, size, offsets) {
         }
     }
 
-    return best ? { q: best.q, r: best.r } : null;
+    return best ? { q: best.q, r: best.r, d2: best.d2 } : null;
 }

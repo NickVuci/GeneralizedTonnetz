@@ -73,6 +73,13 @@ function createTonnetzRenderingController(options) {
         }, jiLabelDisplaySelect?.value || DEFAULT_JI_LABEL_DISPLAY, jiPeriodInput?.value || DEFAULT_JI_PERIOD);
     }
 
+    function getJiOriginOffset(width, height) {
+        return {
+            x: width / 2,
+            y: height / 2
+        };
+    }
+
     function handleCanvasSizeChange() {
         if (canvasSizeSelect.value === 'Custom') {
             customSizeGroup.style.display = '';
@@ -167,65 +174,80 @@ function createTonnetzRenderingController(options) {
             targetCtx.fillStyle = backgroundColor;
             targetCtx.fillRect(0, 0, width, height);
             const cellH = size * SQRT3_HALF;
-            const rows = Math.ceil(height / cellH) + 4;
-            const cols = Math.ceil(width / size) + 4;
-            for (let row = -2; row < rows; row++) {
-                for (let col = -2; col < cols; col++) {
-                    drawTriangle(
-                        col,
-                        row,
-                        size,
-                        colorX,
-                        colorY,
-                        colorZ,
-                        edo,
-                        intervalX,
-                        intervalZ,
-                        labelColor,
-                        highlightZero,
-                        highlightZeroColor,
-                        targetCtx,
-                        scaleSet,
-                        scaleSizeFactor,
-                        canvasLabelFontFamily,
-                        pitchAdapter
-                    );
-                }
+            const centeredJi = latticeMode === 'ji';
+            const rowStart = centeredJi ? -Math.ceil(height / cellH / 2) - 5 : -2;
+            const rowEnd = centeredJi ? Math.ceil(height / cellH / 2) + 5 : Math.ceil(height / cellH) + 4;
+            const colSpan = Math.ceil(width / size / 2) + Math.ceil(height / cellH / 2) + 6;
+            const colStart = centeredJi ? -colSpan : -2;
+            const colEnd = centeredJi ? colSpan : Math.ceil(width / size) + 4;
+
+            if (centeredJi) {
+                const origin = getJiOriginOffset(width, height);
+                targetCtx.save();
+                targetCtx.translate(origin.x, origin.y);
             }
 
-            const overlayDescriptors = latticeMode === 'ji'
-                ? getFixedJiOverlayDescriptors()
-                : getFixedOverlayDescriptors(intervalX, intervalZ, edo);
-            for (const overlay of overlayDescriptors) {
-                if (overlay.anchors.length) {
-                    if (latticeMode === 'ji') {
-                        drawChordOffsetOverlay(
-                            targetCtx,
-                            width,
-                            height,
+            try {
+                for (let row = rowStart; row < rowEnd; row++) {
+                    for (let col = colStart; col < colEnd; col++) {
+                        drawTriangle(
+                            col,
+                            row,
                             size,
-                            overlay.offsets,
-                            overlay.color,
-                            overlay.opacity,
-                            overlay.anchors
-                        );
-                    } else {
-                        drawChordOverlay(
-                            targetCtx,
-                            width,
-                            height,
-                            size,
+                            colorX,
+                            colorY,
+                            colorZ,
                             edo,
                             intervalX,
                             intervalZ,
-                            overlay.steps,
-                            overlay.color,
-                            overlay.opacity,
-                            overlay.anchors,
-                            overlay.repeatAll
+                            labelColor,
+                            highlightZero,
+                            highlightZeroColor,
+                            targetCtx,
+                            scaleSet,
+                            scaleSizeFactor,
+                            canvasLabelFontFamily,
+                            pitchAdapter
                         );
                     }
                 }
+
+                const overlayDescriptors = latticeMode === 'ji'
+                    ? getFixedJiOverlayDescriptors()
+                    : getFixedOverlayDescriptors(intervalX, intervalZ, edo);
+                for (const overlay of overlayDescriptors) {
+                    if (overlay.anchors.length) {
+                        if (latticeMode === 'ji') {
+                            drawChordOffsetOverlay(
+                                targetCtx,
+                                width,
+                                height,
+                                size,
+                                overlay.offsets,
+                                overlay.color,
+                                overlay.opacity,
+                                overlay.anchors
+                            );
+                        } else {
+                            drawChordOverlay(
+                                targetCtx,
+                                width,
+                                height,
+                                size,
+                                edo,
+                                intervalX,
+                                intervalZ,
+                                overlay.steps,
+                                overlay.color,
+                                overlay.opacity,
+                                overlay.anchors,
+                                overlay.repeatAll
+                            );
+                        }
+                    }
+                }
+            } finally {
+                if (centeredJi) targetCtx.restore();
             }
 
             if (latticeMode === 'edo' && drawScaleDots && scaleSet) {
@@ -272,22 +294,39 @@ function createTonnetzRenderingController(options) {
             px = px / scale;
             py = py / scale;
         }
+        if (latticeMode === 'ji') {
+            const dimensions = getCanvasDimensions();
+            const origin = getJiOriginOffset(dimensions.width / dimensions.scale, dimensions.height / dimensions.scale);
+            px -= origin.x;
+            py -= origin.y;
+        }
 
-        const approx = pixelToQR(px, py, size);
-        const apexPixel = qrToPixel(approx.q, approx.r, size);
-        const orientation = py >= apexPixel.y ? 'up' : 'down';
-
-        const role = orientation === 'up' ? 'up' : 'down';
-        const steps = latticeMode === 'ji' ? null : getOverlayStepsForRole(role, intervalX, intervalZ, edo);
         let anchorQR = null;
+        let role = null;
         try {
-            anchorQR = latticeMode === 'ji'
-                ? anchorFromClickOffsets(px, py, size, getJiOverlayOffsetsForRole(role))
-                : anchorFromClick(px, py, size, edo, intervalX, intervalZ, steps);
+            if (latticeMode === 'ji') {
+                const candidates = ['up', 'down'].map(function (candidateRole) {
+                    const anchor = anchorFromClickOffsets(px, py, size, getJiOverlayOffsetsForRole(candidateRole));
+                    return anchor ? { role: candidateRole, anchor, d2: anchor.d2 || 0 } : null;
+                }).filter(Boolean).sort(function (a, b) {
+                    return a.d2 - b.d2;
+                });
+                if (candidates.length) {
+                    role = candidates[0].role;
+                    anchorQR = candidates[0].anchor;
+                }
+            } else {
+                const approx = pixelToQR(px, py, size);
+                const apexPixel = qrToPixel(approx.q, approx.r, size);
+                const orientation = py >= apexPixel.y ? 'up' : 'down';
+                role = orientation === 'up' ? 'up' : 'down';
+                const steps = getOverlayStepsForRole(role, intervalX, intervalZ, edo);
+                anchorQR = anchorFromClick(px, py, size, edo, intervalX, intervalZ, steps);
+            }
         } catch (e) {
             console.error('Error resolving anchor from click', e);
         }
-        if (!anchorQR) return;
+        if (!anchorQR || !role) return;
 
         const { q, r } = anchorQR;
         toggleOverlayAnchor(role, q, r, {
